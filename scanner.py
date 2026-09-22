@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+/usr/bin/env python3
 """
 Scanner boursier — détecte, sur TOUT le NASDAQ et le S&P 500, les actions qui
 prennent +10% (ou plus) dans la journée, et envoie une alerte Telegram.
@@ -38,17 +38,24 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 
 
 def get_nasdaq_tickers():
-    """Liste complète des titres cotés au NASDAQ (fichier officiel, gratuit)."""
-    primary_url = "https://ftp.nasdaqtrader.com/dynamic/SymDirectory/nasdaqlisted.txt"
-    try:
-        resp = requests.get(primary_url, headers=HEADERS, timeout=20)
-        resp.raise_for_status()
-        df = pd.read_csv(io.StringIO(resp.text), sep="|")
-        df = df[df["Test Issue"] == "N"]  # exclut les tickers de test
-        return df["Symbol"].dropna().tolist()
-    except Exception as e:
-        print(f"Impossible de récupérer la liste NASDAQ complète ({e}).")
-        return []
+    """Liste complète des titres cotés au NASDAQ, via un miroir GitHub mis à
+    jour chaque nuit à partir des données officielles NASDAQ (contourne le
+    blocage du serveur ftp.nasdaqtrader.com envers les IP des runners GitHub)."""
+    urls = [
+        "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/main/nasdaq/nasdaq_tickers.txt",
+        "https://raw.githubusercontent.com/deltaray-io/US-Stock-Symbols/main/nasdaq/nasdaq_tickers.txt",
+    ]
+    for url in urls:
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=20)
+            resp.raise_for_status()
+            tickers = [t.strip() for t in resp.text.splitlines() if t.strip()]
+            if tickers:
+                return tickers
+        except Exception as e:
+            print(f"Source NASDAQ {url} indisponible ({e}), essai suivant...")
+    print("Impossible de récupérer la liste NASDAQ complète depuis toutes les sources.")
+    return []
 
 
 def get_sp500_tickers():
