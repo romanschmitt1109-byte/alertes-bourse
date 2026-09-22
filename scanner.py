@@ -1,4 +1,3 @@
-/usr/bin/env python3
 """
 Scanner boursier — détecte, sur TOUT le NASDAQ et le S&P 500, les actions qui
 prennent +10% (ou plus) dans la journée, et envoie une alerte Telegram.
