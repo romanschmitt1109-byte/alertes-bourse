@@ -1,0 +1,29 @@
+name: Alerte hausses +10% (NASDAQ complet + S&P 500)
+
+on:
+  schedule:
+    # 21h30 UTC ≈ 17h30 ET (après la clôture du NASDAQ/NYSE)
+    - cron: "30 21 * * 1-5"
+  workflow_dispatch: {}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90  # le scan de ~6000-7000 titres peut prendre du temps
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install yfinance pandas requests lxml
+
+      - name: Lancer le scan
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scanner.py
