@@ -34,12 +34,14 @@ MARKET_CAP_MIN = float(os.environ.get("MARKET_CAP_MIN", 300_000_000))  # 300M$ �
 AVG_VOLUME_MIN = float(os.environ.get("AVG_VOLUME_MIN", 200_000))      # titres/jour — assure la liquidité
 
 
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+
 def get_nasdaq_tickers():
     """Liste complète des titres cotés au NASDAQ (fichier officiel, gratuit)."""
-    url = "https://old.nasdaq.com/screening/companies-by-name.aspx"  # fallback si besoin
-    primary_url = "http://ftp.nasdaqtrader.com/dynamic/SymDirectory/nasdaqlisted.txt"
+    primary_url = "https://ftp.nasdaqtrader.com/dynamic/SymDirectory/nasdaqlisted.txt"
     try:
-        resp = requests.get(primary_url, timeout=15)
+        resp = requests.get(primary_url, headers=HEADERS, timeout=20)
         resp.raise_for_status()
         df = pd.read_csv(io.StringIO(resp.text), sep="|")
         df = df[df["Test Issue"] == "N"]  # exclut les tickers de test
@@ -51,7 +53,12 @@ def get_nasdaq_tickers():
 
 def get_sp500_tickers():
     try:
-        tables = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
+        resp = requests.get(
+            "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+            headers=HEADERS, timeout=20,
+        )
+        resp.raise_for_status()
+        tables = pd.read_html(io.StringIO(resp.text))
         return tables[0]["Symbol"].str.replace(".", "-", regex=False).tolist()
     except Exception as e:
         print(f"Impossible de récupérer le S&P 500 ({e}).")
