@@ -17,9 +17,12 @@ import io
 import os
 import sys
 import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import requests
 import pandas as pd
 import yfinance as yf
+from deep_translator import GoogleTranslator
 
 GAIN_THRESHOLD_PCT = float(os.environ.get("GAIN_THRESHOLD_PCT", 10))
 BATCH_SIZE = 150          # nb de tickers par requête groupée
@@ -121,7 +124,7 @@ def passes_quality_filters(ticker, price):
 
 def get_news_snippet(ticker):
     """Récupère le titre de l'actualité la plus récente pour un ticker (gratuit,
-    via Yahoo Finance). Retourne None si rien n'est trouvé."""
+    via Yahoo Finance), traduit en français. Retourne None si rien n'est trouvé."""
     try:
         news = yf.Ticker(ticker).news
         if not news:
@@ -133,6 +136,10 @@ def get_news_snippet(ticker):
         link = (content.get("canonicalUrl") or {}).get("url") or content.get("link")
         if not title:
             return None
+        try:
+            title = GoogleTranslator(source="auto", target="fr").translate(title)
+        except Exception:
+            pass  # si la traduction échoue, on garde le titre original en anglais
         return {"title": title, "link": link}
     except Exception:
         return None
@@ -171,7 +178,7 @@ def main():
         all_winners.extend(scan_batch(batch))
         time.sleep(PAUSE_BETWEEN_BATCHES)
 
-    now_str = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')
+    now_str = datetime.now(ZoneInfo("Europe/Paris")).strftime('%d/%m/%Y %H:%M')
 
     if not all_winners:
         message = f"<b>✅ Scan terminé — {now_str}</b>\n<i>RAS : aucune action n'a pris {GAIN_THRESHOLD_PCT}% ou plus " \
@@ -213,3 +220,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
