@@ -2,8 +2,10 @@ name: Alerte hausses +10% (NASDAQ complet + S&P 500)
 
 on:
   schedule:
-    # 21h30 UTC ≈ 17h30 ET (après la clôture du NASDAQ/NYSE)
-    - cron: "30 21 * * 1-5"
+    # Scans toutes les heures pendant les heures de marché US (9h30-16h ET)
+    # 14h30-20h30 UTC couvre approximativement la session, hiver et été confondus
+    # (le marché ouvre/ferme donc parfois 1h plus tôt/tard selon l'heure d'été - acceptable)
+    - cron: "30 14-20 * * 1-5"
   workflow_dispatch: {}
 
 jobs:
