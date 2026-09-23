@@ -119,6 +119,25 @@ def passes_quality_filters(ticker, price):
         return False  # par prudence, on écarte si l'info n'est pas récupérable
 
 
+def get_news_snippet(ticker):
+    """Récupère le titre de l'actualité la plus récente pour un ticker (gratuit,
+    via Yahoo Finance). Retourne None si rien n'est trouvé."""
+    try:
+        news = yf.Ticker(ticker).news
+        if not news:
+            return None
+        item = news[0]
+        # yfinance structure les news sous 'content' depuis les versions récentes
+        content = item.get("content", item)
+        title = content.get("title")
+        link = (content.get("canonicalUrl") or {}).get("url") or content.get("link")
+        if not title:
+            return None
+        return {"title": title, "link": link}
+    except Exception:
+        return None
+
+
 def send_telegram_message(text):
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
@@ -152,26 +171,40 @@ def main():
         all_winners.extend(scan_batch(batch))
         time.sleep(PAUSE_BETWEEN_BATCHES)
 
+    now_str = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')
+
     if not all_winners:
-        print("Aucune action n'a pris 10% ou plus aujourd'hui.")
+        message = f"<b>✅ Scan terminé — {now_str}</b>\n<i>RAS : aucune action n'a pris {GAIN_THRESHOLD_PCT}% ou plus " \
+                  f"({len(tickers)} titres scannés).</i>"
+        print(message)
+        send_telegram_message(message)
         return
 
     print(f"{len(all_winners)} titre(s) en hausse de {GAIN_THRESHOLD_PCT}%+, application des filtres qualité...")
     quality_winners = [w for w in all_winners if passes_quality_filters(w["ticker"], w["price"])]
 
     if not quality_winners:
-        print("Des hausses ont été détectées mais aucune ne passe les filtres qualité (prix/cap/volume).")
+        message = f"<b>✅ Scan terminé — {now_str}</b>\n<i>{len(all_winners)} titre(s) en hausse mais aucun ne " \
+                  f"passe les filtres qualité (prix/capitalisation/volume).</i>"
+        print(message)
+        send_telegram_message(message)
         return
 
     quality_winners.sort(key=lambda w: w["pct_change"], reverse=True)
 
-    lines = [f"<b>🚀 Hausses du jour ≥ {GAIN_THRESHOLD_PCT}% — {pd.Timestamp.now().strftime('%d/%m/%Y')}</b>",
+    lines = [f"<b>🚀 Hausses du jour ≥ {GAIN_THRESHOLD_PCT}% — {now_str}</b>",
              f"<i>{len(quality_winners)} titre(s) retenu(s) après filtre qualité "
              f"(sur {len(all_winners)} en hausse, {len(tickers)} scannés)</i>\n"]
-    for w in quality_winners[:50]:  # limite Telegram: un message ne doit pas être trop long
+    for w in quality_winners[:20]:  # limite abaissée à 20 pour laisser de la place aux news
         lines.append(f"• <b>{w['ticker']}</b> : +{w['pct_change']}% ({w['price']}$)")
-    if len(quality_winners) > 50:
-        lines.append(f"\n... et {len(quality_winners) - 50} autre(s)")
+        news = get_news_snippet(w["ticker"])
+        if news:
+            title = news["title"]
+            if len(title) > 90:
+                title = title[:87] + "..."
+            lines.append(f"  📰 {title}")
+    if len(quality_winners) > 20:
+        lines.append(f"\n... et {len(quality_winners) - 20} autre(s)")
 
     message = "\n".join(lines)
     print(message)
