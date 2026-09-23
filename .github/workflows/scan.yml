@@ -22,7 +22,7 @@ jobs:
           python-version: "3.11"
 
       - name: Installer les dépendances
-        run: pip install yfinance pandas requests lxml
+        run: pip install yfinance pandas requests lxml deep-translator
 
       - name: Lancer le scan
         env:
