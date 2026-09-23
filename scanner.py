@@ -18,6 +18,7 @@ pour chaque titre — pas par indice (Nasdaq/S&P 500 servent uniquement de
 listes de tickers à scanner, pas de catégories d'affichage).
 """
 
+import html
 import io
 import os
 import sys
@@ -218,7 +219,13 @@ def format_grouped_message(quality_winners, header_lines):
                     title = news["title"]
                     if len(title) > 90:
                         title = title[:87] + "..."
-                    lines.append(f"    📰 {title}")
+                    title_safe = html.escape(title)
+                    link = news.get("link")
+                    if link:
+                        link_safe = html.escape(link, quote=True)
+                        lines.append(f'    📰 <a href="{link_safe}">{title_safe}</a>')
+                    else:
+                        lines.append(f"    📰 {title_safe}")
 
     return "\n".join(lines)
 
@@ -290,3 +297,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+          
