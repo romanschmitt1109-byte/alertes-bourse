@@ -1,172 +1,285 @@
-<!doctype html>
+ <!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Scanner Bourse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0b0e14;
-    --panel: #121622;
-    --panel-border: #232a3b;
-    --text: #e6e9f0;
-    --text-dim: #9aa3b5;
-    --accent: #3ddc84;
-    --accent-dim: #25c56a;
-    --link: #6ea8ff;
-    --pill-bg: #1c2333;
+    --bg: #000000;
+    --surface: #121214;
+    --surface-raised: #1A1A1D;
+    --line: #232326;
+    --text: #F2F2F4;
+    --text-dim: #8A8A90;
+    --text-faint: #5B5B60;
+    --gain: #30D158;
+    --gain-dim: #1E7A37;
+    --loss: #FF453A;
+    --accent: #FF7A33;
+    --radius: 18px;
+    --radius-sm: 12px;
   }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f5f6f9;
-      --panel: #ffffff;
-      --panel-border: #e2e5ec;
-      --text: #1a1d29;
-      --text-dim: #5b6372;
-      --accent: #0f9d58;
-      --accent-dim: #0c7d46;
-      --link: #1a56db;
-      --pill-bg: #eef1f8;
-    }
-  }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { background: var(--bg); }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    padding: 16px;
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 18px 14px 40px;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  header {
-    margin-bottom: 20px;
-  }
-  h1 {
-    font-size: 1.4rem;
-    margin: 0 0 4px;
-  }
-  .meta {
-    color: var(--text-dim);
-    font-size: 0.85rem;
+  .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+
+  /* Header */
+  .top-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px 14px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
   }
-  .status {
-    margin-top: 14px;
-    padding: 14px 16px;
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 10px;
-    color: var(--text-dim);
-    font-size: 0.95rem;
-  }
-  .category {
-    margin-top: 22px;
-  }
-  .category-title {
-    font-weight: 700;
-    font-size: 1.05rem;
-    margin-bottom: 10px;
+  .brand {
     display: flex;
     align-items: baseline;
     gap: 8px;
   }
-  .category-count {
-    font-weight: 400;
-    color: var(--text-dim);
-    font-size: 0.85rem;
+  .brand .mark {
+    color: var(--gain);
+    font-size: 1.1rem;
   }
-  .sector {
-    margin: 12px 0 8px 2px;
-    color: var(--text-dim);
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-  }
-  .card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .card-name {
+  h1 {
+    font-size: 1.25rem;
     font-weight: 600;
-  }
-  .card-ticker {
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    font-weight: 400;
-  }
-  .card-stats {
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-  .pct {
-    color: var(--accent);
-    font-weight: 700;
-  }
-  .price {
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    margin-left: 6px;
-  }
-  .news {
-    margin-top: 8px;
-    font-size: 0.88rem;
-    display: flex;
-    gap: 6px;
-    align-items: flex-start;
-  }
-  .news a {
-    color: var(--link);
-    text-decoration: none;
-  }
-  .news a:hover { text-decoration: underline; }
-  .news span.no-link {
-    color: var(--text);
-  }
-  footer {
-    margin-top: 28px;
-    text-align: center;
-    color: var(--text-dim);
-    font-size: 0.78rem;
+    margin: 0;
+    letter-spacing: -0.01em;
   }
   .refresh-btn {
-    margin-left: auto;
-    background: var(--pill-bg);
-    border: 1px solid var(--panel-border);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--line);
     color: var(--text);
-    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .refresh-btn:active { transform: scale(0.92); background: var(--surface-raised); }
+  .refresh-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .refresh-btn.spinning svg { animation: spin 0.6s linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Stat strip */
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
     padding: 6px 12px;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .stat strong { color: var(--text); font-weight: 600; }
+  .stat.gain-stat strong { color: var(--gain); }
+
+  .status {
+    padding: 22px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  /* Exchange section */
+  .exchange {
+    margin-top: 26px;
+  }
+  .exchange-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 4px 10px;
+  }
+  .exchange-head .name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .exchange-head .count {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+  }
+  .sector-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 4px 6px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+  .sector-label .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    flex-shrink: 0;
+  }
+
+  /* List container */
+  .list {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
     cursor: pointer;
   }
-  .top-row {
+  .list .row:last-child { border-bottom: none; }
+  .row:active { background: var(--surface-raised); }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-dim);
+  }
+
+  .identity .name {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 44vw;
+  }
+  .identity .sub {
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    margin-top: 1px;
+  }
+  .identity .sub .ticker { color: var(--text-dim); }
+
+  .figures {
+    text-align: right;
     display: flex;
     align-items: center;
     gap: 10px;
+  }
+  .spark { width: 56px; height: 28px; flex-shrink: 0; }
+  .spark path.line { fill: none; stroke: var(--gain); stroke-width: 1.6; }
+  .spark path.fill { fill: var(--gain); opacity: 0.08; stroke: none; }
+  .figures .nums .price {
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+  .figures .nums .pct {
+    font-size: 0.78rem;
+    color: var(--gain);
+    font-weight: 600;
+  }
+
+  /* Expanded detail */
+  .detail {
+    grid-column: 1 / -1;
+    display: none;
+    padding: 4px 2px 10px 56px;
+  }
+  .row.open .detail { display: block; }
+  .row.open { padding-bottom: 6px; }
+  .detail .chart-big { width: 100%; height: 110px; }
+  .detail .chart-big path.line { fill: none; stroke: var(--gain); stroke-width: 1.8; }
+  .detail .chart-big path.fill { fill: var(--gain); opacity: 0.1; stroke: none; }
+  .detail .range {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--text-faint);
+    margin-top: 4px;
+  }
+  .detail .news {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text-dim);
+  }
+  .detail .news a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .detail .news a:active { opacity: 0.7; }
+  .detail .no-chart {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    padding: 8px 0;
+  }
+
+  footer {
+    margin-top: 30px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 0.72rem;
+  }
+
+  #content { opacity: 0; transition: opacity 0.35s ease; }
+  #content.ready { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #content { transition: none; }
+    .refresh-btn.spinning svg { animation: none; }
   }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <div class="top-row">
-        <h1>🚀 Scanner Bourse</h1>
-        <button class="refresh-btn" onclick="load()">Actualiser</button>
+    <div class="top-row">
+      <div class="brand">
+        <span class="mark mono">▲</span>
+        <h1>Scanner Bourse</h1>
       </div>
-      <div class="meta" id="meta">Chargement…</div>
-    </header>
+      <button class="refresh-btn" id="refreshBtn" aria-label="Actualiser">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M3 12a9 9 0 0 1 15.3-6.5L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-15.3 6.5L3 16"/>
+          <path d="M3 21v-5h5"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="stats" id="stats"></div>
 
     <div id="content"></div>
 
@@ -174,11 +287,14 @@
   </div>
 
 <script>
-async function load() {
-  const metaEl = document.getElementById('meta');
+let lastData = null;
+
+async function load(spin) {
+  const btn = document.getElementById('refreshBtn');
+  const statsEl = document.getElementById('stats');
   const contentEl = document.getElementById('content');
-  metaEl.textContent = 'Chargement…';
-  contentEl.innerHTML = '';
+  if (spin) btn.classList.add('spinning');
+  contentEl.classList.remove('ready');
 
   let data;
   try {
@@ -186,41 +302,46 @@ async function load() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     data = await res.json();
   } catch (e) {
-    metaEl.textContent = '';
-    contentEl.innerHTML = '<div class="status">Impossible de charger les données (' +
-      escapeHtml(String(e.message || e)) + '). Le premier scan n\'a peut-être pas encore tourné.</div>';
+    statsEl.innerHTML = '';
+    contentEl.innerHTML = '<div class="status">Pas encore de données — le premier scan n\'a peut-être pas fini de tourner. Réessaie dans quelques minutes.</div>';
+    contentEl.classList.add('ready');
+    if (spin) setTimeout(() => btn.classList.remove('spinning'), 400);
     return;
   }
 
-  metaEl.innerHTML =
-    '<span>Dernier scan : <strong>' + escapeHtml(data.generated_at) + '</strong></span>' +
-    '<span>Seuil : +' + data.threshold_pct + '%</span>' +
-    '<span>' + data.total_scanned + ' titres scannés</span>' +
-    '<span>' + data.total_risers + ' en hausse</span>' +
-    '<span>' + data.total_quality + ' retenu(s) après filtres</span>';
+  lastData = data;
+  renderStats(data);
+  renderContent(data);
+  contentEl.classList.add('ready');
+  if (spin) setTimeout(() => btn.classList.remove('spinning'), 400);
+}
 
+function renderStats(data) {
+  const statsEl = document.getElementById('stats');
+  statsEl.innerHTML =
+    '<span class="stat">' + escapeHtml(data.generated_at) + '</span>' +
+    '<span class="stat gain-stat"><strong>+' + data.threshold_pct + '%</strong> seuil</span>' +
+    '<span class="stat">' + data.total_scanned + ' scannés</span>' +
+    '<span class="stat"><strong>' + data.total_quality + '</strong> retenus</span>';
+}
+
+function renderContent(data) {
+  const contentEl = document.getElementById('content');
   const results = data.results || [];
   if (results.length === 0) {
-    contentEl.innerHTML = '<div class="status">RAS pour ce scan : aucune action ne dépasse le seuil ' +
-      '(ou aucune ne passe les filtres qualité).</div>';
+    contentEl.innerHTML = '<div class="status">Aucun signal sur ce scan : rien ne dépasse le seuil, ou rien ne passe les filtres qualité.</div>';
     return;
   }
 
-  // Regroupe par bourse (category) puis par secteur
   const byCategory = {};
-  for (const w of results) {
-    (byCategory[w.category] ||= []).push(w);
-  }
+  for (const w of results) (byCategory[w.category] ||= []).push(w);
 
   const categoryOrder = [
-    "NasdaqGS", "Nasdaq Global Select",
-    "NasdaqGM", "Nasdaq Global Market",
-    "NasdaqCM", "Nasdaq Capital Market",
-    "NYSE", "NYSE Arca", "NYSE American",
+    "NasdaqGS", "Nasdaq Global Select", "NasdaqGM", "Nasdaq Global Market",
+    "NasdaqCM", "Nasdaq Capital Market", "NYSE", "NYSE Arca", "NYSE American",
     "Cboe BZX", "Cboe US"
   ];
-  const categories = Object.keys(byCategory);
-  categories.sort((a, b) => {
+  const categories = Object.keys(byCategory).sort((a, b) => {
     const ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
     if (ia === -1 && ib === -1) return a.localeCompare(b);
     if (ia === -1) return 1;
@@ -231,40 +352,89 @@ async function load() {
   let html = '';
   for (const cat of categories) {
     const group = byCategory[cat];
-    html += '<div class="category"><div class="category-title">' + escapeHtml(cat) +
-      '<span class="category-count">(' + group.length + ')</span></div>';
+    html += '<div class="exchange"><div class="exchange-head"><span class="name">' +
+      escapeHtml(cat) + '</span><span class="count">' + group.length + '</span></div><div class="list">';
 
     const bySector = {};
-    for (const w of group) {
-      (bySector[w.sector] ||= []).push(w);
-    }
+    for (const w of group) (bySector[w.sector] ||= []).push(w);
     const sectors = Object.keys(bySector).sort((a, b) => a.localeCompare(b));
 
     for (const sector of sectors) {
+      html += '<div class="sector-label"><span class="dot"></span>' + escapeHtml(sector) + '</div><div class="list" style="border:none;border-radius:0;">';
       const items = bySector[sector].slice().sort((a, b) =>
         (a.name || a.ticker).toLowerCase().localeCompare((b.name || b.ticker).toLowerCase())
       );
-      html += '<div class="sector">' + escapeHtml(sector) + '</div>';
-      for (const w of items) {
-        html += '<div class="card">' +
-          '<div class="card-top">' +
-            '<div class="card-name">' + escapeHtml(w.name || w.ticker) +
-              ' <span class="card-ticker">(' + escapeHtml(w.ticker) + ')</span></div>' +
-            '<div class="card-stats"><span class="pct">+' + w.pct_change + '%</span>' +
-              '<span class="price">' + w.price + '$</span></div>' +
-          '</div>';
-        if (w.news && w.news.title) {
-          html += '<div class="news">📰 ' + (w.news.link
-            ? '<a href="' + escapeAttr(w.news.link) + '" target="_blank" rel="noopener">' + escapeHtml(w.news.title) + '</a>'
-            : '<span class="no-link">' + escapeHtml(w.news.title) + '</span>') + '</div>';
-        }
-        html += '</div>';
-      }
+      for (const w of items) html += rowHtml(w);
+      html += '</div>';
     }
-    html += '</div>';
+    html += '</div></div>';
   }
 
   contentEl.innerHTML = html;
+
+  contentEl.querySelectorAll('.row').forEach(el => {
+    el.addEventListener('click', () => el.classList.toggle('open'));
+  });
+}
+
+function rowHtml(w) {
+  const hist = w.history || [];
+  const initials = (w.ticker || '??').slice(0, 3);
+  const sparkSvg = hist.length >= 2 ? sparkline(hist, 56, 28) : '';
+  const bigSvg = hist.length >= 2 ? sparkline(hist, 300, 110, true) : '';
+
+  let detail;
+  if (hist.length >= 2) {
+    detail =
+      '<svg class="chart-big" viewBox="0 0 300 110" preserveAspectRatio="none">' + bigSvg + '</svg>' +
+      '<div class="range"><span>' + hist[0] + '$</span><span>' + hist[hist.length - 1] + '$</span></div>';
+  } else {
+    detail = '<div class="no-chart">Pas assez de données pour un graphique.</div>';
+  }
+
+  let newsHtml = '';
+  if (w.news && w.news.title) {
+    newsHtml = w.news.link
+      ? '<div class="news">📰 <a href="' + escapeAttr(w.news.link) + '" target="_blank" rel="noopener">' + escapeHtml(w.news.title) + '</a></div>'
+      : '<div class="news">📰 ' + escapeHtml(w.news.title) + '</div>';
+  }
+
+  return (
+    '<div class="row">' +
+      '<div class="avatar mono">' + escapeHtml(initials) + '</div>' +
+      '<div class="identity">' +
+        '<div class="name">' + escapeHtml(w.name || w.ticker) + '</div>' +
+        '<div class="sub"><span class="ticker mono">' + escapeHtml(w.ticker) + '</span></div>' +
+      '</div>' +
+      '<div class="figures">' +
+        (sparkSvg ? '<svg class="spark" viewBox="0 0 56 28" preserveAspectRatio="none">' + sparkSvg + '</svg>' : '') +
+        '<div class="nums">' +
+          '<div class="price mono">' + w.price + '$</div>' +
+          '<div class="pct mono">+' + w.pct_change + '%</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="detail">' + detail + newsHtml + '</div>' +
+    '</div>'
+  );
+}
+
+function sparkline(values, w, h, withFill) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = (max - min) || 1;
+  const stepX = w / (values.length - 1);
+  const pts = values.map((v, i) => {
+    const x = i * stepX;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return [x, y];
+  });
+  const line = 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L');
+  let svg = '<path class="line" d="' + line + '"/>';
+  if (withFill) {
+    const fillPath = line + ' L' + w + ',' + h + ' L0,' + h + ' Z';
+    svg = '<path class="fill" d="' + fillPath + '"/>' + svg;
+  }
+  return svg;
 }
 
 function escapeHtml(str) {
@@ -276,7 +446,8 @@ function escapeAttr(str) {
   return escapeHtml(str).replaceAll('"', '&quot;');
 }
 
-load();
+document.getElementById('refreshBtn').addEventListener('click', () => load(true));
+load(false);
 </script>
 </body>
 </html>
