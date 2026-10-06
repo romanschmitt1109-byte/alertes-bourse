@@ -289,6 +289,31 @@
     color: var(--text-faint);
     padding: 6px 0;
   }
+  .detail .kpis {
+    display: flex;
+    gap: 18px;
+    margin-top: 10px;
+  }
+  .detail .kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .detail .kpi .v {
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .detail .kpi .l {
+    font-size: 0.65rem;
+    color: var(--text-faint);
+  }
+  .detail .summary {
+    margin-top: 10px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
 
   footer {
     margin-top: 32px;
@@ -440,6 +465,14 @@ function renderContent(data) {
   });
 }
 
+function formatBig(n) {
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return (n / 1e9).toFixed(2).replace(/\.00$/, '') + ' Md';
+  if (abs >= 1e6) return (n / 1e6).toFixed(2).replace(/\.00$/, '') + ' M';
+  if (abs >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + ' k';
+  return String(n);
+}
+
 function logoUrl(ticker) {
   return 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(ticker) + '.png';
 }
@@ -467,6 +500,16 @@ function rowHtml(w, maxPct) {
       : '<div class="news">' + escapeHtml(w.news.title) + '</div>';
   }
 
+  let kpisHtml = '';
+  if (w.market_cap || w.day_volume) {
+    kpisHtml = '<div class="kpis">' +
+      (w.market_cap ? '<div class="kpi"><span class="v mono">' + formatBig(w.market_cap) + '$</span><span class="l">Capitalisation</span></div>' : '') +
+      (w.day_volume ? '<div class="kpi"><span class="v mono">' + formatBig(w.day_volume) + '</span><span class="l">Volume du jour</span></div>' : '') +
+      '</div>';
+  }
+
+  const summaryHtml = w.summary ? '<div class="summary">' + escapeHtml(w.summary) + '</div>' : '';
+
   return (
     '<div class="row">' +
       '<div class="avatar">' +
@@ -486,7 +529,7 @@ function rowHtml(w, maxPct) {
           '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
         '</div>' +
       '</div>' +
-      '<div class="detail">' + detail + newsHtml + '</div>' +
+      '<div class="detail">' + detail + kpisHtml + summaryHtml + newsHtml + '</div>' +
     '</div>'
   );
 }
