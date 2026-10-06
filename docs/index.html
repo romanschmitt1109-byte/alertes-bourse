@@ -159,4 +159,124 @@
 </style>
 </head>
 <body>
-  
+  <div class="wrap">
+    <header>
+      <div class="top-row">
+        <h1>🚀 Scanner Bourse</h1>
+        <button class="refresh-btn" onclick="load()">Actualiser</button>
+      </div>
+      <div class="meta" id="meta">Chargement…</div>
+    </header>
+
+    <div id="content"></div>
+
+    <footer>Mis à jour automatiquement à chaque scan — données Yahoo Finance.</footer>
+  </div>
+
+<script>
+async function load() {
+  const metaEl = document.getElementById('meta');
+  const contentEl = document.getElementById('content');
+  metaEl.textContent = 'Chargement…';
+  contentEl.innerHTML = '';
+
+  let data;
+  try {
+    const res = await fetch('data.json?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    data = await res.json();
+  } catch (e) {
+    metaEl.textContent = '';
+    contentEl.innerHTML = '<div class="status">Impossible de charger les données (' +
+      escapeHtml(String(e.message || e)) + '). Le premier scan n\'a peut-être pas encore tourné.</div>';
+    return;
+  }
+
+  metaEl.innerHTML =
+    '<span>Dernier scan : <strong>' + escapeHtml(data.generated_at) + '</strong></span>' +
+    '<span>Seuil : +' + data.threshold_pct + '%</span>' +
+    '<span>' + data.total_scanned + ' titres scannés</span>' +
+    '<span>' + data.total_risers + ' en hausse</span>' +
+    '<span>' + data.total_quality + ' retenu(s) après filtres</span>';
+
+  const results = data.results || [];
+  if (results.length === 0) {
+    contentEl.innerHTML = '<div class="status">RAS pour ce scan : aucune action ne dépasse le seuil ' +
+      '(ou aucune ne passe les filtres qualité).</div>';
+    return;
+  }
+
+  // Regroupe par bourse (category) puis par secteur
+  const byCategory = {};
+  for (const w of results) {
+    (byCategory[w.category] ||= []).push(w);
+  }
+
+  const categoryOrder = [
+    "NasdaqGS", "Nasdaq Global Select",
+    "NasdaqGM", "Nasdaq Global Market",
+    "NasdaqCM", "Nasdaq Capital Market",
+    "NYSE", "NYSE Arca", "NYSE American",
+    "Cboe BZX", "Cboe US"
+  ];
+  const categories = Object.keys(byCategory);
+  categories.sort((a, b) => {
+    const ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
+  let html = '';
+  for (const cat of categories) {
+    const group = byCategory[cat];
+    html += '<div class="category"><div class="category-title">' + escapeHtml(cat) +
+      '<span class="category-count">(' + group.length + ')</span></div>';
+
+    const bySector = {};
+    for (const w of group) {
+      (bySector[w.sector] ||= []).push(w);
+    }
+    const sectors = Object.keys(bySector).sort((a, b) => a.localeCompare(b));
+
+    for (const sector of sectors) {
+      const items = bySector[sector].slice().sort((a, b) =>
+        (a.name || a.ticker).toLowerCase().localeCompare((b.name || b.ticker).toLowerCase())
+      );
+      html += '<div class="sector">' + escapeHtml(sector) + '</div>';
+      for (const w of items) {
+        html += '<div class="card">' +
+          '<div class="card-top">' +
+            '<div class="card-name">' + escapeHtml(w.name || w.ticker) +
+              ' <span class="card-ticker">(' + escapeHtml(w.ticker) + ')</span></div>' +
+            '<div class="card-stats"><span class="pct">+' + w.pct_change + '%</span>' +
+              '<span class="price">' + w.price + '$</span></div>' +
+          '</div>';
+        if (w.news && w.news.title) {
+          html += '<div class="news">📰 ' + (w.news.link
+            ? '<a href="' + escapeAttr(w.news.link) + '" target="_blank" rel="noopener">' + escapeHtml(w.news.title) + '</a>'
+            : '<span class="no-link">' + escapeHtml(w.news.title) + '</span>') + '</div>';
+        }
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+  }
+
+  contentEl.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+function escapeAttr(str) {
+  return escapeHtml(str).replaceAll('"', '&quot;');
+}
+
+load();
+</script>
+</body>
+</html>
