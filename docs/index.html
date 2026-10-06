@@ -1,28 +1,26 @@
- <!doctype html>
+<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Scanner Bourse</title>
+<title>Scanner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #000000;
-    --surface: #121214;
-    --surface-raised: #1A1A1D;
-    --line: #232326;
-    --text: #F2F2F4;
-    --text-dim: #8A8A90;
-    --text-faint: #5B5B60;
-    --gain: #30D158;
-    --gain-dim: #1E7A37;
+    --surface: #111113;
+    --surface-raised: #1C1C1F;
+    --line: #242428;
+    --text: #F5F5F7;
+    --text-dim: #8E8E93;
+    --text-faint: #58585E;
+    --gain: #32D74B;
+    --gain-soft: #32D74B66;
     --loss: #FF453A;
-    --accent: #FF7A33;
-    --radius: 18px;
-    --radius-sm: 12px;
+    --radius: 16px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { background: var(--bg); }
@@ -31,116 +29,130 @@
     background: var(--bg);
     color: var(--text);
     font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-    padding: 18px 14px 40px;
+    padding: 20px 16px 48px;
     -webkit-font-smoothing: antialiased;
   }
   .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
-  .wrap { max-width: 640px; margin: 0 auto; }
+  .wrap { max-width: 620px; margin: 0 auto; }
 
-  /* Header */
   .top-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 18px;
+    margin-bottom: 4px;
   }
   .brand {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-  .brand .mark {
-    color: var(--gain);
-    font-size: 1.1rem;
-  }
-  h1 {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    margin: 0;
     letter-spacing: -0.01em;
   }
-  .refresh-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
+  .brand .dot { color: var(--gain); }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .seg {
+    display: flex;
     background: var(--surface);
     border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 2px;
+  }
+  .seg button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .seg button.active {
+    background: var(--surface-raised);
     color: var(--text);
+  }
+
+  .refresh-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text-dim);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.15s ease, background 0.15s ease;
+    transition: transform 0.15s ease, color 0.15s ease;
   }
-  .refresh-btn:active { transform: scale(0.92); background: var(--surface-raised); }
-  .refresh-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .refresh-btn:active { transform: scale(0.92); }
+  .refresh-btn:focus-visible { outline: 2px solid var(--gain); outline-offset: 2px; }
   .refresh-btn.spinning svg { animation: spin 0.6s linear; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Stat strip */
   .stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 22px;
+    gap: 16px;
+    padding: 14px 2px 20px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line);
   }
   .stat {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 0.78rem;
-    color: var(--text-dim);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
-  .stat strong { color: var(--text); font-weight: 600; }
-  .stat.gain-stat strong { color: var(--gain); }
+  .stat .v {
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat .v.gain { color: var(--gain); }
+  .stat .l {
+    font-size: 0.68rem;
+    color: var(--text-faint);
+  }
 
   .status {
-    padding: 22px 18px;
+    padding: 24px 20px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     color: var(--text-dim);
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     line-height: 1.5;
+    margin-top: 18px;
   }
 
-  /* Exchange section */
-  .exchange {
-    margin-top: 26px;
-  }
+  .exchange { margin-top: 28px; }
   .exchange-head {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    padding: 0 4px 10px;
+    gap: 7px;
+    padding: 0 2px 10px;
   }
   .exchange-head .name {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
   }
   .exchange-head .count {
     color: var(--text-faint);
-    font-size: 0.8rem;
+    font-size: 0.76rem;
   }
   .sector-label {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 14px 4px 6px;
-    color: var(--text-dim);
-    font-size: 0.75rem;
-  }
-  .sector-label .dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--text-faint);
-    flex-shrink: 0;
+    padding: 16px 2px 7px;
+    color: var(--text-faint);
+    font-size: 0.7rem;
+    letter-spacing: 0.02em;
   }
 
-  /* List container */
   .list {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -150,10 +162,10 @@
 
   .row {
     display: grid;
-    grid-template-columns: 44px 1fr auto;
+    grid-template-columns: 38px 1fr auto;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
+    padding: 11px 14px;
     border-bottom: 1px solid var(--line);
     cursor: pointer;
   }
@@ -161,35 +173,46 @@
   .row:active { background: var(--surface-raised); }
 
   .avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: var(--surface-raised);
     border: 1px solid var(--line);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.68rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 5px;
+    background: #fff;
+  }
+  .avatar .initials {
+    font-size: 0.62rem;
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text-dim);
+    display: none;
   }
 
   .identity .name {
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 500;
-    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 44vw;
+    max-width: 42vw;
   }
   .identity .sub {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--text-faint);
     margin-top: 1px;
   }
-  .identity .sub .ticker { color: var(--text-dim); }
 
   .figures {
     text-align: right;
@@ -197,40 +220,62 @@
     align-items: center;
     gap: 10px;
   }
-  .spark { width: 56px; height: 28px; flex-shrink: 0; }
-  .spark path.line { fill: none; stroke: var(--gain); stroke-width: 1.6; }
+  .spark { width: 50px; height: 26px; flex-shrink: 0; }
+  .spark path.line { fill: none; stroke: var(--gain); stroke-width: 1.5; }
   .spark path.fill { fill: var(--gain); opacity: 0.08; stroke: none; }
-  .figures .nums .price {
-    font-size: 0.88rem;
+
+  .nums { min-width: 64px; }
+  .nums .price {
+    font-size: 0.85rem;
     font-weight: 500;
   }
-  .figures .nums .pct {
-    font-size: 0.78rem;
+  .nums .pct {
+    font-size: 0.76rem;
     color: var(--gain);
     font-weight: 600;
+    margin-top: 1px;
+  }
+  .gauge {
+    margin-top: 4px;
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .gauge-fill {
+    height: 100%;
+    background: var(--gain);
+    border-radius: 2px;
   }
 
-  /* Expanded detail */
+  .wrap.compact .row { grid-template-columns: 1fr auto; padding: 9px 14px; }
+  .wrap.compact .avatar { display: none; }
+  .wrap.compact .spark { display: none; }
+  .wrap.compact .identity .name { max-width: 56vw; }
+  .wrap.compact .gauge { display: none; }
+
   .detail {
     grid-column: 1 / -1;
     display: none;
-    padding: 4px 2px 10px 56px;
+    padding: 2px 2px 10px 50px;
   }
+  .wrap.compact .detail { padding-left: 2px; }
   .row.open .detail { display: block; }
-  .row.open { padding-bottom: 6px; }
-  .detail .chart-big { width: 100%; height: 110px; }
-  .detail .chart-big path.line { fill: none; stroke: var(--gain); stroke-width: 1.8; }
+  .row.open { padding-bottom: 4px; }
+  .detail .chart-big { width: 100%; height: 100px; }
+  .detail .chart-big path.line { fill: none; stroke: var(--gain); stroke-width: 1.6; }
   .detail .chart-big path.fill { fill: var(--gain); opacity: 0.1; stroke: none; }
   .detail .range {
     display: flex;
     justify-content: space-between;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     color: var(--text-faint);
     margin-top: 4px;
   }
   .detail .news {
     margin-top: 10px;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     line-height: 1.4;
     color: var(--text-dim);
   }
@@ -239,21 +284,20 @@
     text-decoration: none;
     border-bottom: 1px solid var(--line);
   }
-  .detail .news a:active { opacity: 0.7; }
   .detail .no-chart {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: var(--text-faint);
-    padding: 8px 0;
+    padding: 6px 0;
   }
 
   footer {
-    margin-top: 30px;
+    margin-top: 32px;
     text-align: center;
     color: var(--text-faint);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
   }
 
-  #content { opacity: 0; transition: opacity 0.35s ease; }
+  #content { opacity: 0; transition: opacity 0.3s ease; }
   #content.ready { opacity: 1; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -263,20 +307,23 @@
 </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap" id="wrap">
     <div class="top-row">
-      <div class="brand">
-        <span class="mark mono">▲</span>
-        <h1>Scanner Bourse</h1>
+      <div class="brand"><span class="dot">●</span> Scanner</div>
+      <div class="header-actions">
+        <div class="seg" role="group" aria-label="Densité d'affichage">
+          <button type="button" id="btnDetailed" class="active">Détaillé</button>
+          <button type="button" id="btnCompact">Compact</button>
+        </div>
+        <button class="refresh-btn" id="refreshBtn" aria-label="Actualiser">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 12a9 9 0 0 1 15.3-6.5L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-15.3 6.5L3 16"/>
+            <path d="M3 21v-5h5"/>
+          </svg>
+        </button>
       </div>
-      <button class="refresh-btn" id="refreshBtn" aria-label="Actualiser">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M3 12a9 9 0 0 1 15.3-6.5L21 8"/>
-          <path d="M21 3v5h-5"/>
-          <path d="M21 12a9 9 0 0 1-15.3 6.5L3 16"/>
-          <path d="M3 21v-5h5"/>
-        </svg>
-      </button>
     </div>
 
     <div class="stats" id="stats"></div>
@@ -288,6 +335,20 @@
 
 <script>
 let lastData = null;
+
+function getMode() {
+  try { return localStorage.getItem('scanner_mode') || 'detailed'; } catch (e) { return 'detailed'; }
+}
+function setMode(mode) {
+  try { localStorage.setItem('scanner_mode', mode); } catch (e) {}
+  document.getElementById('wrap').classList.toggle('compact', mode === 'compact');
+  document.getElementById('btnDetailed').classList.toggle('active', mode === 'detailed');
+  document.getElementById('btnCompact').classList.toggle('active', mode === 'compact');
+}
+
+document.getElementById('btnDetailed').addEventListener('click', () => setMode('detailed'));
+document.getElementById('btnCompact').addEventListener('click', () => setMode('compact'));
+setMode(getMode());
 
 async function load(spin) {
   const btn = document.getElementById('refreshBtn');
@@ -319,10 +380,10 @@ async function load(spin) {
 function renderStats(data) {
   const statsEl = document.getElementById('stats');
   statsEl.innerHTML =
-    '<span class="stat">' + escapeHtml(data.generated_at) + '</span>' +
-    '<span class="stat gain-stat"><strong>+' + data.threshold_pct + '%</strong> seuil</span>' +
-    '<span class="stat">' + data.total_scanned + ' scannés</span>' +
-    '<span class="stat"><strong>' + data.total_quality + '</strong> retenus</span>';
+    '<div class="stat"><span class="v">' + escapeHtml(data.generated_at) + '</span><span class="l">Dernier scan</span></div>' +
+    '<div class="stat"><span class="v gain">+' + data.threshold_pct + '%</span><span class="l">Seuil</span></div>' +
+    '<div class="stat"><span class="v">' + data.total_scanned + '</span><span class="l">Scannés</span></div>' +
+    '<div class="stat"><span class="v">' + data.total_quality + '</span><span class="l">Retenus</span></div>';
 }
 
 function renderContent(data) {
@@ -349,6 +410,8 @@ function renderContent(data) {
     return ia - ib;
   });
 
+  const maxPct = Math.max(20, ...results.map(w => w.pct_change));
+
   let html = '';
   for (const cat of categories) {
     const group = byCategory[cat];
@@ -360,11 +423,11 @@ function renderContent(data) {
     const sectors = Object.keys(bySector).sort((a, b) => a.localeCompare(b));
 
     for (const sector of sectors) {
-      html += '<div class="sector-label"><span class="dot"></span>' + escapeHtml(sector) + '</div><div class="list" style="border:none;border-radius:0;">';
+      html += '<div class="sector-label">' + escapeHtml(sector) + '</div><div class="list" style="border:none;border-radius:0;">';
       const items = bySector[sector].slice().sort((a, b) =>
         (a.name || a.ticker).toLowerCase().localeCompare((b.name || b.ticker).toLowerCase())
       );
-      for (const w of items) html += rowHtml(w);
+      for (const w of items) html += rowHtml(w, maxPct);
       html += '</div>';
     }
     html += '</div></div>';
@@ -377,16 +440,21 @@ function renderContent(data) {
   });
 }
 
-function rowHtml(w) {
+function logoUrl(ticker) {
+  return 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(ticker) + '.png';
+}
+
+function rowHtml(w, maxPct) {
   const hist = w.history || [];
   const initials = (w.ticker || '??').slice(0, 3);
-  const sparkSvg = hist.length >= 2 ? sparkline(hist, 56, 28) : '';
-  const bigSvg = hist.length >= 2 ? sparkline(hist, 300, 110, true) : '';
+  const sparkSvg = hist.length >= 2 ? sparkline(hist, 50, 26) : '';
+  const bigSvg = hist.length >= 2 ? sparkline(hist, 300, 100, true) : '';
+  const gaugePct = Math.max(6, Math.min(100, (w.pct_change / maxPct) * 100));
 
   let detail;
   if (hist.length >= 2) {
     detail =
-      '<svg class="chart-big" viewBox="0 0 300 110" preserveAspectRatio="none">' + bigSvg + '</svg>' +
+      '<svg class="chart-big" viewBox="0 0 300 100" preserveAspectRatio="none">' + bigSvg + '</svg>' +
       '<div class="range"><span>' + hist[0] + '$</span><span>' + hist[hist.length - 1] + '$</span></div>';
   } else {
     detail = '<div class="no-chart">Pas assez de données pour un graphique.</div>';
@@ -395,22 +463,27 @@ function rowHtml(w) {
   let newsHtml = '';
   if (w.news && w.news.title) {
     newsHtml = w.news.link
-      ? '<div class="news">📰 <a href="' + escapeAttr(w.news.link) + '" target="_blank" rel="noopener">' + escapeHtml(w.news.title) + '</a></div>'
-      : '<div class="news">📰 ' + escapeHtml(w.news.title) + '</div>';
+      ? '<div class="news">' + escapeHtml(w.news.title) + ' — <a href="' + escapeAttr(w.news.link) + '" target="_blank" rel="noopener">lire</a></div>'
+      : '<div class="news">' + escapeHtml(w.news.title) + '</div>';
   }
 
   return (
     '<div class="row">' +
-      '<div class="avatar mono">' + escapeHtml(initials) + '</div>' +
+      '<div class="avatar">' +
+        '<img src="' + escapeAttr(logoUrl(w.ticker)) + '" alt="" loading="lazy" ' +
+          'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
+        '<span class="initials mono">' + escapeHtml(initials) + '</span>' +
+      '</div>' +
       '<div class="identity">' +
         '<div class="name">' + escapeHtml(w.name || w.ticker) + '</div>' +
-        '<div class="sub"><span class="ticker mono">' + escapeHtml(w.ticker) + '</span></div>' +
+        '<div class="sub mono">' + escapeHtml(w.ticker) + '</div>' +
       '</div>' +
       '<div class="figures">' +
-        (sparkSvg ? '<svg class="spark" viewBox="0 0 56 28" preserveAspectRatio="none">' + sparkSvg + '</svg>' : '') +
+        (sparkSvg ? '<svg class="spark" viewBox="0 0 50 26" preserveAspectRatio="none">' + sparkSvg + '</svg>' : '') +
         '<div class="nums">' +
           '<div class="price mono">' + w.price + '$</div>' +
           '<div class="pct mono">+' + w.pct_change + '%</div>' +
+          '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
         '</div>' +
       '</div>' +
       '<div class="detail">' + detail + newsHtml + '</div>' +
