@@ -213,9 +213,45 @@ def chunked(lst, size):
         yield lst[i:i + size]
 
 
+def load_existing():
+    """Relit le data.json déjà publié (s'il existe), pour pouvoir reporter les
+    résultats de la veille d'un scan à l'autre."""
+    try:
+        with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def compute_previous_day(old_data, today_str):
+    """Détermine ce qu'il faut garder comme "résultats de la veille" :
+    - si le dernier data.json publié date d'un autre jour et contenait des
+      résultats, on les archive comme "veille" ;
+    - sinon (même jour, ou dernier scan vide), on reporte simplement la
+      "veille" déjà enregistrée, pour ne jamais la perdre à cause d'un scan
+      du jour qui ne trouve rien."""
+    if not old_data:
+        return None
+    old_generated_at = old_data.get("generated_at") or ""
+    old_date = old_generated_at.split(" ")[0] if old_generated_at else None
+    if old_date and old_date != today_str and old_data.get("results"):
+        return {
+            "date": old_date,
+            "generated_at": old_generated_at,
+            "total_quality": old_data.get("total_quality"),
+            "results": old_data["results"],
+        }
+    return old_data.get("previous_day")
+
+
 def write_results(shown, total_scanned, total_risers, total_quality, now_dt):
-    """Écrit le JSON consommé par le site statique (docs/index.html)."""
+    """Écrit le JSON consommé par le site statique (docs/index.html), en
+    conservant les résultats de la veille dans un champ séparé."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    today_str = now_dt.strftime("%d/%m/%Y")
+    old_data = load_existing()
+    previous_day = compute_previous_day(old_data, today_str)
+
     payload = {
         "generated_at": now_dt.strftime("%d/%m/%Y %H:%M"),
         "generated_at_iso": now_dt.isoformat(),
@@ -225,6 +261,7 @@ def write_results(shown, total_scanned, total_risers, total_quality, now_dt):
         "total_quality": total_quality,
         "total_shown": len(shown),
         "results": shown,
+        "previous_day": previous_day,
     }
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
