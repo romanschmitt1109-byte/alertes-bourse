@@ -131,6 +131,27 @@
     margin-top: 18px;
   }
 
+  .prev-toggle {
+    margin-top: 18px;
+    width: 100%;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .prev-toggle .chev { transition: transform 0.2s ease; color: var(--text-faint); }
+  .prev-toggle.open .chev { transform: rotate(180deg); }
+  .prev-section { display: none; }
+  .prev-section.open { display: block; }
+
   .exchange { margin-top: 28px; }
   .exchange-head {
     display: flex;
@@ -411,14 +432,7 @@ function renderStats(data) {
     '<div class="stat"><span class="v">' + data.total_quality + '</span><span class="l">Retenus</span></div>';
 }
 
-function renderContent(data) {
-  const contentEl = document.getElementById('content');
-  const results = data.results || [];
-  if (results.length === 0) {
-    contentEl.innerHTML = '<div class="status">Aucun signal sur ce scan : rien ne dépasse le seuil, ou rien ne passe les filtres qualité.</div>';
-    return;
-  }
-
+function groupedListHtml(results) {
   const byCategory = {};
   for (const w of results) (byCategory[w.category] ||= []).push(w);
 
@@ -457,12 +471,44 @@ function renderContent(data) {
     }
     html += '</div></div>';
   }
+  return html;
+}
+
+function renderContent(data) {
+  const contentEl = document.getElementById('content');
+  const results = data.results || [];
+  const previousDay = data.previous_day;
+
+  let html = '';
+  if (results.length === 0) {
+    html += '<div class="status">Aucun signal sur ce scan : rien ne dépasse le seuil, ou rien ne passe les filtres qualité.</div>';
+  } else {
+    html += groupedListHtml(results);
+  }
+
+  if (previousDay && previousDay.results && previousDay.results.length > 0) {
+    html +=
+      '<button type="button" class="prev-toggle" id="prevToggle">' +
+        '<span>Veille — ' + escapeHtml(previousDay.date) + ' (' + previousDay.results.length + ' titre(s))</span>' +
+        '<span class="chev">⌄</span>' +
+      '</button>' +
+      '<div class="prev-section" id="prevSection">' + groupedListHtml(previousDay.results) + '</div>';
+  }
 
   contentEl.innerHTML = html;
 
   contentEl.querySelectorAll('.row').forEach(el => {
     el.addEventListener('click', () => el.classList.toggle('open'));
   });
+
+  const prevToggle = document.getElementById('prevToggle');
+  const prevSection = document.getElementById('prevSection');
+  if (prevToggle && prevSection) {
+    prevToggle.addEventListener('click', () => {
+      prevToggle.classList.toggle('open');
+      prevSection.classList.toggle('open');
+    });
+  }
 }
 
 function formatBig(n) {
