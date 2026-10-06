@@ -140,6 +140,20 @@ def passes_quality_filters(ticker, price):
         return False, None, None, None  # par prudence, on écarte si l'info n'est pas récupérable
 
 
+def get_price_history(ticker):
+    """Récupère un historique de cours récent (5 jours, par pas d'1h) pour
+    tracer un petit graphique. Appelé seulement sur les titres affichés sur
+    le site (peu nombreux), donc une requête dédiée par titre reste raisonnable."""
+    try:
+        hist = yf.Ticker(ticker).history(period="5d", interval="60m")
+        closes = hist["Close"].dropna()
+        if len(closes) < 2:
+            return []
+        return [round(float(c), 2) for c in closes.tolist()]
+    except Exception:
+        return []
+
+
 def get_news_snippet(ticker):
     """Récupère le titre de l'actualité la plus récente pour un ticker (gratuit,
     via Yahoo Finance), traduit en français. Retourne None si rien n'est trouvé."""
@@ -235,11 +249,10 @@ def main():
     shown = quality_winners[:MAX_SHOWN]
     for w in shown:
         w["news"] = get_news_snippet(w["ticker"])
+        w["history"] = get_price_history(w["ticker"])
 
     write_results(shown, len(tickers), len(all_winners), len(quality_winners), now_dt)
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-          
