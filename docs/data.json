@@ -1,0 +1,155 @@
+{
+  "generated_at": "06/10/2026 10:51",
+  "generated_at_iso": "2026-10-06T10:51:07.066027+02:00",
+  "threshold_pct": 10.0,
+  "total_scanned": 4358,
+  "total_risers": 75,
+  "total_quality": 16,
+  "total_shown": 16,
+  "results": [
+    {
+      "ticker": "VEEA",
+      "price": 5.72,
+      "pct_change": 71.8,
+      "name": "Veea Inc.",
+      "category": "NasdaqCM",
+      "sector": "Technology",
+      "news": null
+    },
+    {
+      "ticker": "PTC",
+      "price": 192.26,
+      "pct_change": 33.5,
+      "name": "PTC Inc.",
+      "category": "NasdaqGS",
+      "sector": "Technology",
+      "news": null
+    },
+    {
+      "ticker": "XP",
+      "price": 28.15,
+      "pct_change": 30.9,
+      "name": "XP Inc.",
+      "category": "NasdaqGS",
+      "sector": "Financial Services",
+      "news": null
+    },
+    {
+      "ticker": "PCVX",
+      "price": 73.82,
+      "pct_change": 30.7,
+      "name": "Vaxcyte, Inc.",
+      "category": "NasdaqGS",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "PICS",
+      "price": 11.62,
+      "pct_change": 27.8,
+      "name": "PicS N.V.",
+      "category": "NasdaqGS",
+      "sector": "Technology",
+      "news": null
+    },
+    {
+      "ticker": "STNE",
+      "price": 11.54,
+      "pct_change": 20.8,
+      "name": "StoneCo Ltd.",
+      "category": "NasdaqGS",
+      "sector": "Technology",
+      "news": null
+    },
+    {
+      "ticker": "NVAX",
+      "price": 12.56,
+      "pct_change": 20.1,
+      "name": "Novavax, Inc.",
+      "category": "NasdaqGS",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "INTR",
+      "price": 6.56,
+      "pct_change": 19.7,
+      "name": "Inter & Co. Inc.",
+      "category": "NasdaqGS",
+      "sector": "Financial Services",
+      "news": null
+    },
+    {
+      "ticker": "QDEL",
+      "price": 12.14,
+      "pct_change": 12.7,
+      "name": "QuidelOrtho Corporation",
+      "category": "NasdaqGS",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "ARCT",
+      "price": 14.66,
+      "pct_change": 12.5,
+      "name": "Arcturus Therapeutics Holdings ",
+      "category": "NasdaqGM",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "ALVO",
+      "price": 6.11,
+      "pct_change": 12.1,
+      "name": "Alvotech",
+      "category": "NasdaqGM",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "XERS",
+      "price": 10.13,
+      "pct_change": 11.6,
+      "name": "Xeris Biopharma Holdings, Inc.",
+      "category": "NasdaqGS",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "CD",
+      "price": 7.51,
+      "pct_change": 11.4,
+      "name": "Chaince Digital Holdings Inc. -",
+      "category": "NasdaqGM",
+      "sector": "Financial Services",
+      "news": null
+    },
+    {
+      "ticker": "ALMR",
+      "price": 38.13,
+      "pct_change": 11.0,
+      "name": "Alamar Biosciences, Inc.",
+      "category": "NasdaqGS",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "GMAB",
+      "price": 38.48,
+      "pct_change": 10.7,
+      "name": "Genmab A/S",
+      "category": "NasdaqGS",
+      "sector": "Healthcare",
+      "news": null
+    },
+    {
+      "ticker": "AZTA",
+      "price": 42.73,
+      "pct_change": 10.3,
+      "name": "Azenta, Inc.",
+      "category": "NasdaqGS",
+      "sector": "Healthcare",
+      "news": null
+    }
+  ]
+}
