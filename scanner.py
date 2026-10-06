@@ -117,27 +117,58 @@ def scan_batch(tickers):
 
 def passes_quality_filters(ticker, price):
     """Vérifie prix, capitalisation et volume moyen, et renvoie aussi le nom
-    de l'entreprise, sa bourse de cotation réelle et son secteur d'activité
-    (récupérés au passage, sans requête supplémentaire). Appelé seulement sur
-    les titres déjà repérés en hausse de 10%+, pour limiter le nombre d'appels.
-    Renvoie (passe: bool, nom_entreprise: str | None, bourse: str | None,
-    secteur: str | None)."""
+    de l'entreprise, sa bourse de cotation réelle, son secteur d'activité,
+    sa capitalisation, son volume du jour et son résumé d'activité (en
+    anglais, pas encore traduit) — tout ça récupéré au passage, sans requête
+    supplémentaire. Appelé seulement sur les titres déjà repérés en hausse de
+    10%+, pour limiter le nombre d'appels.
+    Renvoie un dict avec les clés : ok, name, exchange, sector, market_cap,
+    day_volume, summary_raw."""
+    empty = {
+        "ok": False, "name": None, "exchange": None, "sector": None,
+        "market_cap": None, "day_volume": None, "summary_raw": None,
+    }
     if price < PRICE_MIN:
-        return False, None, None, None
+        return empty
     try:
         info = yf.Ticker(ticker).info
         market_cap = info.get("marketCap") or 0
         avg_volume = info.get("averageVolume") or info.get("averageDailyVolume10Day") or 0
+        day_volume = info.get("volume") or info.get("regularMarketVolume") or None
         name = info.get("shortName") or info.get("longName")
         exchange = info.get("fullExchangeName") or info.get("exchange") or "Bourse inconnue"
         sector = info.get("sector") or info.get("industry") or "Secteur inconnu"
+        summary_raw = info.get("longBusinessSummary")
+        result = {
+            "ok": False, "name": name, "exchange": exchange, "sector": sector,
+            "market_cap": market_cap or None, "day_volume": day_volume,
+            "summary_raw": summary_raw,
+        }
         if market_cap < MARKET_CAP_MIN:
-            return False, name, exchange, sector
+            return result
         if avg_volume < AVG_VOLUME_MIN:
-            return False, name, exchange, sector
-        return True, name, exchange, sector
+            return result
+        result["ok"] = True
+        return result
     except Exception:
-        return False, None, None, None  # par prudence, on écarte si l'info n'est pas récupérable
+        return empty  # par prudence, on écarte si l'info n'est pas récupérable
+
+
+def translate_summary(summary_raw):
+    """Traduit et tronque le résumé d'activité d'une entreprise (en anglais
+    sur Yahoo Finance) pour un affichage compact en français."""
+    if not summary_raw:
+        return None
+    text = summary_raw
+    if len(text) > 500:
+        text = text[:497] + "..."
+    try:
+        text = GoogleTranslator(source="auto", target="fr").translate(text)
+    except Exception:
+        pass  # si la traduction échoue, on garde le résumé original en anglais
+    if len(text) > 320:
+        text = text[:317] + "..."
+    return text
 
 
 def get_price_history(ticker):
@@ -230,11 +261,14 @@ def main():
 
     quality_winners = []
     for w in all_winners:
-        ok, name, exchange, sector = passes_quality_filters(w["ticker"], w["price"])
-        if ok:
-            w["name"] = name or w["ticker"]
-            w["category"] = exchange or "Bourse inconnue"
-            w["sector"] = sector or "Secteur inconnu"
+        q = passes_quality_filters(w["ticker"], w["price"])
+        if q["ok"]:
+            w["name"] = q["name"] or w["ticker"]
+            w["category"] = q["exchange"] or "Bourse inconnue"
+            w["sector"] = q["sector"] or "Secteur inconnu"
+            w["market_cap"] = q["market_cap"]
+            w["day_volume"] = q["day_volume"]
+            w["_summary_raw"] = q["summary_raw"]  # traduit plus bas, seulement pour les titres affichés
             quality_winners.append(w)
 
     if not quality_winners:
@@ -250,6 +284,12 @@ def main():
     for w in shown:
         w["news"] = get_news_snippet(w["ticker"])
         w["history"] = get_price_history(w["ticker"])
+        w["summary"] = translate_summary(w.pop("_summary_raw", None))
+
+    # Les titres qualité non affichés gardent quand même leur brouillon de
+    # résumé en interne ; on le retire pour ne pas le publier non traduit.
+    for w in quality_winners:
+        w.pop("_summary_raw", None)
 
     write_results(shown, len(tickers), len(all_winners), len(quality_winners), now_dt)
 
