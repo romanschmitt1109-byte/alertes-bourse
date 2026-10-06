@@ -1,14 +1,13 @@
 """
 Scanner boursier — détecte, sur TOUT le NASDAQ et le S&P 500, les actions qui
-prennent +10% (ou plus) dans la journée, et envoie une alerte Telegram.
+prennent +10% (ou plus) dans la journée, et publie les résultats dans un
+fichier JSON (docs/data.json) consommé par un site statique (GitHub Pages).
 
 Configuration via variables d'environnement :
-  TELEGRAM_BOT_TOKEN   -> token de ton bot Telegram
-  TELEGRAM_CHAT_ID     -> id du chat où envoyer les alertes
   GAIN_THRESHOLD_PCT   -> optionnel, défaut 10 (en %)
 
 Sources de données (gratuites, sans clé API) :
-  - Liste complète du NASDAQ : ftp.nasdaqtrader.com (fichier officiel)
+  - Liste complète du NASDAQ : miroir GitHub des données officielles NASDAQ
   - Liste du S&P 500 : Wikipedia
   - Cours : Yahoo Finance (yfinance), téléchargés par lots
 
@@ -18,8 +17,8 @@ pour chaque titre — pas par indice (Nasdaq/S&P 500 servent uniquement de
 listes de tickers à scanner, pas de catégories d'affichage).
 """
 
-import html
 import io
+import json
 import os
 import sys
 import time
@@ -41,16 +40,12 @@ PRICE_MIN = float(os.environ.get("PRICE_MIN", 5))              # $ — exclut le
 MARKET_CAP_MIN = float(os.environ.get("MARKET_CAP_MIN", 300_000_000))  # 300M$ — exclut les micro/nano-caps
 AVG_VOLUME_MIN = float(os.environ.get("AVG_VOLUME_MIN", 200_000))      # titres/jour — assure la liquidité
 
-# Ordre d'affichage préféré pour les bourses les plus courantes ; toute autre
-# bourse rencontrée est affichée ensuite, par ordre alphabétique.
-CATEGORY_ORDER = [
-    "NasdaqGS", "Nasdaq Global Select",
-    "NasdaqGM", "Nasdaq Global Market",
-    "NasdaqCM", "Nasdaq Capital Market",
-    "NYSE", "NYSE Arca", "NYSE American",
-    "Cboe BZX", "Cboe US",
-]
+# Nombre maximum de titres détaillés (avec news) publiés sur le site
+MAX_SHOWN = 50
 
+# Où écrire le résultat pour le site statique (GitHub Pages sert /docs)
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "docs")
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "data.json")
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
@@ -112,8 +107,8 @@ def scan_batch(tickers):
             if pct_change >= GAIN_THRESHOLD_PCT:
                 winners.append({
                     "ticker": ticker,
-                    "price": round(last_close, 2),
-                    "pct_change": round(pct_change, 1),
+                    "price": round(float(last_close), 2),
+                    "pct_change": round(float(pct_change), 1),
                 })
         except Exception:
             continue
@@ -168,66 +163,27 @@ def get_news_snippet(ticker):
         return None
 
 
-def send_telegram_message(text):
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
-        print("TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID manquant — message non envoyé.")
-        print(text)
-        return
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    resp = requests.post(url, data={"chat_id": chat_id, "text": text, "parse_mode": "HTML"})
-    if resp.status_code != 200:
-        print(f"Échec envoi Telegram: {resp.text}")
-
-
 def chunked(lst, size):
     for i in range(0, len(lst), size):
         yield lst[i:i + size]
 
 
-def format_grouped_message(quality_winners, header_lines):
-    """Groupe les titres retenus par bourse de cotation, puis par secteur
-    d'activité, puis les trie par entreprise (ordre alphabétique du nom,
-    ticker en repli si le nom est inconnu)."""
-    lines = list(header_lines)
-
-    by_category = {}
-    for w in quality_winners:
-        by_category.setdefault(w["category"], []).append(w)
-
-    # Catégories connues dans l'ordre défini, puis toute catégorie imprévue en fin
-    ordered_categories = [c for c in CATEGORY_ORDER if c in by_category]
-    ordered_categories += sorted(c for c in by_category if c not in CATEGORY_ORDER)
-
-    for category in ordered_categories:
-        group = by_category[category]
-        lines.append(f"\n<b>— {category} ({len(group)}) —</b>")
-
-        by_sector = {}
-        for w in group:
-            by_sector.setdefault(w["sector"], []).append(w)
-
-        for sector in sorted(by_sector.keys()):
-            sector_group = sorted(by_sector[sector], key=lambda w: (w["name"] or w["ticker"]).lower())
-            lines.append(f"  <i>{sector} :</i>")
-            for w in sector_group:
-                display_name = w["name"] or w["ticker"]
-                lines.append(f"  • <b>{display_name}</b> ({w['ticker']}) : +{w['pct_change']}% ({w['price']}$)")
-                news = w.get("news")
-                if news:
-                    title = news["title"]
-                    if len(title) > 90:
-                        title = title[:87] + "..."
-                    title_safe = html.escape(title)
-                    link = news.get("link")
-                    if link:
-                        link_safe = html.escape(link, quote=True)
-                        lines.append(f'    📰 <a href="{link_safe}">{title_safe}</a>')
-                    else:
-                        lines.append(f"    📰 {title_safe}")
-
-    return "\n".join(lines)
+def write_results(shown, total_scanned, total_risers, total_quality, now_dt):
+    """Écrit le JSON consommé par le site statique (docs/index.html)."""
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    payload = {
+        "generated_at": now_dt.strftime("%d/%m/%Y %H:%M"),
+        "generated_at_iso": now_dt.isoformat(),
+        "threshold_pct": GAIN_THRESHOLD_PCT,
+        "total_scanned": total_scanned,
+        "total_risers": total_risers,
+        "total_quality": total_quality,
+        "total_shown": len(shown),
+        "results": shown,
+    }
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    print(f"Résultats écrits dans {OUTPUT_FILE} ({len(shown)} titre(s)).")
 
 
 def main():
@@ -235,8 +191,11 @@ def main():
     sp500_tickers = get_sp500_tickers()
     tickers = sorted(set(nasdaq_tickers + sp500_tickers))
 
+    now_dt = datetime.now(ZoneInfo("Europe/Paris"))
+
     if not tickers:
         print("Aucun ticker récupéré, arrêt.")
+        write_results([], 0, 0, 0, now_dt)
         return
 
     print(f"Scan de {len(tickers)} titres (seuil: +{GAIN_THRESHOLD_PCT}%)...")
@@ -248,13 +207,9 @@ def main():
         all_winners.extend(scan_batch(batch))
         time.sleep(PAUSE_BETWEEN_BATCHES)
 
-    now_str = datetime.now(ZoneInfo("Europe/Paris")).strftime('%d/%m/%Y %H:%M')
-
     if not all_winners:
-        message = f"<b>✅ Scan terminé — {now_str}</b>\n<i>RAS : aucune action n'a pris {GAIN_THRESHOLD_PCT}% ou plus " \
-                  f"({len(tickers)} titres scannés).</i>"
-        print(message)
-        send_telegram_message(message)
+        print(f"RAS : aucune action n'a pris {GAIN_THRESHOLD_PCT}% ou plus.")
+        write_results([], len(tickers), 0, 0, now_dt)
         return
 
     print(f"{len(all_winners)} titre(s) en hausse de {GAIN_THRESHOLD_PCT}%+, application des filtres qualité...")
@@ -263,38 +218,28 @@ def main():
     for w in all_winners:
         ok, name, exchange, sector = passes_quality_filters(w["ticker"], w["price"])
         if ok:
-            w["name"] = name
+            w["name"] = name or w["ticker"]
             w["category"] = exchange or "Bourse inconnue"
             w["sector"] = sector or "Secteur inconnu"
             quality_winners.append(w)
 
     if not quality_winners:
-        message = f"<b>✅ Scan terminé — {now_str}</b>\n<i>{len(all_winners)} titre(s) en hausse mais aucun ne " \
-                  f"passe les filtres qualité (prix/capitalisation/volume).</i>"
-        print(message)
-        send_telegram_message(message)
+        print(f"{len(all_winners)} titre(s) en hausse mais aucun ne passe les filtres qualité.")
+        write_results([], len(tickers), len(all_winners), 0, now_dt)
         return
 
-    # Limite à 20 titres (les plus forts en %) pour laisser de la place aux news,
-    # puis on les regroupe par catégorie / entreprise pour l'affichage.
+    # On garde tous les titres qui passent les filtres qualité (triés par
+    # % de hausse), mais on ne va chercher une actu que pour les MAX_SHOWN
+    # premiers, pour limiter le nombre de requêtes.
     quality_winners.sort(key=lambda w: w["pct_change"], reverse=True)
-    shown = quality_winners[:20]
+    shown = quality_winners[:MAX_SHOWN]
     for w in shown:
         w["news"] = get_news_snippet(w["ticker"])
 
-    header_lines = [
-        f"<b>🚀 Hausses du jour ≥ {GAIN_THRESHOLD_PCT}% — {now_str}</b>",
-        f"<i>{len(shown)} titre(s) retenu(s) après filtre qualité "
-        f"(sur {len(all_winners)} en hausse, {len(tickers)} scannés)</i>",
-    ]
-    if len(quality_winners) > 20:
-        header_lines.append(f"<i>... et {len(quality_winners) - 20} autre(s) non affiché(s)</i>")
-
-    message = format_grouped_message(shown, header_lines)
-    print(message)
-    send_telegram_message(message)
+    write_results(shown, len(tickers), len(all_winners), len(quality_winners), now_dt)
 
 
 if __name__ == "__main__":
     sys.exit(main())
+
           
