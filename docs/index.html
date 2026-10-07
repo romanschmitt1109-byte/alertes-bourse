@@ -284,7 +284,30 @@
   .wrap.compact .detail { padding-left: 2px; }
   .row.open .detail { display: block; }
   .row.open { padding-bottom: 4px; }
-  .detail .chart-big { width: 100%; height: 100px; }
+  .detail .range-seg {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .detail .range-btn {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 4px 9px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .detail .range-btn.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  .detail .chart-big { width: 100%; height: 100px; display: block; }
   .detail .chart-big path.line { fill: none; stroke: var(--gain); stroke-width: 1.6; }
   .detail .chart-big path.fill { fill: var(--gain); opacity: 0.1; stroke: none; }
   .detail .range {
@@ -474,10 +497,24 @@ function groupedListHtml(results) {
   return html;
 }
 
+let chartStore = {};
+let rowIdSeq = 0;
+
+const RANGE_DEFS = [
+  { key: '1j', label: '1 j' },
+  { key: '5j', label: '5 j' },
+  { key: '1m', label: '1 m' },
+  { key: '6m', label: '6 m' },
+  { key: '1a', label: '1 an' },
+];
+
 function renderContent(data) {
   const contentEl = document.getElementById('content');
   const results = data.results || [];
   const previousDay = data.previous_day;
+
+  chartStore = {};
+  rowIdSeq = 0;
 
   let html = '';
   if (results.length === 0) {
@@ -498,7 +535,24 @@ function renderContent(data) {
   contentEl.innerHTML = html;
 
   contentEl.querySelectorAll('.row').forEach(el => {
-    el.addEventListener('click', () => el.classList.toggle('open'));
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.range-btn')) return;
+      el.classList.toggle('open');
+    });
+  });
+
+  contentEl.querySelectorAll('.range-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const seg = btn.closest('.range-seg');
+      if (!seg) return;
+      drawRange(seg.dataset.rowId, btn.dataset.range);
+    });
+  });
+
+  Object.keys(chartStore).forEach(rowId => {
+    const def = pickDefaultRange(chartStore[rowId]);
+    if (def) drawRange(rowId, def);
   });
 
   const prevToggle = document.getElementById('prevToggle');
@@ -508,6 +562,65 @@ function renderContent(data) {
       prevToggle.classList.toggle('open');
       prevSection.classList.toggle('open');
     });
+  }
+}
+
+function pointsForRange(chart, key) {
+  if (!chart) return [];
+  if (key === '1j') {
+    const intraday = chart.intraday || [];
+    if (intraday.length === 0) return [];
+    const lastDate = intraday[intraday.length - 1].t.slice(0, 10);
+    return intraday.filter(p => p.t.slice(0, 10) === lastDate);
+  }
+  if (key === '5j') return chart.intraday || [];
+  const daily = chart.daily || [];
+  if (key === '1m') return daily.slice(-22);
+  if (key === '6m') return daily.slice(-126);
+  if (key === '1a') return daily.slice(-252);
+  return daily;
+}
+
+function pickDefaultRange(chart) {
+  if (!chart) return null;
+  for (const key of ['5j', '1j', '1m', '6m', '1a']) {
+    if (pointsForRange(chart, key).length >= 2) return key;
+  }
+  return null;
+}
+
+function formatPointDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+  } catch (e) {
+    return '';
+  }
+}
+
+function drawRange(rowId, key) {
+  const chart = chartStore[rowId];
+  const svg = document.getElementById('chart-' + rowId);
+  const info = document.getElementById('rangeinfo-' + rowId);
+  const seg = document.querySelector('.range-seg[data-row-id="' + rowId + '"]');
+  if (!svg || !chart) return;
+
+  if (seg) {
+    seg.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b.dataset.range === key));
+  }
+
+  const points = pointsForRange(chart, key);
+  if (points.length < 2) {
+    svg.innerHTML = '';
+    if (info) info.textContent = 'Pas assez de données pour cette période.';
+    return;
+  }
+
+  const values = points.map(p => p.c);
+  svg.innerHTML = sparkline(values, 300, 100, true);
+  if (info) {
+    info.innerHTML =
+      '<span>' + formatPointDate(points[0].t) + ' · ' + values[0] + '$</span>' +
+      '<span>' + formatPointDate(points[points.length - 1].t) + ' · ' + values[values.length - 1] + '$</span>';
   }
 }
 
@@ -524,17 +637,23 @@ function logoUrl(ticker) {
 }
 
 function rowHtml(w, maxPct) {
-  const hist = w.history || [];
+  const rowId = 'r' + (rowIdSeq++);
+  chartStore[rowId] = w.chart || null;
+
+  const intradayVals = ((w.chart && w.chart.intraday) || []).map(p => p.c);
   const initials = (w.ticker || '??').slice(0, 3);
-  const sparkSvg = hist.length >= 2 ? sparkline(hist, 50, 26) : '';
-  const bigSvg = hist.length >= 2 ? sparkline(hist, 300, 100, true) : '';
+  const sparkSvg = intradayVals.length >= 2 ? sparkline(intradayVals, 50, 26) : '';
   const gaugePct = Math.max(6, Math.min(100, (w.pct_change / maxPct) * 100));
 
+  const hasChart = w.chart && (((w.chart.intraday || []).length >= 2) || ((w.chart.daily || []).length >= 2));
   let detail;
-  if (hist.length >= 2) {
+  if (hasChart) {
     detail =
-      '<svg class="chart-big" viewBox="0 0 300 100" preserveAspectRatio="none">' + bigSvg + '</svg>' +
-      '<div class="range"><span>' + hist[0] + '$</span><span>' + hist[hist.length - 1] + '$</span></div>';
+      '<div class="range-seg" data-row-id="' + rowId + '">' +
+        RANGE_DEFS.map(r => '<button type="button" class="range-btn" data-range="' + r.key + '">' + r.label + '</button>').join('') +
+      '</div>' +
+      '<svg class="chart-big" id="chart-' + rowId + '" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>' +
+      '<div class="range" id="rangeinfo-' + rowId + '"></div>';
   } else {
     detail = '<div class="no-chart">Pas assez de données pour un graphique.</div>';
   }
