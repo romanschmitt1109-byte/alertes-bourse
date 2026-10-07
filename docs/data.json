@@ -1,21 +1,21 @@
 {
-  "generated_at": "07/10/2026 16:41",
-  "generated_at_iso": "2026-10-07T16:41:58.679760+02:00",
+  "generated_at": "07/10/2026 17:47",
+  "generated_at_iso": "2026-10-07T17:47:37.028684+02:00",
   "threshold_pct": 10.0,
   "total_scanned": 4378,
-  "total_risers": 32,
+  "total_risers": 35,
   "total_quality": 2,
   "total_shown": 2,
   "results": [
     {
       "ticker": "XRPN",
-      "price": 21.93,
-      "pct_change": 14.2,
+      "price": 24.06,
+      "pct_change": 25.3,
       "name": "Armada Acquisition Corp. II",
       "category": "NasdaqGM",
       "sector": "Financial Services",
-      "market_cap": 692768704,
-      "day_volume": 818095,
+      "market_cap": 760055360,
+      "day_volume": 1408475,
       "news": null,
       "chart": {
         "intraday": [
@@ -137,7 +137,11 @@
           },
           {
             "t": "2026-10-07T14:30:00+00:00",
-            "c": 21.93
+            "c": 23.77
+          },
+          {
+            "t": "2026-10-07T15:30:00+00:00",
+            "c": 24.06
           }
         ],
         "daily": [
@@ -1147,7 +1151,7 @@
           },
           {
             "t": "2026-10-07T04:00:00+00:00",
-            "c": 21.93
+            "c": 24.06
           }
         ]
       },
@@ -1155,13 +1159,13 @@
     },
     {
       "ticker": "PENG",
-      "price": 73.07,
-      "pct_change": 13.8,
+      "price": 73.98,
+      "pct_change": 15.2,
       "name": "Penguin Solutions, Inc.",
       "category": "NasdaqGS",
       "sector": "Technology",
-      "market_cap": 3747890944,
-      "day_volume": 11221970,
+      "market_cap": 3783248640,
+      "day_volume": 14130735,
       "news": null,
       "chart": {
         "intraday": [
@@ -1283,7 +1287,11 @@
           },
           {
             "t": "2026-10-07T14:30:00+00:00",
-            "c": 73.16
+            "c": 73.06
+          },
+          {
+            "t": "2026-10-07T15:30:00+00:00",
+            "c": 73.9
           }
         ],
         "daily": [
@@ -2293,7 +2301,7 @@
           },
           {
             "t": "2026-10-07T04:00:00+00:00",
-            "c": 73.16
+            "c": 73.86
           }
         ]
       },
