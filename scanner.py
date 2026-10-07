@@ -171,18 +171,36 @@ def translate_summary(summary_raw):
     return text
 
 
-def get_price_history(ticker):
-    """Récupère un historique de cours récent (5 jours, par pas d'1h) pour
-    tracer un petit graphique. Appelé seulement sur les titres affichés sur
-    le site (peu nombreux), donc une requête dédiée par titre reste raisonnable."""
-    try:
-        hist = yf.Ticker(ticker).history(period="5d", interval="60m")
-        closes = hist["Close"].dropna()
-        if len(closes) < 2:
-            return []
-        return [round(float(c), 2) for c in closes.tolist()]
-    except Exception:
+def series_to_points(hist):
+    """Convertit une série de cours yfinance en liste de points {t, c} —
+    horodatage ISO (UTC) et cours de clôture — exploitable côté site pour
+    tracer un graphique sur différentes périodes."""
+    closes = hist["Close"].dropna()
+    if len(closes) < 2:
         return []
+    points = []
+    for ts, c in closes.items():
+        try:
+            t_iso = ts.tz_convert("UTC").isoformat()
+        except Exception:
+            t_iso = ts.isoformat()
+        points.append({"t": t_iso, "c": round(float(c), 2)})
+    return points
+
+
+def get_price_charts(ticker):
+    """Récupère deux historiques de cours pour un titre :
+    - "intraday" : 5 jours, par pas d'1h (court terme : 1 jour / 5 jours)
+    - "daily"    : 1 an, par pas d'1 jour (long terme : 1 mois / 6 mois / 1 an)
+    Appelé seulement sur les titres affichés sur le site (peu nombreux), donc
+    deux requêtes dédiées par titre restent raisonnables."""
+    try:
+        tk = yf.Ticker(ticker)
+        intraday = series_to_points(tk.history(period="5d", interval="60m"))
+        daily = series_to_points(tk.history(period="1y", interval="1d"))
+        return {"intraday": intraday, "daily": daily}
+    except Exception:
+        return {"intraday": [], "daily": []}
 
 
 def get_news_snippet(ticker):
@@ -320,7 +338,7 @@ def main():
     shown = quality_winners[:MAX_SHOWN]
     for w in shown:
         w["news"] = get_news_snippet(w["ticker"])
-        w["history"] = get_price_history(w["ticker"])
+        w["chart"] = get_price_charts(w["ticker"])
         w["summary"] = translate_summary(w.pop("_summary_raw", None))
 
     # Les titres qualité non affichés gardent quand même leur brouillon de
