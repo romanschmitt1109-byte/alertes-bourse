@@ -784,8 +784,16 @@ const RANGE_DEFS = [
 
 function renderContent(data) {
   const contentEl = document.getElementById('content');
-  const results = data.results || [];
   const previousDay = data.previous_day;
+  const lastSignal = data.last_signal;
+
+  let results = data.results || [];
+  let bannerHtml = '';
+  if (results.length === 0 && lastSignal && lastSignal.results && lastSignal.results.length > 0) {
+    results = lastSignal.results;
+    bannerHtml = '<div class="status" style="margin-bottom:14px;">Aucun nouveau signal pour l\'instant — voici les derniers titres repérés (' +
+      escapeHtml(lastSignal.date || '') + '), avec leur dernière clôture.</div>';
+  }
 
   chartStore = {};
   rowIdSeq = 0;
@@ -793,7 +801,7 @@ function renderContent(data) {
   const toolbarWrap = document.getElementById('toolbarWrap');
   if (toolbarWrap) toolbarWrap.style.display = results.length > 0 ? 'block' : 'none';
 
-  let html = '';
+  let html = bannerHtml;
   if (results.length === 0) {
     html += '<div class="status">Aucun signal sur ce scan : rien ne dépasse le seuil, ou rien ne passe les filtres qualité.</div>';
   } else {
