@@ -35,6 +35,7 @@
   .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
   .wrap { max-width: 620px; margin: 0 auto; }
 
+  /* Header */
   .top-row {
     display: flex;
     align-items: center;
@@ -96,6 +97,7 @@
   .refresh-btn.spinning svg { animation: spin 0.6s linear; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Stat strip */
   .stats {
     display: flex;
     flex-wrap: wrap;
@@ -103,6 +105,82 @@
     padding: 14px 2px 20px;
     margin-bottom: 4px;
     border-bottom: 1px solid var(--line);
+  }
+
+  /* Barre recherche + tri */
+  .toolbar-wrap { display: none; }
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .toolbar-filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .toolbar-filters .sort-select { flex: 1; max-width: none; min-width: 120px; }
+  .search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0 10px;
+    min-width: 0;
+  }
+  .search-box svg { color: var(--text-faint); flex-shrink: 0; }
+  .search-box input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 9px 0;
+  }
+  .search-box input::placeholder { color: var(--text-faint); }
+  .search-clear {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    display: none;
+  }
+  .search-box.has-value .search-clear { display: block; }
+  .sort-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2358585E' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 500;
+    padding: 0 26px 0 11px;
+    cursor: pointer;
+    flex-shrink: 0;
+    max-width: 38vw;
+  }
+  .empty-filter {
+    padding: 26px 20px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-top: 18px;
   }
   .stat {
     display: flex;
@@ -152,6 +230,7 @@
   .prev-section { display: none; }
   .prev-section.open { display: block; }
 
+  /* Exchange section */
   .exchange { margin-top: 28px; }
   .exchange-head {
     display: flex;
@@ -246,15 +325,17 @@
   .spark path.fill { opacity: 0.08; stroke: none; }
 
   .nums { min-width: 64px; }
-  .nums .price {
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
   .nums .pct {
-    font-size: 0.76rem;
+    font-size: 1.05rem;
     color: var(--gain);
-    font-weight: 600;
-    margin-top: 1px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .nums .price {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-top: 2px;
   }
   .gauge {
     margin-top: 4px;
@@ -270,12 +351,14 @@
     border-radius: 2px;
   }
 
+  /* Compact mode */
   .wrap.compact .row { grid-template-columns: 1fr auto; padding: 9px 14px; }
   .wrap.compact .avatar { display: none; }
   .wrap.compact .spark { display: none; }
   .wrap.compact .identity .name { max-width: 56vw; }
   .wrap.compact .gauge { display: none; }
 
+  /* Expanded detail */
   .detail {
     grid-column: 1 / -1;
     display: none;
@@ -497,6 +580,33 @@
 
     <div class="stats" id="stats"></div>
 
+    <div class="toolbar-wrap" id="toolbarWrap">
+      <div class="toolbar">
+        <div class="search-box" id="searchBox">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="Rechercher un ticker ou une société" autocomplete="off">
+          <button type="button" class="search-clear" id="searchClear" aria-label="Effacer la recherche">✕</button>
+        </div>
+        <select class="sort-select" id="sortSelect" aria-label="Trier par">
+          <option value="default">Tri par défaut</option>
+          <option value="pct_desc">% hausse ↓</option>
+          <option value="pct_asc">% hausse ↑</option>
+          <option value="cap_desc">Capitalisation ↓</option>
+          <option value="cap_asc">Capitalisation ↑</option>
+          <option value="vol_desc">Volume ↓</option>
+          <option value="vol_asc">Volume ↑</option>
+        </select>
+      </div>
+      <div class="toolbar-filters">
+        <select class="sort-select" id="filterExchange" aria-label="Filtrer par bourse">
+          <option value="all">Toutes les bourses</option>
+        </select>
+        <select class="sort-select" id="filterSector" aria-label="Filtrer par secteur">
+          <option value="all">Tous les secteurs</option>
+        </select>
+      </div>
+    </div>
+
     <div id="content"></div>
 
     <footer>Mis à jour automatiquement à chaque scan — données Yahoo Finance.</footer>
@@ -511,6 +621,10 @@
 })();
 
 let lastData = null;
+let searchQuery = '';
+let sortKey = 'default';
+let filterExchange = 'all';
+let filterSector = 'all';
 
 function getMode() {
   try { return localStorage.getItem('scanner_mode') || 'detailed'; } catch (e) { return 'detailed'; }
@@ -579,6 +693,8 @@ function groupedListHtml(results) {
     return ia - ib;
   });
 
+  // Plafond pour la jauge visuelle : on cale le 100% de la barre sur le plus
+  // fort gain du lot (minimum 20% pour éviter une jauge écrasée si tout est proche du seuil)
   const maxPct = Math.max(20, ...results.map(w => w.pct_change));
 
   let html = '';
@@ -604,6 +720,57 @@ function groupedListHtml(results) {
   return html;
 }
 
+function flatListHtml(results) {
+  if (results.length === 0) return '';
+  const maxPct = Math.max(20, ...results.map(w => w.pct_change));
+  let html = '<div class="list">';
+  for (const w of results) html += rowHtml(w, maxPct);
+  html += '</div>';
+  return html;
+}
+
+function populateFilters(results) {
+  const exchangeSel = document.getElementById('filterExchange');
+  const sectorSel = document.getElementById('filterSector');
+  if (!exchangeSel || !sectorSel) return;
+
+  const exchanges = [...new Set(results.map(w => w.category).filter(Boolean))].sort();
+  const sectors = [...new Set(results.map(w => w.sector).filter(Boolean))].sort();
+
+  exchangeSel.innerHTML = '<option value="all">Toutes les bourses</option>' +
+    exchanges.map(e => '<option value="' + escapeAttr(e) + '">' + escapeHtml(e) + '</option>').join('');
+  sectorSel.innerHTML = '<option value="all">Tous les secteurs</option>' +
+    sectors.map(s => '<option value="' + escapeAttr(s) + '">' + escapeHtml(s) + '</option>').join('');
+
+  exchangeSel.value = exchanges.includes(filterExchange) ? filterExchange : 'all';
+  sectorSel.value = sectors.includes(filterSector) ? filterSector : 'all';
+  filterExchange = exchangeSel.value;
+  filterSector = sectorSel.value;
+}
+
+function applyFiltersAndSort(results) {
+  const q = searchQuery.trim().toLowerCase();
+  let out = results.filter(w => {
+    if (filterExchange !== 'all' && w.category !== filterExchange) return false;
+    if (filterSector !== 'all' && w.sector !== filterSector) return false;
+    if (q) {
+      const hay = ((w.name || '') + ' ' + (w.ticker || '')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (sortKey !== 'default') {
+    const [field, dir] = sortKey.split('_');
+    const prop = field === 'pct' ? 'pct_change' : field === 'cap' ? 'market_cap' : 'day_volume';
+    out = out.slice().sort((a, b) => {
+      const va = a[prop] || 0, vb = b[prop] || 0;
+      return dir === 'asc' ? va - vb : vb - va;
+    });
+  }
+  return out;
+}
+
 let chartStore = {};
 let rowIdSeq = 0;
 
@@ -623,11 +790,22 @@ function renderContent(data) {
   chartStore = {};
   rowIdSeq = 0;
 
+  const toolbarWrap = document.getElementById('toolbarWrap');
+  if (toolbarWrap) toolbarWrap.style.display = results.length > 0 ? 'block' : 'none';
+
   let html = '';
   if (results.length === 0) {
     html += '<div class="status">Aucun signal sur ce scan : rien ne dépasse le seuil, ou rien ne passe les filtres qualité.</div>';
   } else {
-    html += groupedListHtml(results);
+    populateFilters(results);
+    const filtered = applyFiltersAndSort(results);
+    if (filtered.length === 0) {
+      html += '<div class="empty-filter">Aucun résultat ne correspond à ta recherche ou tes filtres.</div>';
+    } else if (sortKey === 'default') {
+      html += groupedListHtml(filtered);
+    } else {
+      html += flatListHtml(filtered);
+    }
   }
 
   if (previousDay && previousDay.results && previousDay.results.length > 0) {
@@ -657,6 +835,8 @@ function renderContent(data) {
     });
   });
 
+  // Dessine le graphique par défaut de chaque ligne (la période la plus
+  // courte disposant d'assez de points).
   Object.keys(chartStore).forEach(rowId => {
     const def = pickDefaultRange(chartStore[rowId]);
     if (def) drawRange(rowId, def);
@@ -796,8 +976,8 @@ function rowHtml(w, maxPct) {
       '<div class="figures">' +
         (sparkSvg ? '<svg class="spark" viewBox="0 0 50 26" preserveAspectRatio="none">' + sparkSvg + '</svg>' : '') +
         '<div class="nums">' +
-          '<div class="price mono">' + w.price + '$</div>' +
           '<div class="pct mono">+' + w.pct_change + '%</div>' +
+          '<div class="price mono">' + w.price + '$</div>' +
           '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
         '</div>' +
       '</div>' +
@@ -840,6 +1020,34 @@ function escapeAttr(str) {
 }
 
 document.getElementById('refreshBtn').addEventListener('click', () => load(true));
+
+const searchInput = document.getElementById('searchInput');
+const searchBox = document.getElementById('searchBox');
+const searchClear = document.getElementById('searchClear');
+searchInput.addEventListener('input', (e) => {
+  searchQuery = e.target.value;
+  searchBox.classList.toggle('has-value', searchQuery.length > 0);
+  if (lastData) renderContent(lastData);
+});
+searchClear.addEventListener('click', () => {
+  searchQuery = '';
+  searchInput.value = '';
+  searchBox.classList.remove('has-value');
+  if (lastData) renderContent(lastData);
+});
+document.getElementById('sortSelect').addEventListener('change', (e) => {
+  sortKey = e.target.value;
+  if (lastData) renderContent(lastData);
+});
+document.getElementById('filterExchange').addEventListener('change', (e) => {
+  filterExchange = e.target.value;
+  if (lastData) renderContent(lastData);
+});
+document.getElementById('filterSector').addEventListener('change', (e) => {
+  filterSector = e.target.value;
+  if (lastData) renderContent(lastData);
+});
+
 load(false);
 </script>
 </body>
