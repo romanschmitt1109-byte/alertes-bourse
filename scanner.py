@@ -203,6 +203,43 @@ def get_price_charts(ticker):
         return {"intraday": [], "daily": []}
 
 
+def enrich_ticker(ticker):
+    """Construit une fiche complète et à jour pour un ticker donné (prix,
+    variation, capitalisation, volume, secteur, graphique, actu, résumé),
+    sans exiger qu'il dépasse le seuil de hausse du jour. Utilisé pour
+    rafraîchir les derniers signaux connus (prix/graphique à la dernière
+    clôture) les jours où aucun nouveau signal n'est détecté."""
+    try:
+        tk = yf.Ticker(ticker)
+        info = tk.info
+        daily_hist = tk.history(period="5d", interval="1d")
+        closes = daily_hist["Close"].dropna()
+        if len(closes) < 1:
+            return None
+        last_close = float(closes.iloc[-1])
+        if len(closes) >= 2:
+            prev_close = float(closes.iloc[-2])
+            pct_change = round((last_close - prev_close) / prev_close * 100, 1)
+        else:
+            pct_change = 0.0
+        row = {
+            "ticker": ticker,
+            "price": round(last_close, 2),
+            "pct_change": pct_change,
+            "name": info.get("shortName") or info.get("longName") or ticker,
+            "category": info.get("fullExchangeName") or info.get("exchange") or "Bourse inconnue",
+            "sector": info.get("sector") or info.get("industry") or "Secteur inconnu",
+            "market_cap": info.get("marketCap") or None,
+            "day_volume": info.get("volume") or info.get("regularMarketVolume") or None,
+        }
+        row["news"] = get_news_snippet(ticker)
+        row["chart"] = get_price_charts(ticker)
+        row["summary"] = translate_summary(info.get("longBusinessSummary"))
+        return row
+    except Exception:
+        return None
+
+
 def get_news_snippet(ticker):
     """Récupère le titre de l'actualité la plus récente pour un ticker (gratuit,
     via Yahoo Finance), traduit en français. Retourne None si rien n'est trouvé."""
@@ -262,13 +299,39 @@ def compute_previous_day(old_data, today_str):
     return old_data.get("previous_day")
 
 
-def write_results(shown, total_scanned, total_risers, total_quality, now_dt):
+def write_results(shown, total_scanned, total_risers, total_quality, now_dt, old_data):
     """Écrit le JSON consommé par le site statique (docs/index.html), en
-    conservant les résultats de la veille dans un champ séparé."""
+    conservant les résultats de la veille, et surtout les "derniers signaux
+    connus" (last_signal) : le dernier jeu de titres ayant déclenché un
+    signal, réaffiché et rafraîchi (prix, graphique) tant qu'aucun nouveau
+    signal n'est trouvé — pour que le site ne soit jamais vide."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     today_str = now_dt.strftime("%d/%m/%Y")
-    old_data = load_existing()
     previous_day = compute_previous_day(old_data, today_str)
+
+    if shown:
+        last_signal = {
+            "date": today_str,
+            "generated_at": now_dt.strftime("%d/%m/%Y %H:%M"),
+            "results": shown,
+        }
+    else:
+        old_last_signal = (old_data or {}).get("last_signal")
+        last_signal = old_last_signal
+        if old_last_signal and old_last_signal.get("results"):
+            tickers = [w["ticker"] for w in old_last_signal["results"]]
+            refreshed = []
+            for t in tickers:
+                row = enrich_ticker(t)
+                if row:
+                    refreshed.append(row)
+            if refreshed:
+                refreshed.sort(key=lambda w: w["pct_change"], reverse=True)
+                last_signal = {
+                    "date": old_last_signal.get("date"),
+                    "generated_at": old_last_signal.get("generated_at"),
+                    "results": refreshed,
+                }
 
     payload = {
         "generated_at": now_dt.strftime("%d/%m/%Y %H:%M"),
@@ -280,6 +343,7 @@ def write_results(shown, total_scanned, total_risers, total_quality, now_dt):
         "total_shown": len(shown),
         "results": shown,
         "previous_day": previous_day,
+        "last_signal": last_signal,
     }
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -292,10 +356,11 @@ def main():
     tickers = sorted(set(nasdaq_tickers + sp500_tickers))
 
     now_dt = datetime.now(ZoneInfo("Europe/Paris"))
+    old_data = load_existing()
 
     if not tickers:
         print("Aucun ticker récupéré, arrêt.")
-        write_results([], 0, 0, 0, now_dt)
+        write_results([], 0, 0, 0, now_dt, old_data)
         return
 
     print(f"Scan de {len(tickers)} titres (seuil: +{GAIN_THRESHOLD_PCT}%)...")
@@ -309,7 +374,7 @@ def main():
 
     if not all_winners:
         print(f"RAS : aucune action n'a pris {GAIN_THRESHOLD_PCT}% ou plus.")
-        write_results([], len(tickers), 0, 0, now_dt)
+        write_results([], len(tickers), 0, 0, now_dt, old_data)
         return
 
     print(f"{len(all_winners)} titre(s) en hausse de {GAIN_THRESHOLD_PCT}%+, application des filtres qualité...")
@@ -328,7 +393,7 @@ def main():
 
     if not quality_winners:
         print(f"{len(all_winners)} titre(s) en hausse mais aucun ne passe les filtres qualité.")
-        write_results([], len(tickers), len(all_winners), 0, now_dt)
+        write_results([], len(tickers), len(all_winners), 0, now_dt, old_data)
         return
 
     # On garde tous les titres qui passent les filtres qualité (triés par
@@ -346,7 +411,7 @@ def main():
     for w in quality_winners:
         w.pop("_summary_raw", None)
 
-    write_results(shown, len(tickers), len(all_winners), len(quality_winners), now_dt)
+    write_results(shown, len(tickers), len(all_winners), len(quality_winners), now_dt, old_data)
 
 
 if __name__ == "__main__":
