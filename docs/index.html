@@ -20,6 +20,8 @@
     --gain: #32D74B;
     --gain-soft: #32D74B66;
     --loss: #FF453A;
+    --warn: #FF9F0A;
+    --warn-soft: #FF9F0A66;
     --radius: 16px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -312,7 +314,19 @@
     font-size: 0.7rem;
     color: var(--text-faint);
     margin-top: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
+  .risk-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .risk-dot.lvl-3 { background: var(--loss); box-shadow: 0 0 6px var(--loss); }
+  .risk-dot.lvl-2 { background: var(--warn); box-shadow: 0 0 6px var(--warn-soft); }
+  .risk-dot.lvl-1 { background: var(--text-faint); }
 
   .figures {
     text-align: right;
@@ -441,6 +455,42 @@
     line-height: 1.5;
     color: var(--text-dim);
   }
+  .detail .badges-label {
+    margin-top: 12px;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .detail .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-dim);
+  }
+  .badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .badge.lvl-3 { border-color: color-mix(in srgb, var(--loss) 35%, var(--line)); color: var(--text); }
+  .badge.lvl-3 .dot { background: var(--loss); box-shadow: 0 0 5px var(--loss); }
+  .badge.lvl-2 { border-color: color-mix(in srgb, var(--warn) 35%, var(--line)); color: var(--text); }
+  .badge.lvl-2 .dot { background: var(--warn); box-shadow: 0 0 5px var(--warn-soft); }
+  .badge.lvl-1 .dot { background: var(--text-faint); }
 
   footer {
     margin-top: 32px;
@@ -970,6 +1020,15 @@ function rowHtml(w, maxPct) {
 
   const summaryHtml = w.summary ? '<div class="summary">' + escapeHtml(w.summary) + '</div>' : '';
 
+  const badges = w.badges || [];
+  const topLevel = badges.length ? badges[0].level : null;
+  const riskDotHtml = topLevel ? '<span class="risk-dot lvl-' + topLevel + '" aria-hidden="true"></span>' : '';
+  const badgesHtml = badges.length
+    ? '<div class="badges-label">Repères</div><div class="badges">' +
+      badges.map(b => '<span class="badge lvl-' + b.level + '"><span class="dot"></span>' + escapeHtml(b.label) + '</span>').join('') +
+      '</div>'
+    : '';
+
   return (
     '<div class="row">' +
       '<div class="avatar">' +
@@ -979,7 +1038,7 @@ function rowHtml(w, maxPct) {
       '</div>' +
       '<div class="identity">' +
         '<div class="name">' + escapeHtml(w.name || w.ticker) + '</div>' +
-        '<div class="sub mono">' + escapeHtml(w.ticker) + '</div>' +
+        '<div class="sub mono">' + escapeHtml(w.ticker) + riskDotHtml + '</div>' +
       '</div>' +
       '<div class="figures">' +
         (sparkSvg ? '<svg class="spark" viewBox="0 0 50 26" preserveAspectRatio="none">' + sparkSvg + '</svg>' : '') +
@@ -989,7 +1048,7 @@ function rowHtml(w, maxPct) {
           '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
         '</div>' +
       '</div>' +
-      '<div class="detail">' + detail + kpisHtml + summaryHtml + newsHtml + '</div>' +
+      '<div class="detail">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + '</div>' +
     '</div>'
   );
 }
