@@ -123,10 +123,10 @@ def passes_quality_filters(ticker, price):
     supplémentaire. Appelé seulement sur les titres déjà repérés en hausse de
     10%+, pour limiter le nombre d'appels.
     Renvoie un dict avec les clés : ok, name, exchange, sector, market_cap,
-    day_volume, summary_raw."""
+    day_volume, avg_volume, summary_raw."""
     empty = {
         "ok": False, "name": None, "exchange": None, "sector": None,
-        "market_cap": None, "day_volume": None, "summary_raw": None,
+        "market_cap": None, "day_volume": None, "avg_volume": None, "summary_raw": None,
     }
     if price < PRICE_MIN:
         return empty
@@ -142,7 +142,7 @@ def passes_quality_filters(ticker, price):
         result = {
             "ok": False, "name": name, "exchange": exchange, "sector": sector,
             "market_cap": market_cap or None, "day_volume": day_volume,
-            "summary_raw": summary_raw,
+            "avg_volume": avg_volume or None, "summary_raw": summary_raw,
         }
         if market_cap < MARKET_CAP_MIN:
             return result
@@ -203,6 +203,64 @@ def get_price_charts(ticker):
         return {"intraday": [], "daily": []}
 
 
+def compute_risk_badges(w):
+    """Calcule des repères factuels (volatilité, taille, liquidité, actu) sur
+    un titre — jamais un verdict ou une note globale, juste des constats
+    neutres pour aider à juger soi-même le niveau de risque d'un pari
+    spéculatif. 'level' : 1 = neutre/info, 2 = à surveiller, 3 = à surveiller
+    de près. Triés du plus au moins préoccupant."""
+    badges = []
+
+    # Volatilité : écart-type des variations quotidiennes sur les ~30
+    # dernières séances (à partir de l'historique déjà récupéré pour le
+    # graphique, donc sans requête supplémentaire).
+    daily_points = (w.get("chart") or {}).get("daily") or []
+    closes = [p["c"] for p in daily_points][-31:]
+    if len(closes) >= 10:
+        returns = [
+            (closes[i] - closes[i - 1]) / closes[i - 1] * 100
+            for i in range(1, len(closes)) if closes[i - 1]
+        ]
+        if returns:
+            mean = sum(returns) / len(returns)
+            variance = sum((r - mean) ** 2 for r in returns) / len(returns)
+            volatility = variance ** 0.5
+            if volatility >= 6:
+                badges.append({"label": "Forte volatilité", "level": 3})
+            elif volatility >= 3:
+                badges.append({"label": "Volatilité modérée", "level": 2})
+            else:
+                badges.append({"label": "Volatilité faible", "level": 1})
+
+    market_cap = w.get("market_cap")
+    if market_cap:
+        if market_cap < 2_000_000_000:
+            badges.append({"label": "Petite capitalisation", "level": 2})
+        elif market_cap < 10_000_000_000:
+            badges.append({"label": "Capitalisation moyenne", "level": 1})
+        else:
+            badges.append({"label": "Grande capitalisation", "level": 1})
+
+    day_volume = w.get("day_volume")
+    avg_volume = w.get("avg_volume")
+    if day_volume and avg_volume:
+        ratio = day_volume / avg_volume
+        if ratio <= 0.3:
+            badges.append({"label": "Faible liquidité du jour", "level": 3})
+        elif ratio >= 3:
+            badges.append({"label": "Volume très inhabituel", "level": 2})
+        else:
+            badges.append({"label": "Volume dans la normale", "level": 1})
+
+    if w.get("news") and w["news"].get("title"):
+        badges.append({"label": "Actu identifiée", "level": 1})
+    else:
+        badges.append({"label": "Pas d'actu identifiée", "level": 2})
+
+    badges.sort(key=lambda b: -b["level"])
+    return badges
+
+
 def enrich_ticker(ticker):
     """Construit une fiche complète et à jour pour un ticker donné (prix,
     variation, capitalisation, volume, secteur, graphique, actu, résumé),
@@ -231,10 +289,13 @@ def enrich_ticker(ticker):
             "sector": info.get("sector") or info.get("industry") or "Secteur inconnu",
             "market_cap": info.get("marketCap") or None,
             "day_volume": info.get("volume") or info.get("regularMarketVolume") or None,
+            "avg_volume": info.get("averageVolume") or info.get("averageDailyVolume10Day") or None,
         }
         row["news"] = get_news_snippet(ticker)
         row["chart"] = get_price_charts(ticker)
         row["summary"] = translate_summary(info.get("longBusinessSummary"))
+        row["badges"] = compute_risk_badges(row)
+        row.pop("avg_volume", None)
         return row
     except Exception:
         return None
@@ -388,6 +449,7 @@ def main():
             w["sector"] = q["sector"] or "Secteur inconnu"
             w["market_cap"] = q["market_cap"]
             w["day_volume"] = q["day_volume"]
+            w["avg_volume"] = q["avg_volume"]
             w["_summary_raw"] = q["summary_raw"]  # traduit plus bas, seulement pour les titres affichés
             quality_winners.append(w)
 
@@ -405,11 +467,14 @@ def main():
         w["news"] = get_news_snippet(w["ticker"])
         w["chart"] = get_price_charts(w["ticker"])
         w["summary"] = translate_summary(w.pop("_summary_raw", None))
+        w["badges"] = compute_risk_badges(w)
+        w.pop("avg_volume", None)
 
     # Les titres qualité non affichés gardent quand même leur brouillon de
     # résumé en interne ; on le retire pour ne pas le publier non traduit.
     for w in quality_winners:
         w.pop("_summary_raw", None)
+        w.pop("avg_volume", None)
 
     write_results(shown, len(tickers), len(all_winners), len(quality_winners), now_dt, old_data)
 
