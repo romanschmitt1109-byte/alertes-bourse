@@ -1,21 +1,21 @@
 {
-  "generated_at": "08/10/2026 17:44",
-  "generated_at_iso": "2026-10-08T17:44:15.811108+02:00",
+  "generated_at": "08/10/2026 18:44",
+  "generated_at_iso": "2026-10-08T18:44:38.845011+02:00",
   "threshold_pct": 10.0,
   "total_scanned": 4354,
-  "total_risers": 33,
+  "total_risers": 38,
   "total_quality": 4,
   "total_shown": 4,
   "results": [
     {
       "ticker": "PCRX",
-      "price": 36.28,
-      "pct_change": 44.0,
+      "price": 36.31,
+      "pct_change": 44.1,
       "name": "Pacira BioSciences, Inc.",
       "category": "NasdaqGS",
       "sector": "Healthcare",
-      "market_cap": 1446388608,
-      "day_volume": 19740771,
+      "market_cap": 1428723200,
+      "day_volume": 22491529,
       "news": null,
       "chart": {
         "intraday": [
@@ -141,7 +141,11 @@
           },
           {
             "t": "2026-10-08T15:30:00+00:00",
-            "c": 36.28
+            "c": 36.3
+          },
+          {
+            "t": "2026-10-08T16:30:00+00:00",
+            "c": 36.31
           }
         ],
         "daily": [
@@ -1151,7 +1155,7 @@
           },
           {
             "t": "2026-10-08T04:00:00+00:00",
-            "c": 36.28
+            "c": 36.31
           }
         ]
       },
@@ -1177,13 +1181,13 @@
     },
     {
       "ticker": "RZAI",
-      "price": 12.61,
-      "pct_change": 17.3,
+      "price": 12.5,
+      "pct_change": 16.3,
       "name": "Roze AI Inc.",
       "category": "NasdaqCM",
       "sector": "Technology",
-      "market_cap": 708624128,
-      "day_volume": 333349,
+      "market_cap": 697768064,
+      "day_volume": 407703,
       "news": null,
       "chart": {
         "intraday": [
@@ -1309,7 +1313,11 @@
           },
           {
             "t": "2026-10-08T15:30:00+00:00",
-            "c": 12.74
+            "c": 12.28
+          },
+          {
+            "t": "2026-10-08T16:30:00+00:00",
+            "c": 12.54
           }
         ],
         "daily": [
@@ -1339,7 +1347,7 @@
           },
           {
             "t": "2026-10-08T04:00:00+00:00",
-            "c": 12.74
+            "c": 12.54
           }
         ]
       },
@@ -1361,13 +1369,13 @@
     },
     {
       "ticker": "GFUZ",
-      "price": 8.43,
-      "pct_change": 10.9,
+      "price": 8.68,
+      "pct_change": 14.2,
       "name": "General Fusion Group Ltd.",
       "category": "NasdaqGM",
       "sector": "Industrials",
-      "market_cap": 680495232,
-      "day_volume": 379438,
+      "market_cap": 913516544,
+      "day_volume": 430696,
       "news": null,
       "chart": {
         "intraday": [
@@ -1493,7 +1501,11 @@
           },
           {
             "t": "2026-10-08T15:30:00+00:00",
-            "c": 8.43
+            "c": 8.77
+          },
+          {
+            "t": "2026-10-08T16:30:00+00:00",
+            "c": 8.65
           }
         ],
         "daily": [
@@ -2503,7 +2515,7 @@
           },
           {
             "t": "2026-10-08T04:00:00+00:00",
-            "c": 8.43
+            "c": 8.65
           }
         ]
       },
@@ -2529,13 +2541,13 @@
     },
     {
       "ticker": "HNRG",
-      "price": 15.04,
-      "pct_change": 10.2,
+      "price": 15.15,
+      "pct_change": 11.0,
       "name": "Hallador Energy Company",
       "category": "NasdaqCM",
       "sector": "Utilities",
-      "market_cap": 709488640,
-      "day_volume": 1028000,
+      "market_cap": 704557440,
+      "day_volume": 1252764,
       "news": null,
       "chart": {
         "intraday": [
@@ -2661,7 +2673,11 @@
           },
           {
             "t": "2026-10-08T15:30:00+00:00",
-            "c": 15.05
+            "c": 15.23
+          },
+          {
+            "t": "2026-10-08T16:30:00+00:00",
+            "c": 14.94
           }
         ],
         "daily": [
@@ -3671,7 +3687,7 @@
           },
           {
             "t": "2026-10-08T04:00:00+00:00",
-            "c": 15.05
+            "c": 14.94
           }
         ]
       },
@@ -6025,17 +6041,17 @@
   },
   "last_signal": {
     "date": "08/10/2026",
-    "generated_at": "08/10/2026 17:44",
+    "generated_at": "08/10/2026 18:44",
     "results": [
       {
         "ticker": "PCRX",
-        "price": 36.28,
-        "pct_change": 44.0,
+        "price": 36.31,
+        "pct_change": 44.1,
         "name": "Pacira BioSciences, Inc.",
         "category": "NasdaqGS",
         "sector": "Healthcare",
-        "market_cap": 1446388608,
-        "day_volume": 19740771,
+        "market_cap": 1428723200,
+        "day_volume": 22491529,
         "news": null,
         "chart": {
           "intraday": [
@@ -6161,7 +6177,11 @@
             },
             {
               "t": "2026-10-08T15:30:00+00:00",
-              "c": 36.28
+              "c": 36.3
+            },
+            {
+              "t": "2026-10-08T16:30:00+00:00",
+              "c": 36.31
             }
           ],
           "daily": [
@@ -7171,7 +7191,7 @@
             },
             {
               "t": "2026-10-08T04:00:00+00:00",
-              "c": 36.28
+              "c": 36.31
             }
           ]
         },
@@ -7197,13 +7217,13 @@
       },
       {
         "ticker": "RZAI",
-        "price": 12.61,
-        "pct_change": 17.3,
+        "price": 12.5,
+        "pct_change": 16.3,
         "name": "Roze AI Inc.",
         "category": "NasdaqCM",
         "sector": "Technology",
-        "market_cap": 708624128,
-        "day_volume": 333349,
+        "market_cap": 697768064,
+        "day_volume": 407703,
         "news": null,
         "chart": {
           "intraday": [
@@ -7329,7 +7349,11 @@
             },
             {
               "t": "2026-10-08T15:30:00+00:00",
-              "c": 12.74
+              "c": 12.28
+            },
+            {
+              "t": "2026-10-08T16:30:00+00:00",
+              "c": 12.54
             }
           ],
           "daily": [
@@ -7359,7 +7383,7 @@
             },
             {
               "t": "2026-10-08T04:00:00+00:00",
-              "c": 12.74
+              "c": 12.54
             }
           ]
         },
@@ -7381,13 +7405,13 @@
       },
       {
         "ticker": "GFUZ",
-        "price": 8.43,
-        "pct_change": 10.9,
+        "price": 8.68,
+        "pct_change": 14.2,
         "name": "General Fusion Group Ltd.",
         "category": "NasdaqGM",
         "sector": "Industrials",
-        "market_cap": 680495232,
-        "day_volume": 379438,
+        "market_cap": 913516544,
+        "day_volume": 430696,
         "news": null,
         "chart": {
           "intraday": [
@@ -7513,7 +7537,11 @@
             },
             {
               "t": "2026-10-08T15:30:00+00:00",
-              "c": 8.43
+              "c": 8.77
+            },
+            {
+              "t": "2026-10-08T16:30:00+00:00",
+              "c": 8.65
             }
           ],
           "daily": [
@@ -8523,7 +8551,7 @@
             },
             {
               "t": "2026-10-08T04:00:00+00:00",
-              "c": 8.43
+              "c": 8.65
             }
           ]
         },
@@ -8549,13 +8577,13 @@
       },
       {
         "ticker": "HNRG",
-        "price": 15.04,
-        "pct_change": 10.2,
+        "price": 15.15,
+        "pct_change": 11.0,
         "name": "Hallador Energy Company",
         "category": "NasdaqCM",
         "sector": "Utilities",
-        "market_cap": 709488640,
-        "day_volume": 1028000,
+        "market_cap": 704557440,
+        "day_volume": 1252764,
         "news": null,
         "chart": {
           "intraday": [
@@ -8681,7 +8709,11 @@
             },
             {
               "t": "2026-10-08T15:30:00+00:00",
-              "c": 15.05
+              "c": 15.23
+            },
+            {
+              "t": "2026-10-08T16:30:00+00:00",
+              "c": 14.94
             }
           ],
           "daily": [
@@ -9691,7 +9723,7 @@
             },
             {
               "t": "2026-10-08T04:00:00+00:00",
-              "c": 15.05
+              "c": 14.94
             }
           ]
         },
