@@ -200,6 +200,32 @@
     color: var(--text-faint);
   }
 
+  .market-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .market-status .mdot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .market-status.open .mdot { background: var(--gain); box-shadow: 0 0 6px var(--gain); animation: pulseDot 1.8s ease-in-out infinite; }
+  .market-status.closed .mdot { background: var(--text-faint); }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
   .status {
     padding: 24px 20px;
     background: var(--surface);
@@ -209,6 +235,43 @@
     font-size: 0.9rem;
     line-height: 1.5;
     margin-top: 18px;
+  }
+
+  .empty-state {
+    padding: 36px 20px 30px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    text-align: center;
+    margin-top: 18px;
+  }
+  .radar {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 18px;
+    position: relative;
+  }
+  .radar svg { width: 100%; height: 100%; }
+  .radar-sweep {
+    transform-origin: 50px 50px;
+    animation: radarSpin 3s linear infinite;
+  }
+  @keyframes radarSpin { to { transform: rotate(360deg); } }
+  .empty-state .headline {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .empty-state .sub {
+    font-size: 0.8rem;
+    color: var(--text-faint);
+    line-height: 1.5;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .radar-sweep { animation: none; }
   }
 
   .prev-toggle {
@@ -270,9 +333,23 @@
     padding: 11px 14px;
     border-bottom: 1px solid var(--line);
     cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease;
   }
   .list .row:last-child { border-bottom: none; }
-  .row:active { background: var(--surface-raised); }
+  .row:active { background: var(--surface-raised); transform: scale(0.985); }
+
+  .new-pill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--bg);
+    background: var(--gain);
+    padding: 2px 6px;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
 
   .avatar {
     width: 36px;
@@ -303,8 +380,13 @@
   }
 
   .identity .name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.88rem;
     font-weight: 500;
+  }
+  .identity .name .name-text {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -369,18 +451,26 @@
   .wrap.compact .row { grid-template-columns: 1fr auto; padding: 9px 14px; }
   .wrap.compact .avatar { display: none; }
   .wrap.compact .spark { display: none; }
-  .wrap.compact .identity .name { max-width: 56vw; }
+  .wrap.compact .identity .name .name-text { max-width: 56vw; }
   .wrap.compact .gauge { display: none; }
 
   /* Expanded detail */
   .detail {
     grid-column: 1 / -1;
-    display: none;
-    padding: 2px 2px 10px 50px;
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    overflow: hidden;
+    transition: grid-template-rows 0.28s ease, opacity 0.2s ease;
   }
-  .wrap.compact .detail { padding-left: 2px; }
-  .row.open .detail { display: block; }
+  .detail > div { min-height: 0; }
+  .detail-inner { padding: 8px 2px 10px 50px; min-height: 0; overflow: hidden; }
+  .wrap.compact .detail-inner { padding-left: 2px; }
+  .row.open .detail { grid-template-rows: 1fr; opacity: 1; }
   .row.open { padding-bottom: 4px; }
+  @media (prefers-reduced-motion: reduce) {
+    .detail { transition: none; }
+  }
   .detail .range-seg {
     display: flex;
     gap: 4px;
@@ -628,6 +718,7 @@
       </div>
     </div>
 
+    <div id="marketStatus"></div>
     <div class="stats" id="stats"></div>
 
     <div class="toolbar-wrap" id="toolbarWrap">
@@ -711,10 +802,56 @@ async function load(spin) {
   }
 
   lastData = data;
+  renderMarketStatus();
   renderStats(data);
   renderContent(data);
   contentEl.classList.add('ready');
   if (spin) setTimeout(() => btn.classList.remove('spinning'), 400);
+}
+
+function emptyStateHtml() {
+  return (
+    '<div class="empty-state">' +
+      '<div class="radar">' +
+        '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+          '<circle cx="50" cy="50" r="46" fill="none" stroke="var(--line)" stroke-width="1.5"/>' +
+          '<circle cx="50" cy="50" r="30" fill="none" stroke="var(--line)" stroke-width="1.5"/>' +
+          '<circle cx="50" cy="50" r="14" fill="none" stroke="var(--line)" stroke-width="1.5"/>' +
+          '<g class="radar-sweep">' +
+            '<path d="M50,50 L50,4 A46,46 0 0,1 90,28 Z" fill="var(--gain)" opacity="0.14"/>' +
+            '<line x1="50" y1="50" x2="50" y2="4" stroke="var(--gain)" stroke-width="2" stroke-linecap="round"/>' +
+          '</g>' +
+          '<circle cx="50" cy="50" r="2.5" fill="var(--gain)"/>' +
+        '</svg>' +
+      '</div>' +
+      '<div class="headline">Aucun signal pour l\'instant</div>' +
+      '<div class="sub">Rien ne dépasse le seuil, ou rien ne passe les filtres qualité. Le scan continue en arrière-plan.</div>' +
+    '</div>'
+  );
+}
+
+function renderMarketStatus() {
+  const el = document.getElementById('marketStatus');
+  if (!el) return;
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', weekday: 'short', hour: 'numeric',
+      minute: 'numeric', hour12: false,
+    }).formatToParts(new Date());
+    const get = (type) => parts.find(p => p.type === type).value;
+    const weekday = get('weekday');
+    const hour = parseInt(get('hour'), 10);
+    const minute = parseInt(get('minute'), 10);
+    const mins = hour * 60 + minute;
+    const isWeekday = !['Sat', 'Sun'].includes(weekday);
+    const isOpen = isWeekday && mins >= 9 * 60 + 30 && mins < 16 * 60;
+    el.innerHTML = '<span class="market-status ' + (isOpen ? 'open' : 'closed') + '">' +
+      '<span class="mdot"></span>' +
+      (isOpen ? 'Marché ouvert (Wall Street)' : 'Marché fermé (Wall Street)') +
+      '</span>';
+  } catch (e) {
+    el.innerHTML = '';
+  }
 }
 
 function renderStats(data) {
@@ -853,7 +990,7 @@ function renderContent(data) {
 
   let html = bannerHtml;
   if (results.length === 0) {
-    html += '<div class="status">Aucun signal sur ce scan : rien ne dépasse le seuil, ou rien ne passe les filtres qualité.</div>';
+    html += emptyStateHtml();
   } else {
     populateFilters(results);
     const filtered = applyFiltersAndSort(results);
@@ -1011,10 +1148,16 @@ function rowHtml(w, maxPct) {
   }
 
   let kpisHtml = '';
-  if (w.market_cap || w.day_volume) {
+  if (w.market_cap || w.day_volume || typeof w.since_signal_pct === 'number') {
+    const sincePct = w.since_signal_pct;
+    const sinceColor = typeof sincePct === 'number' ? (sincePct >= 0 ? 'var(--gain)' : 'var(--loss)') : '';
+    const sinceSign = typeof sincePct === 'number' && sincePct >= 0 ? '+' : '';
     kpisHtml = '<div class="kpis">' +
       (w.market_cap ? '<div class="kpi"><span class="v mono">' + formatBig(w.market_cap) + '$</span><span class="l">Capitalisation</span></div>' : '') +
       (w.day_volume ? '<div class="kpi"><span class="v mono">' + formatBig(w.day_volume) + '</span><span class="l">Volume du jour</span></div>' : '') +
+      (typeof sincePct === 'number'
+        ? '<div class="kpi"><span class="v mono" style="color:' + sinceColor + '">' + sinceSign + sincePct + '%</span><span class="l">Depuis le signal' + (w.since_signal_date ? ' (' + escapeHtml(w.since_signal_date) + ')' : '') + '</span></div>'
+        : '') +
       '</div>';
   }
 
@@ -1029,6 +1172,14 @@ function rowHtml(w, maxPct) {
       '</div>'
     : '';
 
+  const newPillHtml = w.is_new ? '<span class="new-pill">NOUVEAU</span>' : '';
+
+  // Intensité visuelle proportionnelle à la force du signal : plus un titre
+  // est loin devant le lot, plus son pourcentage "rayonne".
+  const intensity = Math.max(0, Math.min(1, w.pct_change / maxPct));
+  const glow = (2 + intensity * 9).toFixed(1);
+  const pctStyle = 'text-shadow:0 0 ' + glow + 'px var(--gain-soft)';
+
   return (
     '<div class="row">' +
       '<div class="avatar">' +
@@ -1037,18 +1188,18 @@ function rowHtml(w, maxPct) {
         '<span class="initials mono">' + escapeHtml(initials) + '</span>' +
       '</div>' +
       '<div class="identity">' +
-        '<div class="name">' + escapeHtml(w.name || w.ticker) + '</div>' +
+        '<div class="name"><span class="name-text">' + escapeHtml(w.name || w.ticker) + '</span>' + newPillHtml + '</div>' +
         '<div class="sub mono">' + escapeHtml(w.ticker) + riskDotHtml + '</div>' +
       '</div>' +
       '<div class="figures">' +
         (sparkSvg ? '<svg class="spark" viewBox="0 0 50 26" preserveAspectRatio="none">' + sparkSvg + '</svg>' : '') +
         '<div class="nums">' +
-          '<div class="pct mono">+' + w.pct_change + '%</div>' +
+          '<div class="pct mono" style="' + pctStyle + '">+' + w.pct_change + '%</div>' +
           '<div class="price mono">' + w.price + '$</div>' +
           '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
         '</div>' +
       '</div>' +
-      '<div class="detail">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + '</div>' +
+      '<div class="detail"><div class="detail-inner">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + '</div></div>' +
     '</div>'
   );
 }
@@ -1116,6 +1267,7 @@ document.getElementById('filterSector').addEventListener('change', (e) => {
 });
 
 load(false);
+setInterval(renderMarketStatus, 60000);
 </script>
 </body>
 </html>
