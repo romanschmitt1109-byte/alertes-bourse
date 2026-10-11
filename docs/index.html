@@ -582,6 +582,100 @@
   .badge.lvl-2 .dot { background: var(--warn); box-shadow: 0 0 5px var(--warn-soft); }
   .badge.lvl-1 .dot { background: var(--text-faint); }
 
+  .analyst {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .analyst-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .analyst-label .l {
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .analyst-rec {
+    font-size: 0.66rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+  }
+  .analyst-rec.buy { color: var(--gain); border-color: color-mix(in srgb, var(--gain) 35%, var(--line)); }
+  .analyst-rec.sell { color: var(--loss); border-color: color-mix(in srgb, var(--loss) 35%, var(--line)); }
+  .analyst-rec.hold { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, var(--line)); }
+  .analyst-targets {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+  }
+  .analyst-targets .mid {
+    text-align: center;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .analyst-bar {
+    position: relative;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    overflow: visible;
+  }
+  .analyst-bar .range-fill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--gain) 35%, var(--text-faint));
+  }
+  .analyst-bar .mean-dot {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text);
+    border: 2px solid var(--bg);
+    transform: translate(-50%, -50%);
+  }
+  .analyst-bar .price-dot {
+    position: absolute;
+    top: 50%;
+    width: 4px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--gain);
+    transform: translate(-50%, -50%);
+  }
+  .analyst-upside {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .analyst-meta {
+    margin-top: 4px;
+    font-size: 0.66rem;
+    color: var(--text-faint);
+  }
+  .analyst-note {
+    margin-top: 6px;
+    font-size: 0.64rem;
+    line-height: 1.5;
+    color: var(--text-faint);
+  }
+  .no-analyst {
+    font-size: 0.74rem;
+    color: var(--text-faint);
+  }
+
   .sim {
     margin-top: 14px;
     padding-top: 12px;
@@ -1302,6 +1396,44 @@ function rowHtml(w, maxPct) {
 
   const newPillHtml = w.is_new ? '<span class="new-pill">NOUVEAU</span>' : '';
 
+  const a = w.analyst;
+  let analystHtml;
+  if (a && a.target_mean) {
+    const low = a.target_low || a.target_mean;
+    const high = a.target_high || a.target_mean;
+    const span = (high - low) || 1;
+    const meanPos = Math.max(0, Math.min(100, ((a.target_mean - low) / span) * 100));
+    const pricePos = Math.max(0, Math.min(100, ((w.price - low) / span) * 100));
+    const upside = Math.round(((a.target_mean - w.price) / w.price) * 1000) / 10;
+    const upsideColor = upside >= 0 ? 'var(--gain)' : 'var(--loss)';
+    const upsideSign = upside >= 0 ? '+' : '';
+    const recClass = a.recommendation === 'Achat fort' || a.recommendation === 'Achat' ? 'buy'
+      : a.recommendation === 'Vente' || a.recommendation === 'Vente forte' ? 'sell'
+      : a.recommendation === 'Conserver' ? 'hold' : '';
+    const recHtml = a.recommendation ? '<span class="analyst-rec ' + recClass + '">' + escapeHtml(a.recommendation) + '</span>' : '';
+    analystHtml =
+      '<div class="analyst">' +
+        '<div class="analyst-label"><span class="l">Consensus d\'analystes</span>' + recHtml + '</div>' +
+        '<div class="analyst-targets">' +
+          '<span>' + low.toFixed(2) + '$</span>' +
+          '<span class="mono mid">' + a.target_mean.toFixed(2) + '$</span>' +
+          '<span>' + high.toFixed(2) + '$</span>' +
+        '</div>' +
+        '<div class="analyst-bar">' +
+          '<div class="range-fill" style="left:0%;width:100%"></div>' +
+          '<div class="price-dot" style="left:' + pricePos.toFixed(1) + '%" title="Cours actuel"></div>' +
+          '<div class="mean-dot" style="left:' + meanPos.toFixed(1) + '%" title="Objectif moyen"></div>' +
+        '</div>' +
+        '<div class="analyst-upside">Objectif moyen ' +
+          '<span class="mono" style="color:' + upsideColor + ';font-weight:600">' + upsideSign + upside + '%</span>' +
+          ' par rapport au cours actuel (' + w.price + '$).</div>' +
+        (a.num_analysts ? '<div class="analyst-meta">Basé sur ' + a.num_analysts + ' analyste' + (a.num_analysts > 1 ? 's' : '') + '.</div>' : '') +
+        '<div class="analyst-note">Consensus d\'analystes financiers externes (via Yahoo Finance) — ce n\'est pas une estimation de ce site et ça ne garantit rien sur l\'évolution réelle du cours.</div>' +
+      '</div>';
+  } else {
+    analystHtml = '<div class="analyst"><div class="analyst-label"><span class="l">Consensus d\'analystes</span></div><div class="no-analyst">Aucun avis d\'analyste disponible pour ce titre.</div></div>';
+  }
+
   simStore[rowId] = {
     sincePct: typeof w.since_signal_pct === 'number' ? w.since_signal_pct : null,
     sinceDate: w.since_signal_date || null,
@@ -1360,7 +1492,7 @@ function rowHtml(w, maxPct) {
           '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
         '</div>' +
       '</div>' +
-      '<div class="detail"><div class="detail-inner">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + simulatorHtml + '</div></div>' +
+      '<div class="detail"><div class="detail-inner">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + analystHtml + simulatorHtml + '</div></div>' +
     '</div>'
   );
 }
