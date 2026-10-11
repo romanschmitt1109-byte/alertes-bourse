@@ -582,6 +582,95 @@
   .badge.lvl-2 .dot { background: var(--warn); box-shadow: 0 0 5px var(--warn-soft); }
   .badge.lvl-1 .dot { background: var(--text-faint); }
 
+  .sim {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .sim-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+  .sim-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .sim-input {
+    width: 64px;
+    flex-shrink: 0;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.78rem;
+    padding: 7px 8px;
+    min-width: 0;
+  }
+  .sim-unit {
+    font-size: 0.76rem;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+  .sim-select {
+    flex: 1;
+    min-width: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--surface-raised) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2358585E' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 9px center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.74rem;
+    padding: 7px 24px 7px 9px;
+    cursor: pointer;
+  }
+  .sim-results {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .sim-cell {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 7px 5px;
+    text-align: center;
+  }
+  .sim-cell .v {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .sim-cell .l {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
+  .sim-hist {
+    margin-top: 10px;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+  .sim-note {
+    margin-top: 8px;
+    font-size: 0.66rem;
+    line-height: 1.5;
+    color: var(--text-faint);
+  }
+  @media (max-width: 380px) {
+    .sim-results { grid-template-columns: repeat(2, 1fr); }
+  }
+
   footer {
     margin-top: 32px;
     text-align: center;
@@ -959,6 +1048,7 @@ function applyFiltersAndSort(results) {
 }
 
 let chartStore = {};
+let simStore = {};
 let rowIdSeq = 0;
 
 const RANGE_DEFS = [
@@ -983,6 +1073,7 @@ function renderContent(data) {
   }
 
   chartStore = {};
+  simStore = {};
   rowIdSeq = 0;
 
   const toolbarWrap = document.getElementById('toolbarWrap');
@@ -1016,7 +1107,7 @@ function renderContent(data) {
 
   contentEl.querySelectorAll('.row').forEach(el => {
     el.addEventListener('click', (e) => {
-      if (e.target.closest('.range-btn')) return;
+      if (e.target.closest('.range-btn') || e.target.closest('.sim')) return;
       el.classList.toggle('open');
     });
   });
@@ -1028,6 +1119,21 @@ function renderContent(data) {
       if (!seg) return;
       drawRange(seg.dataset.rowId, btn.dataset.range);
     });
+  });
+
+  contentEl.querySelectorAll('.sim').forEach(simEl => {
+    const rowId = simEl.dataset.rowId;
+    const amountEl = document.getElementById('sim-amount-' + rowId);
+    const rateEl = document.getElementById('sim-rate-' + rowId);
+    if (amountEl) {
+      amountEl.addEventListener('click', (e) => e.stopPropagation());
+      amountEl.addEventListener('input', () => updateSim(rowId));
+    }
+    if (rateEl) {
+      rateEl.addEventListener('click', (e) => e.stopPropagation());
+      rateEl.addEventListener('change', () => updateSim(rowId));
+    }
+    updateSim(rowId);
   });
 
   // Dessine le graphique par défaut de chaque ligne (la période la plus
@@ -1106,6 +1212,28 @@ function drawRange(rowId, key) {
   }
 }
 
+function updateSim(rowId) {
+  const amountEl = document.getElementById('sim-amount-' + rowId);
+  const rateEl = document.getElementById('sim-rate-' + rowId);
+  const resultsEl = document.getElementById('sim-results-' + rowId);
+  if (!amountEl || !rateEl || !resultsEl) return;
+
+  const amount = Math.max(0, parseFloat(amountEl.value) || 0);
+  const rate = (parseFloat(rateEl.value) || 0) / 100;
+  const periods = [
+    { label: '1 mois', m: 1 },
+    { label: '3 mois', m: 3 },
+    { label: '6 mois', m: 6 },
+    { label: '1 an', m: 12 },
+  ];
+
+  resultsEl.innerHTML = periods.map(p => {
+    const value = amount * Math.pow(1 + rate, p.m);
+    const color = value >= amount ? 'var(--gain)' : (value < amount ? 'var(--loss)' : 'var(--text)');
+    return '<div class="sim-cell"><span class="v mono" style="color:' + color + '">' + value.toFixed(2) + ' €</span><span class="l">Dans ' + p.label + '</span></div>';
+  }).join('');
+}
+
 function formatBig(n) {
   const abs = Math.abs(n);
   if (abs >= 1e9) return (n / 1e9).toFixed(2).replace(/\.00$/, '') + ' Md';
@@ -1174,6 +1302,39 @@ function rowHtml(w, maxPct) {
 
   const newPillHtml = w.is_new ? '<span class="new-pill">NOUVEAU</span>' : '';
 
+  simStore[rowId] = {
+    sincePct: typeof w.since_signal_pct === 'number' ? w.since_signal_pct : null,
+    sinceDate: w.since_signal_date || null,
+  };
+  let simHistHtml = '';
+  if (typeof w.since_signal_pct === 'number') {
+    const sp = w.since_signal_pct;
+    const spColor = sp >= 0 ? 'var(--gain)' : 'var(--loss)';
+    const spSign = sp >= 0 ? '+' : '';
+    simHistHtml = '<div class="sim-hist">Pour comparaison : un montant investi réellement au moment du signal' +
+      (w.since_signal_date ? ' (' + escapeHtml(w.since_signal_date) + ')' : '') + ' vaudrait aujourd\'hui ' +
+      '<span class="mono" style="color:' + spColor + '">' + spSign + sp + '%</span> — chiffre basé sur l\'évolution réelle du cours, pas une estimation.</div>';
+  }
+  const simulatorHtml =
+    '<div class="sim" data-row-id="' + rowId + '">' +
+      '<div class="sim-label">Simulateur (argent fictif)</div>' +
+      '<div class="sim-row">' +
+        '<input type="number" class="sim-input mono" id="sim-amount-' + rowId + '" value="10" min="0" step="1" inputmode="decimal">' +
+        '<span class="sim-unit mono">€ →</span>' +
+        '<select class="sim-select" id="sim-rate-' + rowId + '">' +
+          '<option value="-10">Pessimiste (-10%/mois)</option>' +
+          '<option value="-5">Prudent (-5%/mois)</option>' +
+          '<option value="0">Stable (0%/mois)</option>' +
+          '<option value="2" selected>Modéré (+2%/mois)</option>' +
+          '<option value="5">Optimiste (+5%/mois)</option>' +
+          '<option value="10">Très optimiste (+10%/mois)</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="sim-results" id="sim-results-' + rowId + '"></div>' +
+      simHistHtml +
+      '<div class="sim-note">Simulation mathématique à partir d\'une hypothèse de croissance que tu choisis toi-même — ce n\'est ni une prévision ni un conseil d\'investissement. Les performances passées ne garantissent rien pour l\'avenir et les marchés peuvent faire l\'inverse du scénario choisi.</div>' +
+    '</div>';
+
   // Intensité visuelle proportionnelle à la force du signal : plus un titre
   // est loin devant le lot, plus son pourcentage "rayonne".
   const intensity = Math.max(0, Math.min(1, w.pct_change / maxPct));
@@ -1199,7 +1360,7 @@ function rowHtml(w, maxPct) {
           '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
         '</div>' +
       '</div>' +
-      '<div class="detail"><div class="detail-inner">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + '</div></div>' +
+      '<div class="detail"><div class="detail-inner">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + simulatorHtml + '</div></div>' +
     '</div>'
   );
 }
