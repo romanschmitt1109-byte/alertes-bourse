@@ -362,13 +362,18 @@ def compute_previous_day(old_data, today_str):
 
 def write_results(shown, total_scanned, total_risers, total_quality, now_dt, old_data):
     """Écrit le JSON consommé par le site statique (docs/index.html), en
-    conservant les résultats de la veille, et surtout les "derniers signaux
-    connus" (last_signal) : le dernier jeu de titres ayant déclenché un
-    signal, réaffiché et rafraîchi (prix, graphique) tant qu'aucun nouveau
-    signal n'est trouvé — pour que le site ne soit jamais vide."""
+    conservant les résultats de la veille, les "derniers signaux connus"
+    (last_signal), le marquage des signaux tout juste détectés (is_new) et le
+    suivi de performance depuis la détection de chaque titre (tracking)."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     today_str = now_dt.strftime("%d/%m/%Y")
     previous_day = compute_previous_day(old_data, today_str)
+
+    # "Nouveau" : un titre est marqué nouveau s'il ne figurait pas déjà dans
+    # les résultats du scan précédent.
+    old_shown_tickers = {w["ticker"] for w in (old_data or {}).get("results") or []}
+    for w in shown:
+        w["is_new"] = w["ticker"] not in old_shown_tickers
 
     if shown:
         last_signal = {
@@ -385,6 +390,7 @@ def write_results(shown, total_scanned, total_risers, total_quality, now_dt, old
             for t in tickers:
                 row = enrich_ticker(t)
                 if row:
+                    row["is_new"] = False
                     refreshed.append(row)
             if refreshed:
                 refreshed.sort(key=lambda w: w["pct_change"], reverse=True)
@@ -393,6 +399,40 @@ def write_results(shown, total_scanned, total_risers, total_quality, now_dt, old
                     "generated_at": old_last_signal.get("generated_at"),
                     "results": refreshed,
                 }
+
+    # Suivi de performance depuis la détection : on mémorise le prix au
+    # moment où un titre est détecté pour la première fois, et on calcule
+    # l'évolution depuis, même des jours plus tard. Purement factuel (pas un
+    # conseil) — juste "voici ce qui s'est passé depuis que ce titre a été
+    # repéré".
+    tracking = dict((old_data or {}).get("tracking") or {})
+    for w in shown:
+        t = w["ticker"]
+        if t not in tracking:
+            tracking[t] = {"price": w["price"], "date": today_str}
+    if last_signal and last_signal.get("results"):
+        for w in last_signal["results"]:
+            t = w["ticker"]
+            if t not in tracking:
+                tracking[t] = {"price": w["price"], "date": last_signal.get("date") or today_str}
+
+    def attach_since_signal(rows):
+        for w in rows:
+            tr = tracking.get(w["ticker"])
+            if tr and tr.get("price"):
+                w["since_signal_pct"] = round((w["price"] - tr["price"]) / tr["price"] * 100, 1)
+                w["since_signal_date"] = tr.get("date")
+
+    attach_since_signal(shown)
+    if last_signal and last_signal.get("results"):
+        attach_since_signal(last_signal["results"])
+
+    # On ne garde en mémoire que le suivi des titres encore affichés
+    # quelque part, pour que le fichier ne grossisse pas indéfiniment.
+    active_tickers = {w["ticker"] for w in shown}
+    if last_signal and last_signal.get("results"):
+        active_tickers |= {w["ticker"] for w in last_signal["results"]}
+    tracking = {k: v for k, v in tracking.items() if k in active_tickers}
 
     payload = {
         "generated_at": now_dt.strftime("%d/%m/%Y %H:%M"),
@@ -405,6 +445,7 @@ def write_results(shown, total_scanned, total_risers, total_quality, now_dt, old
         "results": shown,
         "previous_day": previous_day,
         "last_signal": last_signal,
+        "tracking": tracking,
     }
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
