@@ -123,10 +123,11 @@ def passes_quality_filters(ticker, price):
     supplémentaire. Appelé seulement sur les titres déjà repérés en hausse de
     10%+, pour limiter le nombre d'appels.
     Renvoie un dict avec les clés : ok, name, exchange, sector, market_cap,
-    day_volume, avg_volume, summary_raw."""
+    day_volume, avg_volume, summary_raw, analyst."""
     empty = {
         "ok": False, "name": None, "exchange": None, "sector": None,
         "market_cap": None, "day_volume": None, "avg_volume": None, "summary_raw": None,
+        "analyst": None,
     }
     if price < PRICE_MIN:
         return empty
@@ -143,6 +144,7 @@ def passes_quality_filters(ticker, price):
             "ok": False, "name": name, "exchange": exchange, "sector": sector,
             "market_cap": market_cap or None, "day_volume": day_volume,
             "avg_volume": avg_volume or None, "summary_raw": summary_raw,
+            "analyst": extract_analyst_target(info),
         }
         if market_cap < MARKET_CAP_MIN:
             return result
@@ -152,6 +154,34 @@ def passes_quality_filters(ticker, price):
         return result
     except Exception:
         return empty  # par prudence, on écarte si l'info n'est pas récupérable
+
+
+def extract_analyst_target(info):
+    """Extrait le consensus des analystes (objectif de cours, nombre
+    d'analystes, recommandation) directement depuis les données déjà
+    récupérées par Yahoo Finance — aucune requête supplémentaire. Renvoie
+    None si Yahoo Finance ne fournit aucun avis d'analyste pour ce titre
+    (fréquent pour les petites capitalisations peu suivies). C'est un
+    consensus EXTERNE (des analystes de marché), pas une estimation
+    calculée par ce site."""
+    target_mean = info.get("targetMeanPrice")
+    rec_key = info.get("recommendationKey")
+    if not target_mean and not rec_key:
+        return None
+    rec_labels = {
+        "strong_buy": "Achat fort",
+        "buy": "Achat",
+        "hold": "Conserver",
+        "sell": "Vente",
+        "strong_sell": "Vente forte",
+    }
+    return {
+        "target_mean": round(target_mean, 2) if target_mean else None,
+        "target_high": round(info.get("targetHighPrice"), 2) if info.get("targetHighPrice") else None,
+        "target_low": round(info.get("targetLowPrice"), 2) if info.get("targetLowPrice") else None,
+        "num_analysts": info.get("numberOfAnalystOpinions") or None,
+        "recommendation": rec_labels.get(rec_key),
+    }
 
 
 def translate_summary(summary_raw):
@@ -295,6 +325,7 @@ def enrich_ticker(ticker):
         row["chart"] = get_price_charts(ticker)
         row["summary"] = translate_summary(info.get("longBusinessSummary"))
         row["badges"] = compute_risk_badges(row)
+        row["analyst"] = extract_analyst_target(info)
         row.pop("avg_volume", None)
         return row
     except Exception:
@@ -491,6 +522,7 @@ def main():
             w["market_cap"] = q["market_cap"]
             w["day_volume"] = q["day_volume"]
             w["avg_volume"] = q["avg_volume"]
+            w["analyst"] = q["analyst"]
             w["_summary_raw"] = q["summary_raw"]  # traduit plus bas, seulement pour les titres affichés
             quality_winners.append(w)
 
