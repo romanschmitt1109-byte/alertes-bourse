@@ -58,6 +58,11 @@ META_MAX_TRIES = 3
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "docs")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "data.json")
 
+# Liste de suivi : fichier texte facultatif à la racine du dépôt (un ticker par
+# ligne ou séparés par des virgules, # pour un commentaire). Ces titres
+# reçoivent toujours une fiche détaillée complète.
+WATCHLIST_FILE = os.environ.get("WATCHLIST_FILE", "watchlist.txt")
+
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
 RAW_BASES = [
@@ -569,6 +574,22 @@ def build_detail(ticker):
         return None
 
 
+def load_watchlist():
+    try:
+        with open(WATCHLIST_FILE, "r", encoding="utf-8") as f:
+            text = f.read()
+    except Exception:
+        return []
+    out = []
+    for line in text.splitlines():
+        line = line.split("#", 1)[0]
+        for raw in re.split(r"[\s,;]+", line):
+            sym = clean_symbol(raw)
+            if sym and sym not in out:
+                out.append(sym)
+    return out
+
+
 def pick_detail_tickers(universe):
     """Titres à fiche détaillée : les plus échangés, plus les plus fortes
     hausses et baisses du jour parmi les titres réellement échangés."""
@@ -577,7 +598,9 @@ def pick_detail_tickers(universe):
     gainers = sorted(traded, key=lambda u: u["c"], reverse=True)[:DETAIL_TOP_GAINERS]
     losers = sorted(traded, key=lambda u: u["c"])[:DETAIL_TOP_LOSERS]
     picks, seen = [], set()
-    for u in active + gainers + losers:
+    known = {u["t"]: u for u in universe}
+    watch = [known[t] for t in load_watchlist() if t in known]
+    for u in watch + active + gainers + losers:
         if u["t"] not in seen:
             seen.add(u["t"])
             picks.append(u["t"])
