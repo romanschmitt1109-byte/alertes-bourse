@@ -870,6 +870,173 @@
     .refresh-btn.spinning svg { animation: none; }
     .boot-grid, .boot-scanline, .boot-title, .boot-bar-fill { animation: none; }
   }
+
+  /* ---- Plage de prix (slider) ---- */
+  .price-panel {
+    margin-top: 14px;
+    padding: 14px 16px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .pp-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .pp-title { font-size: 0.82rem; font-weight: 600; }
+  .pp-count { font-size: 0.72rem; color: var(--text-faint); text-align: right; }
+  .pp-count b { color: var(--text); font-weight: 600; }
+  .pp-hist {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 34px;
+    margin: 0 11px;
+  }
+  .pp-hist i {
+    flex: 1;
+    min-height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--line);
+    transition: background 0.15s ease;
+  }
+  .pp-hist i.on { background: color-mix(in srgb, var(--gain) 70%, var(--text-faint)); }
+  .pp-slider { position: relative; height: 28px; margin-top: 2px; }
+  .pp-track {
+    position: absolute;
+    left: 11px; right: 11px; top: 12px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+  .pp-fill {
+    position: absolute;
+    top: 0; height: 100%;
+    border-radius: 2px;
+    background: var(--gain);
+    box-shadow: 0 0 8px var(--gain-soft);
+  }
+  .pp-slider input[type=range] {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 28px;
+    margin: 0;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+  }
+  .pp-slider input[type=range]::-webkit-slider-runnable-track { background: transparent; height: 28px; border: none; }
+  .pp-slider input[type=range]::-moz-range-track { background: transparent; height: 28px; border: none; }
+  .pp-slider input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    width: 22px; height: 22px;
+    margin-top: 3px;
+    border-radius: 50%;
+    background: var(--text);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--line), 0 2px 6px #000a;
+    cursor: grab;
+  }
+  .pp-slider input[type=range]::-moz-range-thumb {
+    pointer-events: auto;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--line), 0 2px 6px #000a;
+    cursor: grab;
+  }
+  .pp-slider input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--gain); }
+  .pp-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .pp-inputs .dash { color: var(--text-faint); font-size: 0.8rem; }
+  .pp-field {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 0 10px;
+    min-width: 0;
+  }
+  .pp-field span { color: var(--text-faint); font-size: 0.68rem; }
+  .pp-field input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 0.82rem;
+    padding: 8px 0;
+    text-align: right;
+  }
+  .pp-field input::placeholder { color: var(--text-faint); }
+  .pp-chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .pp-chips::-webkit-scrollbar { display: none; }
+  .pp-chip {
+    appearance: none;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .pp-chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* Liste complète */
+  .nums .pct.loss { color: var(--loss); }
+  .nums .pct.flat { color: var(--text-dim); }
+  .nums .pct { text-shadow: none; }
+  .identity .sub .dim { color: var(--text-faint); }
+  .more-btn {
+    margin-top: 14px;
+    width: 100%;
+    appearance: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 13px 16px;
+    cursor: pointer;
+  }
+  .more-btn:active { background: var(--surface-raised); }
+  .list-meta { margin: 14px 2px 8px; font-size: 0.72rem; color: var(--text-faint); display: flex; justify-content: space-between; gap: 10px; }
+  .link-btn { appearance: none; border: none; background: none; color: var(--gain); font-family: inherit; font-size: inherit; cursor: pointer; padding: 0; }
+  .detail .kpis { flex-wrap: wrap; row-gap: 10px; }
+  .detail .no-detail {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    color: var(--text-faint);
+  }
+  .detail .range-note { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -902,23 +1069,45 @@
     </div>
 
     <div id="marketStatus"></div>
+
+    <div class="price-panel" id="pricePanel" style="display:none">
+      <div class="pp-head">
+        <span class="pp-title">Plage de prix</span>
+        <span class="pp-count" id="ppCount"></span>
+      </div>
+      <div class="pp-hist" id="ppHist" aria-hidden="true"></div>
+      <div class="pp-slider">
+        <div class="pp-track"><div class="pp-fill" id="ppFill"></div></div>
+        <input type="range" id="ppMin" min="0" max="1000" step="1" value="0" aria-label="Prix minimum">
+        <input type="range" id="ppMax" min="0" max="1000" step="1" value="1000" aria-label="Prix maximum">
+      </div>
+      <div class="pp-inputs">
+        <label class="pp-field"><span>Min</span><input type="text" id="ppMinVal" class="mono" inputmode="decimal" placeholder="0" autocomplete="off"><span>$</span></label>
+        <span class="dash">—</span>
+        <label class="pp-field"><span>Max</span><input type="text" id="ppMaxVal" class="mono" inputmode="decimal" placeholder="∞" autocomplete="off"><span>$</span></label>
+      </div>
+      <div class="pp-chips" id="ppChips"></div>
+    </div>
+
     <div class="stats" id="stats"></div>
 
     <div class="toolbar-wrap" id="toolbarWrap">
       <div class="toolbar">
         <div class="search-box" id="searchBox">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input type="text" id="searchInput" placeholder="Rechercher un ticker ou une société" autocomplete="off">
+          <input type="text" id="searchInput" placeholder="Rechercher un ticker ou une société" autocomplete="off" autocapitalize="off" spellcheck="false">
           <button type="button" class="search-clear" id="searchClear" aria-label="Effacer la recherche">✕</button>
         </div>
         <select class="sort-select" id="sortSelect" aria-label="Trier par">
-          <option value="default">Tri par défaut</option>
-          <option value="pct_desc">% hausse ↓</option>
-          <option value="pct_asc">% hausse ↑</option>
           <option value="cap_desc">Capitalisation ↓</option>
           <option value="cap_asc">Capitalisation ↑</option>
+          <option value="pct_desc">Hausse du jour ↓</option>
+          <option value="pct_asc">Baisse du jour ↓</option>
+          <option value="price_desc">Prix ↓</option>
+          <option value="price_asc">Prix ↑</option>
           <option value="vol_desc">Volume ↓</option>
-          <option value="vol_asc">Volume ↑</option>
+          <option value="val_desc">Valeur échangée ↓</option>
+          <option value="name_asc">Nom A → Z</option>
         </select>
       </div>
       <div class="toolbar-filters">
@@ -944,12 +1133,32 @@
   setTimeout(() => boot.classList.add('hidden'), reduce ? 0 : 1300);
 })();
 
+const PAGE_SIZE = 100;
+const BINS = 48;
+const CHIPS = [
+  { label: 'Tout', min: null, max: null },
+  { label: '< 1 $', min: null, max: 1 },
+  { label: '1 – 5 $', min: 1, max: 5 },
+  { label: '5 – 20 $', min: 5, max: 20 },
+  { label: '20 – 100 $', min: 20, max: 100 },
+  { label: '100 – 500 $', min: 100, max: 500 },
+  { label: '500 $ +', min: 500, max: null },
+];
+
 let lastData = null;
+let universe = [];
+let byTicker = {};
+let details = {};
 let searchQuery = '';
-let sortKey = 'default';
+let sortKey = 'cap_desc';
 let filterExchange = 'all';
 let filterSector = 'all';
+let shown = PAGE_SIZE;
+let LO = 1, HI = 1000;       // bornes (échelle logarithmique) du slider
+let minP = null, maxP = null; // plage choisie, null = pas de limite
+let filteredCache = [];
 
+/* ---------- mode compact / détaillé ---------- */
 function getMode() {
   try { return localStorage.getItem('scanner_mode') || 'detailed'; } catch (e) { return 'detailed'; }
 }
@@ -959,14 +1168,13 @@ function setMode(mode) {
   document.getElementById('btnDetailed').classList.toggle('active', mode === 'detailed');
   document.getElementById('btnCompact').classList.toggle('active', mode === 'compact');
 }
-
 document.getElementById('btnDetailed').addEventListener('click', () => setMode('detailed'));
 document.getElementById('btnCompact').addEventListener('click', () => setMode('compact'));
 setMode(getMode());
 
+/* ---------- chargement ---------- */
 async function load(spin) {
   const btn = document.getElementById('refreshBtn');
-  const statsEl = document.getElementById('stats');
   const contentEl = document.getElementById('content');
   if (spin) btn.classList.add('spinning');
   contentEl.classList.remove('ready');
@@ -977,42 +1185,47 @@ async function load(spin) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     data = await res.json();
   } catch (e) {
-    statsEl.innerHTML = '';
-    contentEl.innerHTML = '<div class="status">Pas encore de données — le premier scan n\'a peut-être pas fini de tourner. Réessaie dans quelques minutes.</div>';
-    contentEl.classList.add('ready');
+    showStatus('Pas encore de données — le premier scan n\'a peut-être pas fini de tourner. Réessaie dans quelques minutes.');
+    if (spin) setTimeout(() => btn.classList.remove('spinning'), 400);
+    return;
+  }
+
+  if (!Array.isArray(data.universe)) {
+    showStatus('Les données publiées sont dans l\'ancien format. Lance le scan (Actions → Run workflow) avec le nouveau scanner.py, puis reviens ici.');
     if (spin) setTimeout(() => btn.classList.remove('spinning'), 400);
     return;
   }
 
   lastData = data;
+  universe = data.universe.filter(u => u && u.t && typeof u.p === 'number' && u.p > 0);
+  byTicker = {};
+  universe.forEach(u => { byTicker[u.t] = u; });
+  details = data.details || {};
+
+  setupBounds();
+  populateFilters();
+  document.getElementById('pricePanel').style.display = universe.length ? 'block' : 'none';
+  document.getElementById('toolbarWrap').style.display = universe.length ? 'block' : 'none';
   renderMarketStatus();
-  renderStats(data);
-  renderContent(data);
+  buildHistogram();
+  syncSlider();
+  renderStats();
+  shown = PAGE_SIZE;
+  renderList();
   contentEl.classList.add('ready');
   if (spin) setTimeout(() => btn.classList.remove('spinning'), 400);
 }
 
-function emptyStateHtml() {
-  return (
-    '<div class="empty-state">' +
-      '<div class="radar">' +
-        '<svg viewBox="0 0 100 100" aria-hidden="true">' +
-          '<circle cx="50" cy="50" r="46" fill="none" stroke="var(--line)" stroke-width="1.5"/>' +
-          '<circle cx="50" cy="50" r="30" fill="none" stroke="var(--line)" stroke-width="1.5"/>' +
-          '<circle cx="50" cy="50" r="14" fill="none" stroke="var(--line)" stroke-width="1.5"/>' +
-          '<g class="radar-sweep">' +
-            '<path d="M50,50 L50,4 A46,46 0 0,1 90,28 Z" fill="var(--gain)" opacity="0.14"/>' +
-            '<line x1="50" y1="50" x2="50" y2="4" stroke="var(--gain)" stroke-width="2" stroke-linecap="round"/>' +
-          '</g>' +
-          '<circle cx="50" cy="50" r="2.5" fill="var(--gain)"/>' +
-        '</svg>' +
-      '</div>' +
-      '<div class="headline">Aucun signal pour l\'instant</div>' +
-      '<div class="sub">Rien ne dépasse le seuil, ou rien ne passe les filtres qualité. Le scan continue en arrière-plan.</div>' +
-    '</div>'
-  );
+function showStatus(msg) {
+  document.getElementById('stats').innerHTML = '';
+  document.getElementById('pricePanel').style.display = 'none';
+  document.getElementById('toolbarWrap').style.display = 'none';
+  const el = document.getElementById('content');
+  el.innerHTML = '<div class="status">' + escapeHtml(msg) + '</div>';
+  el.classList.add('ready');
 }
 
+/* ---------- statut du marché ---------- */
 function renderMarketStatus() {
   const el = document.getElementById('marketStatus');
   if (!el) return;
@@ -1023,235 +1236,378 @@ function renderMarketStatus() {
     }).formatToParts(new Date());
     const get = (type) => parts.find(p => p.type === type).value;
     const weekday = get('weekday');
-    const hour = parseInt(get('hour'), 10);
-    const minute = parseInt(get('minute'), 10);
-    const mins = hour * 60 + minute;
-    const isWeekday = !['Sat', 'Sun'].includes(weekday);
-    const isOpen = isWeekday && mins >= 9 * 60 + 30 && mins < 16 * 60;
+    const mins = (parseInt(get('hour'), 10) % 24) * 60 + parseInt(get('minute'), 10);
+    const isOpen = !['Sat', 'Sun'].includes(weekday) && mins >= 9 * 60 + 30 && mins < 16 * 60;
     el.innerHTML = '<span class="market-status ' + (isOpen ? 'open' : 'closed') + '">' +
       '<span class="mdot"></span>' +
-      (isOpen ? 'Marché ouvert (Wall Street)' : 'Marché fermé (Wall Street)') +
-      '</span>';
+      (isOpen ? 'Marché ouvert (Wall Street)' : 'Marché fermé (Wall Street)') + '</span>';
   } catch (e) {
     el.innerHTML = '';
   }
 }
 
-function renderStats(data) {
-  const statsEl = document.getElementById('stats');
-  statsEl.innerHTML =
-    '<div class="stat"><span class="v">' + escapeHtml(data.generated_at) + '</span><span class="l">Dernier scan</span></div>' +
-    '<div class="stat"><span class="v gain">+' + data.threshold_pct + '%</span><span class="l">Seuil</span></div>' +
-    '<div class="stat"><span class="v">' + data.total_scanned + '</span><span class="l">Scannés</span></div>' +
-    '<div class="stat"><span class="v">' + data.total_quality + '</span><span class="l">Retenus</span></div>';
+function renderStats() {
+  let up = 0, down = 0;
+  for (const u of universe) { if (u.c > 0) up++; else if (u.c < 0) down++; }
+  document.getElementById('stats').innerHTML =
+    '<div class="stat"><span class="v">' + escapeHtml(lastData.generated_at || '—') + '</span><span class="l">Dernier scan</span></div>' +
+    '<div class="stat"><span class="v">' + universe.length.toLocaleString('fr-FR') + '</span><span class="l">Actions</span></div>' +
+    '<div class="stat"><span class="v gain">' + up.toLocaleString('fr-FR') + '</span><span class="l">En hausse</span></div>' +
+    '<div class="stat"><span class="v" style="color:var(--loss)">' + down.toLocaleString('fr-FR') + '</span><span class="l">En baisse</span></div>';
 }
 
-function groupedListHtml(results) {
-  const byCategory = {};
-  for (const w of results) (byCategory[w.category] ||= []).push(w);
+/* ---------- slider de prix (échelle logarithmique) ---------- */
+function setupBounds() {
+  let lo = Infinity, hi = 0;
+  for (const u of universe) { if (u.p < lo) lo = u.p; if (u.p > hi) hi = u.p; }
+  if (!isFinite(lo) || hi <= 0) { lo = 1; hi = 1000; }
+  LO = Math.max(lo, 0.0001);
+  HI = hi > LO * 1.01 ? hi : LO * 10;
+  if (minP != null && minP < LO) minP = null;
+  if (maxP != null && maxP > HI) maxP = null;
+}
+const toPrice = (s) => LO * Math.pow(HI / LO, s / 1000);
+const toSlider = (p) => Math.max(0, Math.min(1000, Math.round(1000 * Math.log(p / LO) / Math.log(HI / LO))));
+function niceRound(p) { return Number(p.toPrecision(2)); }
 
-  const categoryOrder = [
-    "NasdaqGS", "Nasdaq Global Select", "NasdaqGM", "Nasdaq Global Market",
-    "NasdaqCM", "Nasdaq Capital Market", "NYSE", "NYSE Arca", "NYSE American",
-    "Cboe BZX", "Cboe US"
-  ];
-  const categories = Object.keys(byCategory).sort((a, b) => {
-    const ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
-    if (ia === -1 && ib === -1) return a.localeCompare(b);
-    if (ia === -1) return 1;
-    if (ib === -1) return -1;
-    return ia - ib;
-  });
+function fmtPrice(p) {
+  if (p == null) return '';
+  if (p < 1) return String(Number(p.toFixed(4)));
+  if (p < 100) return String(Number(p.toFixed(2)));
+  return String(Number(p.toFixed(2)));
+}
 
-  // Plafond pour la jauge visuelle : on cale le 100% de la barre sur le plus
-  // fort gain du lot (minimum 20% pour éviter une jauge écrasée si tout est proche du seuil)
-  const maxPct = Math.max(20, ...results.map(w => w.pct_change));
-
-  let html = '';
-  for (const cat of categories) {
-    const group = byCategory[cat];
-    html += '<div class="exchange"><div class="exchange-head"><span class="name">' +
-      escapeHtml(cat) + '</span><span class="count">' + group.length + '</span></div><div class="list">';
-
-    const bySector = {};
-    for (const w of group) (bySector[w.sector] ||= []).push(w);
-    const sectors = Object.keys(bySector).sort((a, b) => a.localeCompare(b));
-
-    for (const sector of sectors) {
-      html += '<div class="sector-label">' + escapeHtml(sector) + '</div><div class="list" style="border:none;border-radius:0;">';
-      const items = bySector[sector].slice().sort((a, b) =>
-        (a.name || a.ticker).toLowerCase().localeCompare((b.name || b.ticker).toLowerCase())
-      );
-      for (const w of items) html += rowHtml(w, maxPct);
-      html += '</div>';
-    }
-    html += '</div></div>';
+function buildHistogram() {
+  const counts = new Array(BINS).fill(0);
+  const span = Math.log(HI / LO);
+  for (const u of universe) {
+    const f = Math.log(u.p / LO) / span;
+    counts[Math.max(0, Math.min(BINS - 1, Math.floor(f * BINS)))]++;
   }
-  return html;
+  const max = Math.max(1, ...counts);
+  document.getElementById('ppHist').innerHTML = counts.map(c =>
+    '<i style="height:' + Math.max(6, Math.sqrt(c / max) * 100).toFixed(0) + '%"></i>').join('');
 }
 
-function flatListHtml(results) {
-  if (results.length === 0) return '';
-  const maxPct = Math.max(20, ...results.map(w => w.pct_change));
-  let html = '<div class="list">';
-  for (const w of results) html += rowHtml(w, maxPct);
-  html += '</div>';
-  return html;
+function syncSlider() {
+  const sMin = minP == null ? 0 : toSlider(minP);
+  const sMax = maxP == null ? 1000 : toSlider(maxP);
+  const a = document.getElementById('ppMin'), b = document.getElementById('ppMax');
+  a.value = sMin; b.value = sMax;
+  a.style.zIndex = sMin > 900 ? 3 : 2;
+  b.style.zIndex = 2;
+  const fill = document.getElementById('ppFill');
+  fill.style.left = (sMin / 10) + '%';
+  fill.style.width = ((sMax - sMin) / 10) + '%';
+  const hist = document.getElementById('ppHist').children;
+  for (let i = 0; i < hist.length; i++) {
+    const from = i / BINS * 1000, to = (i + 1) / BINS * 1000;
+    hist[i].classList.toggle('on', to > sMin && from < sMax);
+  }
+  const act = document.activeElement;
+  if (act !== document.getElementById('ppMinVal')) document.getElementById('ppMinVal').value = minP == null ? '' : fmtPrice(minP);
+  if (act !== document.getElementById('ppMaxVal')) document.getElementById('ppMaxVal').value = maxP == null ? '' : fmtPrice(maxP);
+  document.getElementById('ppChips').innerHTML = CHIPS.map((c, i) =>
+    '<button type="button" class="pp-chip' + (c.min === minP && c.max === maxP ? ' active' : '') + '" data-i="' + i + '">' + c.label + '</button>').join('');
 }
 
-function populateFilters(results) {
-  const exchangeSel = document.getElementById('filterExchange');
-  const sectorSel = document.getElementById('filterSector');
-  if (!exchangeSel || !sectorSel) return;
+function onSliderInput(which) {
+  let a = parseInt(document.getElementById('ppMin').value, 10);
+  let b = parseInt(document.getElementById('ppMax').value, 10);
+  if (which === 'min' && a > b) a = b;
+  if (which === 'max' && b < a) b = a;
+  minP = a <= 0 ? null : niceRound(toPrice(a));
+  maxP = b >= 1000 ? null : niceRound(toPrice(b));
+  afterRangeChange();
+}
+function afterRangeChange() {
+  syncSlider();
+  shown = PAGE_SIZE;
+  scheduleRender();
+}
+let rafPending = false;
+function scheduleRender() {
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; renderList(); });
+}
+function parsePrice(str) {
+  const n = parseFloat(String(str).replace(',', '.').replace(/[^0-9.]/g, ''));
+  return isFinite(n) && n >= 0 ? n : null;
+}
+document.getElementById('ppMin').addEventListener('input', () => onSliderInput('min'));
+document.getElementById('ppMax').addEventListener('input', () => onSliderInput('max'));
+document.getElementById('ppMinVal').addEventListener('change', (e) => {
+  const v = parsePrice(e.target.value);
+  minP = v == null || v <= 0 ? null : v;
+  if (minP != null && maxP != null && minP > maxP) maxP = minP;
+  afterRangeChange();
+});
+document.getElementById('ppMaxVal').addEventListener('change', (e) => {
+  const v = parsePrice(e.target.value);
+  maxP = v == null || v <= 0 ? null : v;
+  if (minP != null && maxP != null && maxP < minP) minP = maxP;
+  afterRangeChange();
+});
+document.getElementById('ppChips').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pp-chip');
+  if (!btn) return;
+  const c = CHIPS[parseInt(btn.dataset.i, 10)];
+  minP = c.min; maxP = c.max;
+  afterRangeChange();
+});
 
-  const exchanges = [...new Set(results.map(w => w.category).filter(Boolean))].sort();
-  const sectors = [...new Set(results.map(w => w.sector).filter(Boolean))].sort();
-
-  exchangeSel.innerHTML = '<option value="all">Toutes les bourses</option>' +
-    exchanges.map(e => '<option value="' + escapeAttr(e) + '">' + escapeHtml(e) + '</option>').join('');
-  sectorSel.innerHTML = '<option value="all">Tous les secteurs</option>' +
-    sectors.map(s => '<option value="' + escapeAttr(s) + '">' + escapeHtml(s) + '</option>').join('');
-
-  exchangeSel.value = exchanges.includes(filterExchange) ? filterExchange : 'all';
-  sectorSel.value = sectors.includes(filterSector) ? filterSector : 'all';
-  filterExchange = exchangeSel.value;
-  filterSector = sectorSel.value;
+/* ---------- filtres, tri, liste ---------- */
+function populateFilters() {
+  const ex = [...new Set(universe.map(u => u.x).filter(Boolean))].sort();
+  const sec = [...new Set(universe.map(u => u.g).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+  const exSel = document.getElementById('filterExchange');
+  const secSel = document.getElementById('filterSector');
+  exSel.innerHTML = '<option value="all">Toutes les bourses</option>' +
+    ex.map(e => '<option value="' + escapeAttr(e) + '">' + escapeHtml(e) + '</option>').join('');
+  secSel.innerHTML = '<option value="all">Tous les secteurs</option>' +
+    sec.map(s => '<option value="' + escapeAttr(s) + '">' + escapeHtml(s) + '</option>').join('');
+  if (!ex.includes(filterExchange)) filterExchange = 'all';
+  if (!sec.includes(filterSector)) filterSector = 'all';
+  exSel.value = filterExchange;
+  secSel.value = filterSector;
 }
 
-function applyFiltersAndSort(results) {
+function getFiltered() {
   const q = searchQuery.trim().toLowerCase();
-  let out = results.filter(w => {
-    if (filterExchange !== 'all' && w.category !== filterExchange) return false;
-    if (filterSector !== 'all' && w.sector !== filterSector) return false;
-    if (q) {
-      const hay = ((w.name || '') + ' ' + (w.ticker || '')).toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
+  const out = universe.filter(u => {
+    if (minP != null && u.p < minP) return false;
+    if (maxP != null && u.p > maxP) return false;
+    if (filterExchange !== 'all' && u.x !== filterExchange) return false;
+    if (filterSector !== 'all' && u.g !== filterSector) return false;
+    if (q && !(u.t.toLowerCase().includes(q) || (u.n || '').toLowerCase().includes(q))) return false;
     return true;
   });
-
-  if (sortKey !== 'default') {
-    const [field, dir] = sortKey.split('_');
-    const prop = field === 'pct' ? 'pct_change' : field === 'cap' ? 'market_cap' : 'day_volume';
-    out = out.slice().sort((a, b) => {
-      const va = a[prop] || 0, vb = b[prop] || 0;
-      return dir === 'asc' ? va - vb : vb - va;
+  const [field, dir] = sortKey.split('_');
+  const val = {
+    cap: u => u.m, pct: u => u.c, price: u => u.p, vol: u => u.v,
+    val: u => (u.v ? u.v * u.p : null),
+  }[field];
+  if (field === 'name') {
+    out.sort((a, b) => (a.n || a.t).localeCompare(b.n || b.t, 'en'));
+  } else {
+    const sign = (field === 'pct' ? dir === 'asc' : dir === 'asc') ? 1 : -1;
+    out.sort((a, b) => {
+      const va = val(a), vb = val(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;      // valeurs inconnues toujours en bas
+      if (vb == null) return -1;
+      return (va - vb) * sign;
     });
   }
   return out;
 }
 
-let chartStore = {};
-let simStore = {};
-let rowIdSeq = 0;
+function renderList() {
+  const contentEl = document.getElementById('content');
+  filteredCache = getFiltered();
+  const total = filteredCache.length;
 
+  const lo = minP == null ? 'min' : fmtPrice(minP) + ' $';
+  const hi = maxP == null ? 'max' : fmtPrice(maxP) + ' $';
+  document.getElementById('ppCount').innerHTML =
+    '<b>' + total.toLocaleString('fr-FR') + '</b> action' + (total > 1 ? 's' : '') +
+    (minP == null && maxP == null ? '' : ' entre ' + lo + ' et ' + hi);
+
+  if (total === 0) {
+    contentEl.innerHTML = '<div class="empty-filter">Aucune action ne correspond à cette plage de prix ou à ces filtres.' +
+      '<div style="margin-top:10px"><button type="button" class="link-btn" id="resetAll">Tout réinitialiser</button></div></div>';
+    return;
+  }
+
+  const slice = filteredCache.slice(0, shown);
+  let html = '<div class="list-meta"><span>' + Math.min(shown, total).toLocaleString('fr-FR') + ' sur ' +
+    total.toLocaleString('fr-FR') + ' affichées</span>' +
+    (minP != null || maxP != null || filterExchange !== 'all' || filterSector !== 'all' || searchQuery
+      ? '<button type="button" class="link-btn" id="resetAll">Réinitialiser</button>' : '') + '</div>';
+  html += '<div class="list" id="rows">' + slice.map(rowHtml).join('') + '</div>';
+  if (total > shown) {
+    html += '<button type="button" class="more-btn" id="moreBtn">Afficher ' + Math.min(PAGE_SIZE, total - shown) +
+      ' de plus (' + (total - shown).toLocaleString('fr-FR') + ' restantes)</button>';
+  }
+  contentEl.innerHTML = html;
+}
+
+function resetAll() {
+  minP = null; maxP = null; filterExchange = 'all'; filterSector = 'all';
+  searchQuery = ''; document.getElementById('searchInput').value = '';
+  document.getElementById('searchBox').classList.remove('has-value');
+  document.getElementById('filterExchange').value = 'all';
+  document.getElementById('filterSector').value = 'all';
+  shown = PAGE_SIZE;
+  syncSlider();
+  renderList();
+}
+
+/* ---------- lignes et fiches ---------- */
 const RANGE_DEFS = [
-  { key: '1j', label: '1 j' },
-  { key: '5j', label: '5 j' },
-  { key: '1m', label: '1 m' },
-  { key: '6m', label: '6 m' },
-  { key: '1a', label: '1 an' },
+  { key: '1j', label: '1 j' }, { key: '5j', label: '5 j' }, { key: '1m', label: '1 m' },
+  { key: '6m', label: '6 m' }, { key: '1a', label: '1 an' },
 ];
 
-function renderContent(data) {
-  const contentEl = document.getElementById('content');
-  const previousDay = data.previous_day;
-  const lastSignal = data.last_signal;
+function formatBig(n) {
+  const abs = Math.abs(n);
+  if (abs >= 1e12) return (n / 1e12).toFixed(2).replace(/\.?0+$/, '') + ' Bn';
+  if (abs >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, '') + ' Md';
+  if (abs >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + ' M';
+  if (abs >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + ' k';
+  return String(n);
+}
+function logoUrl(ticker) {
+  return 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(ticker) + '.png';
+}
 
-  let results = data.results || [];
-  let bannerHtml = '';
-  if (results.length === 0 && lastSignal && lastSignal.results && lastSignal.results.length > 0) {
-    results = lastSignal.results;
-    bannerHtml = '<div class="status" style="margin-bottom:14px;">Aucun nouveau signal pour l\'instant — voici les derniers titres repérés (' +
-      escapeHtml(lastSignal.date || '') + '), avec leur dernière clôture.</div>';
-  }
+function rowHtml(u) {
+  const spark = (u.s && u.s.length >= 2) ? sparkline(u.s, 50, 26) : '';
+  const cls = u.c > 0 ? '' : (u.c < 0 ? ' loss' : ' flat');
+  const sign = u.c > 0 ? '+' : '';
+  const det = details[u.t];
+  const topLevel = det && det.badges && det.badges.length ? det.badges[0].level : null;
+  const riskDot = topLevel ? '<span class="risk-dot lvl-' + topLevel + '" aria-hidden="true"></span>' : '';
+  const sub = escapeHtml(u.t) + (u.m ? '<span class="dim">· ' + formatBig(u.m) + '$</span>' : (u.x ? '<span class="dim">· ' + escapeHtml(u.x) + '</span>' : '')) + riskDot;
+  return (
+    '<div class="row" data-t="' + escapeAttr(u.t) + '">' +
+      '<div class="avatar">' +
+        '<img src="' + escapeAttr(logoUrl(u.t)) + '" alt="" loading="lazy" ' +
+          'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
+        '<span class="initials mono">' + escapeHtml(u.t.slice(0, 3)) + '</span>' +
+      '</div>' +
+      '<div class="identity">' +
+        '<div class="name"><span class="name-text">' + escapeHtml(u.n || u.t) + '</span></div>' +
+        '<div class="sub mono">' + sub + '</div>' +
+      '</div>' +
+      '<div class="figures">' +
+        (spark ? '<svg class="spark" viewBox="0 0 50 26" preserveAspectRatio="none">' + spark + '</svg>' : '') +
+        '<div class="nums">' +
+          '<div class="pct mono' + cls + '">' + sign + u.c.toFixed(2) + '%</div>' +
+          '<div class="price mono">' + fmtPrice(u.p) + '$</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="detail"><div class="detail-inner"></div></div>' +
+    '</div>'
+  );
+}
 
-  chartStore = {};
-  simStore = {};
-  rowIdSeq = 0;
-
-  const toolbarWrap = document.getElementById('toolbarWrap');
-  if (toolbarWrap) toolbarWrap.style.display = results.length > 0 ? 'block' : 'none';
-
-  let html = bannerHtml;
-  if (results.length === 0) {
-    html += emptyStateHtml();
+function detailHtml(u) {
+  const det = details[u.t];
+  const chart = det && det.chart;
+  const hasLong = chart && (((chart.intraday || []).length >= 2) || ((chart.daily || []).length >= 2));
+  let chartHtml;
+  if (hasLong) {
+    chartHtml =
+      '<div class="range-seg">' +
+        RANGE_DEFS.map(r => '<button type="button" class="range-btn" data-range="' + r.key + '">' + r.label + '</button>').join('') +
+      '</div>' +
+      '<svg class="chart-big" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>' +
+      '<div class="range"></div>';
+  } else if (u.s && u.s.length >= 2) {
+    chartHtml = '<div class="range-note">5 dernières séances</div>' +
+      '<svg class="chart-big" viewBox="0 0 300 100" preserveAspectRatio="none">' + sparkline(u.s, 300, 100, true) + '</svg>' +
+      '<div class="range"><span>' + fmtPrice(u.s[0]) + '$</span><span>' + fmtPrice(u.s[u.s.length - 1]) + '$</span></div>';
   } else {
-    populateFilters(results);
-    const filtered = applyFiltersAndSort(results);
-    if (filtered.length === 0) {
-      html += '<div class="empty-filter">Aucun résultat ne correspond à ta recherche ou tes filtres.</div>';
-    } else if (sortKey === 'default') {
-      html += groupedListHtml(filtered);
-    } else {
-      html += flatListHtml(filtered);
-    }
+    chartHtml = '<div class="no-chart">Pas assez de données pour un graphique.</div>';
   }
 
-  if (previousDay && previousDay.results && previousDay.results.length > 0) {
-    html +=
-      '<button type="button" class="prev-toggle" id="prevToggle">' +
-        '<span>Veille — ' + escapeHtml(previousDay.date) + ' (' + previousDay.results.length + ' titre(s))</span>' +
-        '<span class="chev">⌄</span>' +
-      '</button>' +
-      '<div class="prev-section" id="prevSection">' + groupedListHtml(previousDay.results) + '</div>';
-  }
+  const kpis = '<div class="kpis">' +
+    (u.m ? '<div class="kpi"><span class="v mono">' + formatBig(u.m) + '$</span><span class="l">Capitalisation</span></div>' : '') +
+    (u.v ? '<div class="kpi"><span class="v mono">' + formatBig(u.v) + '</span><span class="l">Volume</span></div>' : '') +
+    (u.x ? '<div class="kpi"><span class="v">' + escapeHtml(u.x) + '</span><span class="l">Bourse</span></div>' : '') +
+    (u.g ? '<div class="kpi"><span class="v">' + escapeHtml(u.g) + '</span><span class="l">Secteur</span></div>' : '') +
+    '</div>';
 
-  contentEl.innerHTML = html;
-
-  contentEl.querySelectorAll('.row').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.range-btn') || e.target.closest('.sim')) return;
-      el.classList.toggle('open');
-    });
-  });
-
-  contentEl.querySelectorAll('.range-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const seg = btn.closest('.range-seg');
-      if (!seg) return;
-      drawRange(seg.dataset.rowId, btn.dataset.range);
-    });
-  });
-
-  contentEl.querySelectorAll('.sim').forEach(simEl => {
-    const rowId = simEl.dataset.rowId;
-    const amountEl = document.getElementById('sim-amount-' + rowId);
-    const rateEl = document.getElementById('sim-rate-' + rowId);
-    if (amountEl) {
-      amountEl.addEventListener('click', (e) => e.stopPropagation());
-      amountEl.addEventListener('input', () => updateSim(rowId));
+  let extra = '';
+  if (det) {
+    if (det.summary) extra += '<div class="summary">' + escapeHtml(det.summary) + '</div>';
+    const badges = det.badges || [];
+    if (badges.length) {
+      extra += '<div class="badges-label">Repères</div><div class="badges">' +
+        badges.map(b => '<span class="badge lvl-' + b.level + '"><span class="dot"></span>' + escapeHtml(b.label) + '</span>').join('') + '</div>';
     }
-    if (rateEl) {
-      rateEl.addEventListener('click', (e) => e.stopPropagation());
-      rateEl.addEventListener('change', () => updateSim(rowId));
+    if (det.news && det.news.title) {
+      extra += det.news.link
+        ? '<div class="news">' + escapeHtml(det.news.title) + ' — <a href="' + escapeAttr(det.news.link) + '" target="_blank" rel="noopener">lire</a></div>'
+        : '<div class="news">' + escapeHtml(det.news.title) + '</div>';
     }
-    updateSim(rowId);
-  });
-
-  // Dessine le graphique par défaut de chaque ligne (la période la plus
-  // courte disposant d'assez de points).
-  Object.keys(chartStore).forEach(rowId => {
-    const def = pickDefaultRange(chartStore[rowId]);
-    if (def) drawRange(rowId, def);
-  });
-
-  const prevToggle = document.getElementById('prevToggle');
-  const prevSection = document.getElementById('prevSection');
-  if (prevToggle && prevSection) {
-    prevToggle.addEventListener('click', () => {
-      prevToggle.classList.toggle('open');
-      prevSection.classList.toggle('open');
-    });
+    extra += analystHtml(det.analyst, u.p);
+  } else {
+    extra = '<div class="no-detail">Fiche détaillée (résumé, actualité, analystes, graphiques 1 mois → 1 an) disponible pour les titres les plus échangés et ceux qui bougent le plus aujourd\'hui.</div>';
   }
+  return chartHtml + kpis + extra + simulatorHtml();
+}
+
+function analystHtml(a, price) {
+  if (!a || !a.target_mean) {
+    return '<div class="analyst"><div class="analyst-label"><span class="l">Consensus d\'analystes</span></div><div class="no-analyst">Aucun avis d\'analyste disponible pour ce titre.</div></div>';
+  }
+  const low = a.target_low || a.target_mean;
+  const high = a.target_high || a.target_mean;
+  const span = (high - low) || 1;
+  const meanPos = Math.max(0, Math.min(100, ((a.target_mean - low) / span) * 100));
+  const pricePos = Math.max(0, Math.min(100, ((price - low) / span) * 100));
+  const upside = Math.round(((a.target_mean - price) / price) * 1000) / 10;
+  const upColor = upside >= 0 ? 'var(--gain)' : 'var(--loss)';
+  const recClass = a.recommendation === 'Achat fort' || a.recommendation === 'Achat' ? 'buy'
+    : a.recommendation === 'Vente' || a.recommendation === 'Vente forte' ? 'sell'
+    : a.recommendation === 'Conserver' ? 'hold' : '';
+  const recHtml = a.recommendation ? '<span class="analyst-rec ' + recClass + '">' + escapeHtml(a.recommendation) + '</span>' : '';
+  return (
+    '<div class="analyst">' +
+      '<div class="analyst-label"><span class="l">Consensus d\'analystes</span>' + recHtml + '</div>' +
+      '<div class="analyst-targets"><span>' + low.toFixed(2) + '$</span><span class="mono mid">' + a.target_mean.toFixed(2) + '$</span><span>' + high.toFixed(2) + '$</span></div>' +
+      '<div class="analyst-bar"><div class="range-fill" style="left:0%;width:100%"></div>' +
+        '<div class="price-dot" style="left:' + pricePos.toFixed(1) + '%" title="Cours actuel"></div>' +
+        '<div class="mean-dot" style="left:' + meanPos.toFixed(1) + '%" title="Objectif moyen"></div></div>' +
+      '<div class="analyst-upside">Objectif moyen <span class="mono" style="color:' + upColor + ';font-weight:600">' + (upside >= 0 ? '+' : '') + upside + '%</span> par rapport au cours actuel (' + fmtPrice(price) + '$).</div>' +
+      (a.num_analysts ? '<div class="analyst-meta">Basé sur ' + a.num_analysts + ' analyste' + (a.num_analysts > 1 ? 's' : '') + '.</div>' : '') +
+      '<div class="analyst-note">Consensus d\'analystes financiers externes (via Yahoo Finance) — ce n\'est pas une estimation de ce site et ça ne garantit rien sur l\'évolution réelle du cours.</div>' +
+    '</div>'
+  );
+}
+
+function simulatorHtml() {
+  return (
+    '<div class="sim">' +
+      '<div class="sim-label">Simulateur (argent fictif)</div>' +
+      '<div class="sim-row">' +
+        '<input type="number" class="sim-input mono" value="10" min="0" step="1" inputmode="decimal">' +
+        '<span class="sim-unit mono">€ →</span>' +
+        '<select class="sim-select">' +
+          '<option value="-10">Pessimiste (-10%/mois)</option>' +
+          '<option value="-5">Prudent (-5%/mois)</option>' +
+          '<option value="0">Stable (0%/mois)</option>' +
+          '<option value="2" selected>Modéré (+2%/mois)</option>' +
+          '<option value="5">Optimiste (+5%/mois)</option>' +
+          '<option value="10">Très optimiste (+10%/mois)</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="sim-results"></div>' +
+      '<div class="sim-note">Simulation mathématique à partir d\'une hypothèse de croissance que tu choisis toi-même — ce n\'est ni une prévision ni un conseil d\'investissement. Les performances passées ne garantissent rien pour l\'avenir et les marchés peuvent faire l\'inverse du scénario choisi.</div>' +
+    '</div>'
+  );
+}
+
+function updateSim(simEl) {
+  const amount = Math.max(0, parseFloat(simEl.querySelector('.sim-input').value) || 0);
+  const rate = (parseFloat(simEl.querySelector('.sim-select').value) || 0) / 100;
+  simEl.querySelector('.sim-results').innerHTML = [
+    ['1 mois', 1], ['3 mois', 3], ['6 mois', 6], ['1 an', 12],
+  ].map(([label, m]) => {
+    const value = amount * Math.pow(1 + rate, m);
+    const color = value >= amount ? 'var(--gain)' : 'var(--loss)';
+    return '<div class="sim-cell"><span class="v mono" style="color:' + color + '">' + value.toFixed(2) + ' €</span><span class="l">Dans ' + label + '</span></div>';
+  }).join('');
 }
 
 function pointsForRange(chart, key) {
   if (!chart) return [];
   if (key === '1j') {
     const intraday = chart.intraday || [];
-    if (intraday.length === 0) return [];
+    if (!intraday.length) return [];
     const lastDate = intraday[intraday.length - 1].t.slice(0, 10);
     return intraday.filter(p => p.t.slice(0, 10) === lastDate);
   }
@@ -1262,261 +1618,94 @@ function pointsForRange(chart, key) {
   if (key === '1a') return daily.slice(-252);
   return daily;
 }
-
 function pickDefaultRange(chart) {
-  if (!chart) return null;
   for (const key of ['5j', '1j', '1m', '6m', '1a']) {
     if (pointsForRange(chart, key).length >= 2) return key;
   }
   return null;
 }
-
 function formatPointDate(iso) {
-  try {
-    return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-  } catch (e) {
-    return '';
-  }
+  try { return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }); } catch (e) { return ''; }
 }
-
-function drawRange(rowId, key) {
-  const chart = chartStore[rowId];
-  const svg = document.getElementById('chart-' + rowId);
-  const info = document.getElementById('rangeinfo-' + rowId);
-  const seg = document.querySelector('.range-seg[data-row-id="' + rowId + '"]');
+function drawRange(rowEl, key) {
+  const u = byTicker[rowEl.dataset.t];
+  const chart = details[rowEl.dataset.t] && details[rowEl.dataset.t].chart;
+  const svg = rowEl.querySelector('.chart-big');
+  const info = rowEl.querySelector('.range');
   if (!svg || !chart) return;
-
-  if (seg) {
-    seg.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b.dataset.range === key));
-  }
-
+  rowEl.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b.dataset.range === key));
   const points = pointsForRange(chart, key);
   if (points.length < 2) {
     svg.innerHTML = '';
     if (info) info.textContent = 'Pas assez de données pour cette période.';
     return;
   }
-
   const values = points.map(p => p.c);
   svg.innerHTML = sparkline(values, 300, 100, true);
   if (info) {
-    info.innerHTML =
-      '<span>' + formatPointDate(points[0].t) + ' · ' + values[0] + '$</span>' +
+    info.innerHTML = '<span>' + formatPointDate(points[0].t) + ' · ' + values[0] + '$</span>' +
       '<span>' + formatPointDate(points[points.length - 1].t) + ' · ' + values[values.length - 1] + '$</span>';
   }
 }
 
-function updateSim(rowId) {
-  const amountEl = document.getElementById('sim-amount-' + rowId);
-  const rateEl = document.getElementById('sim-rate-' + rowId);
-  const resultsEl = document.getElementById('sim-results-' + rowId);
-  if (!amountEl || !rateEl || !resultsEl) return;
-
-  const amount = Math.max(0, parseFloat(amountEl.value) || 0);
-  const rate = (parseFloat(rateEl.value) || 0) / 100;
-  const periods = [
-    { label: '1 mois', m: 1 },
-    { label: '3 mois', m: 3 },
-    { label: '6 mois', m: 6 },
-    { label: '1 an', m: 12 },
-  ];
-
-  resultsEl.innerHTML = periods.map(p => {
-    const value = amount * Math.pow(1 + rate, p.m);
-    const color = value >= amount ? 'var(--gain)' : (value < amount ? 'var(--loss)' : 'var(--text)');
-    return '<div class="sim-cell"><span class="v mono" style="color:' + color + '">' + value.toFixed(2) + ' €</span><span class="l">Dans ' + p.label + '</span></div>';
-  }).join('');
-}
-
-function formatBig(n) {
-  const abs = Math.abs(n);
-  if (abs >= 1e9) return (n / 1e9).toFixed(2).replace(/\.00$/, '') + ' Md';
-  if (abs >= 1e6) return (n / 1e6).toFixed(2).replace(/\.00$/, '') + ' M';
-  if (abs >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + ' k';
-  return String(n);
-}
-
-function logoUrl(ticker) {
-  return 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(ticker) + '.png';
-}
-
-function rowHtml(w, maxPct) {
-  const rowId = 'r' + (rowIdSeq++);
-  chartStore[rowId] = w.chart || null;
-
-  const intradayVals = ((w.chart && w.chart.intraday) || []).map(p => p.c);
-  const initials = (w.ticker || '??').slice(0, 3);
-  const sparkSvg = intradayVals.length >= 2 ? sparkline(intradayVals, 50, 26) : '';
-  const gaugePct = Math.max(6, Math.min(100, (w.pct_change / maxPct) * 100));
-
-  const hasChart = w.chart && (((w.chart.intraday || []).length >= 2) || ((w.chart.daily || []).length >= 2));
-  let detail;
-  if (hasChart) {
-    detail =
-      '<div class="range-seg" data-row-id="' + rowId + '">' +
-        RANGE_DEFS.map(r => '<button type="button" class="range-btn" data-range="' + r.key + '">' + r.label + '</button>').join('') +
-      '</div>' +
-      '<svg class="chart-big" id="chart-' + rowId + '" viewBox="0 0 300 100" preserveAspectRatio="none"></svg>' +
-      '<div class="range" id="rangeinfo-' + rowId + '"></div>';
+function openRow(rowEl) {
+  const inner = rowEl.querySelector('.detail-inner');
+  if (!rowEl.dataset.built) {
+    const u = byTicker[rowEl.dataset.t];
+    if (!u) return;
+    inner.innerHTML = detailHtml(u);
+    rowEl.dataset.built = '1';
+    const det = details[u.t];
+    if (det && det.chart) {
+      const def = pickDefaultRange(det.chart);
+      if (def) drawRange(rowEl, def);
+    }
+    const sim = rowEl.querySelector('.sim');
+    if (sim) updateSim(sim);
+    requestAnimationFrame(() => rowEl.classList.add('open'));
   } else {
-    detail = '<div class="no-chart">Pas assez de données pour un graphique.</div>';
+    rowEl.classList.toggle('open');
   }
-
-  let newsHtml = '';
-  if (w.news && w.news.title) {
-    newsHtml = w.news.link
-      ? '<div class="news">' + escapeHtml(w.news.title) + ' — <a href="' + escapeAttr(w.news.link) + '" target="_blank" rel="noopener">lire</a></div>'
-      : '<div class="news">' + escapeHtml(w.news.title) + '</div>';
-  }
-
-  let kpisHtml = '';
-  if (w.market_cap || w.day_volume || typeof w.since_signal_pct === 'number') {
-    const sincePct = w.since_signal_pct;
-    const sinceColor = typeof sincePct === 'number' ? (sincePct >= 0 ? 'var(--gain)' : 'var(--loss)') : '';
-    const sinceSign = typeof sincePct === 'number' && sincePct >= 0 ? '+' : '';
-    kpisHtml = '<div class="kpis">' +
-      (w.market_cap ? '<div class="kpi"><span class="v mono">' + formatBig(w.market_cap) + '$</span><span class="l">Capitalisation</span></div>' : '') +
-      (w.day_volume ? '<div class="kpi"><span class="v mono">' + formatBig(w.day_volume) + '</span><span class="l">Volume du jour</span></div>' : '') +
-      (typeof sincePct === 'number'
-        ? '<div class="kpi"><span class="v mono" style="color:' + sinceColor + '">' + sinceSign + sincePct + '%</span><span class="l">Depuis le signal' + (w.since_signal_date ? ' (' + escapeHtml(w.since_signal_date) + ')' : '') + '</span></div>'
-        : '') +
-      '</div>';
-  }
-
-  const summaryHtml = w.summary ? '<div class="summary">' + escapeHtml(w.summary) + '</div>' : '';
-
-  const badges = w.badges || [];
-  const topLevel = badges.length ? badges[0].level : null;
-  const riskDotHtml = topLevel ? '<span class="risk-dot lvl-' + topLevel + '" aria-hidden="true"></span>' : '';
-  const badgesHtml = badges.length
-    ? '<div class="badges-label">Repères</div><div class="badges">' +
-      badges.map(b => '<span class="badge lvl-' + b.level + '"><span class="dot"></span>' + escapeHtml(b.label) + '</span>').join('') +
-      '</div>'
-    : '';
-
-  const newPillHtml = w.is_new ? '<span class="new-pill">NOUVEAU</span>' : '';
-
-  const a = w.analyst;
-  let analystHtml;
-  if (a && a.target_mean) {
-    const low = a.target_low || a.target_mean;
-    const high = a.target_high || a.target_mean;
-    const span = (high - low) || 1;
-    const meanPos = Math.max(0, Math.min(100, ((a.target_mean - low) / span) * 100));
-    const pricePos = Math.max(0, Math.min(100, ((w.price - low) / span) * 100));
-    const upside = Math.round(((a.target_mean - w.price) / w.price) * 1000) / 10;
-    const upsideColor = upside >= 0 ? 'var(--gain)' : 'var(--loss)';
-    const upsideSign = upside >= 0 ? '+' : '';
-    const recClass = a.recommendation === 'Achat fort' || a.recommendation === 'Achat' ? 'buy'
-      : a.recommendation === 'Vente' || a.recommendation === 'Vente forte' ? 'sell'
-      : a.recommendation === 'Conserver' ? 'hold' : '';
-    const recHtml = a.recommendation ? '<span class="analyst-rec ' + recClass + '">' + escapeHtml(a.recommendation) + '</span>' : '';
-    analystHtml =
-      '<div class="analyst">' +
-        '<div class="analyst-label"><span class="l">Consensus d\'analystes</span>' + recHtml + '</div>' +
-        '<div class="analyst-targets">' +
-          '<span>' + low.toFixed(2) + '$</span>' +
-          '<span class="mono mid">' + a.target_mean.toFixed(2) + '$</span>' +
-          '<span>' + high.toFixed(2) + '$</span>' +
-        '</div>' +
-        '<div class="analyst-bar">' +
-          '<div class="range-fill" style="left:0%;width:100%"></div>' +
-          '<div class="price-dot" style="left:' + pricePos.toFixed(1) + '%" title="Cours actuel"></div>' +
-          '<div class="mean-dot" style="left:' + meanPos.toFixed(1) + '%" title="Objectif moyen"></div>' +
-        '</div>' +
-        '<div class="analyst-upside">Objectif moyen ' +
-          '<span class="mono" style="color:' + upsideColor + ';font-weight:600">' + upsideSign + upside + '%</span>' +
-          ' par rapport au cours actuel (' + w.price + '$).</div>' +
-        (a.num_analysts ? '<div class="analyst-meta">Basé sur ' + a.num_analysts + ' analyste' + (a.num_analysts > 1 ? 's' : '') + '.</div>' : '') +
-        '<div class="analyst-note">Consensus d\'analystes financiers externes (via Yahoo Finance) — ce n\'est pas une estimation de ce site et ça ne garantit rien sur l\'évolution réelle du cours.</div>' +
-      '</div>';
-  } else {
-    analystHtml = '<div class="analyst"><div class="analyst-label"><span class="l">Consensus d\'analystes</span></div><div class="no-analyst">Aucun avis d\'analyste disponible pour ce titre.</div></div>';
-  }
-
-  simStore[rowId] = {
-    sincePct: typeof w.since_signal_pct === 'number' ? w.since_signal_pct : null,
-    sinceDate: w.since_signal_date || null,
-  };
-  let simHistHtml = '';
-  if (typeof w.since_signal_pct === 'number') {
-    const sp = w.since_signal_pct;
-    const spColor = sp >= 0 ? 'var(--gain)' : 'var(--loss)';
-    const spSign = sp >= 0 ? '+' : '';
-    simHistHtml = '<div class="sim-hist">Pour comparaison : un montant investi réellement au moment du signal' +
-      (w.since_signal_date ? ' (' + escapeHtml(w.since_signal_date) + ')' : '') + ' vaudrait aujourd\'hui ' +
-      '<span class="mono" style="color:' + spColor + '">' + spSign + sp + '%</span> — chiffre basé sur l\'évolution réelle du cours, pas une estimation.</div>';
-  }
-  const simulatorHtml =
-    '<div class="sim" data-row-id="' + rowId + '">' +
-      '<div class="sim-label">Simulateur (argent fictif)</div>' +
-      '<div class="sim-row">' +
-        '<input type="number" class="sim-input mono" id="sim-amount-' + rowId + '" value="10" min="0" step="1" inputmode="decimal">' +
-        '<span class="sim-unit mono">€ →</span>' +
-        '<select class="sim-select" id="sim-rate-' + rowId + '">' +
-          '<option value="-10">Pessimiste (-10%/mois)</option>' +
-          '<option value="-5">Prudent (-5%/mois)</option>' +
-          '<option value="0">Stable (0%/mois)</option>' +
-          '<option value="2" selected>Modéré (+2%/mois)</option>' +
-          '<option value="5">Optimiste (+5%/mois)</option>' +
-          '<option value="10">Très optimiste (+10%/mois)</option>' +
-        '</select>' +
-      '</div>' +
-      '<div class="sim-results" id="sim-results-' + rowId + '"></div>' +
-      simHistHtml +
-      '<div class="sim-note">Simulation mathématique à partir d\'une hypothèse de croissance que tu choisis toi-même — ce n\'est ni une prévision ni un conseil d\'investissement. Les performances passées ne garantissent rien pour l\'avenir et les marchés peuvent faire l\'inverse du scénario choisi.</div>' +
-    '</div>';
-
-  // Intensité visuelle proportionnelle à la force du signal : plus un titre
-  // est loin devant le lot, plus son pourcentage "rayonne".
-  const intensity = Math.max(0, Math.min(1, w.pct_change / maxPct));
-  const glow = (2 + intensity * 9).toFixed(1);
-  const pctStyle = 'text-shadow:0 0 ' + glow + 'px var(--gain-soft)';
-
-  return (
-    '<div class="row">' +
-      '<div class="avatar">' +
-        '<img src="' + escapeAttr(logoUrl(w.ticker)) + '" alt="" loading="lazy" ' +
-          'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
-        '<span class="initials mono">' + escapeHtml(initials) + '</span>' +
-      '</div>' +
-      '<div class="identity">' +
-        '<div class="name"><span class="name-text">' + escapeHtml(w.name || w.ticker) + '</span>' + newPillHtml + '</div>' +
-        '<div class="sub mono">' + escapeHtml(w.ticker) + riskDotHtml + '</div>' +
-      '</div>' +
-      '<div class="figures">' +
-        (sparkSvg ? '<svg class="spark" viewBox="0 0 50 26" preserveAspectRatio="none">' + sparkSvg + '</svg>' : '') +
-        '<div class="nums">' +
-          '<div class="pct mono" style="' + pctStyle + '">+' + w.pct_change + '%</div>' +
-          '<div class="price mono">' + w.price + '$</div>' +
-          '<div class="gauge"><div class="gauge-fill" style="width:' + gaugePct.toFixed(0) + '%"></div></div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="detail"><div class="detail-inner">' + detail + kpisHtml + summaryHtml + badgesHtml + newsHtml + analystHtml + simulatorHtml + '</div></div>' +
-    '</div>'
-  );
 }
 
+/* ---------- événements de la liste (délégation) ---------- */
+const contentRoot = document.getElementById('content');
+contentRoot.addEventListener('click', (e) => {
+  if (e.target.closest('#moreBtn')) { shown += PAGE_SIZE; renderList(); return; }
+  if (e.target.closest('#resetAll')) { resetAll(); return; }
+  const rangeBtn = e.target.closest('.range-btn');
+  if (rangeBtn) {
+    e.stopPropagation();
+    drawRange(rangeBtn.closest('.row'), rangeBtn.dataset.range);
+    return;
+  }
+  if (e.target.closest('.detail')) return;       // clic dans la fiche : on ne la referme pas
+  const row = e.target.closest('.row');
+  if (row) openRow(row);
+});
+contentRoot.addEventListener('input', (e) => {
+  const sim = e.target.closest('.sim');
+  if (sim) updateSim(sim);
+});
+contentRoot.addEventListener('change', (e) => {
+  const sim = e.target.closest('.sim');
+  if (sim) updateSim(sim);
+});
+
+/* ---------- graphiques ---------- */
 function trendColor(values) {
   return values[values.length - 1] >= values[0] ? 'var(--gain)' : 'var(--loss)';
 }
-
 function sparkline(values, w, h, withFill) {
   const color = trendColor(values);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = Math.min(...values), max = Math.max(...values);
   const range = (max - min) || 1;
   const stepX = w / (values.length - 1);
-  const pts = values.map((v, i) => {
-    const x = i * stepX;
-    const y = h - ((v - min) / range) * (h - 4) - 2;
-    return [x, y];
-  });
+  const pts = values.map((v, i) => [i * stepX, h - ((v - min) / range) * (h - 4) - 2]);
   const line = 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L');
   let svg = '<path class="line" d="' + line + '" style="stroke:' + color + '"/>';
   if (withFill) {
-    const fillPath = line + ' L' + w + ',' + h + ' L0,' + h + ' Z';
-    svg = '<path class="fill" d="' + fillPath + '" style="fill:' + color + '"/>' + svg;
+    svg = '<path class="fill" d="' + line + ' L' + w + ',' + h + ' L0,' + h + ' Z" style="fill:' + color + '"/>' + svg;
   }
   return svg;
 }
@@ -1530,34 +1719,24 @@ function escapeAttr(str) {
   return escapeHtml(str).replaceAll('"', '&quot;');
 }
 
+/* ---------- barre d'outils ---------- */
 document.getElementById('refreshBtn').addEventListener('click', () => load(true));
-
 const searchInput = document.getElementById('searchInput');
 const searchBox = document.getElementById('searchBox');
-const searchClear = document.getElementById('searchClear');
 searchInput.addEventListener('input', (e) => {
   searchQuery = e.target.value;
   searchBox.classList.toggle('has-value', searchQuery.length > 0);
-  if (lastData) renderContent(lastData);
+  shown = PAGE_SIZE;
+  scheduleRender();
 });
-searchClear.addEventListener('click', () => {
-  searchQuery = '';
-  searchInput.value = '';
+document.getElementById('searchClear').addEventListener('click', () => {
+  searchQuery = ''; searchInput.value = '';
   searchBox.classList.remove('has-value');
-  if (lastData) renderContent(lastData);
+  shown = PAGE_SIZE; renderList();
 });
-document.getElementById('sortSelect').addEventListener('change', (e) => {
-  sortKey = e.target.value;
-  if (lastData) renderContent(lastData);
-});
-document.getElementById('filterExchange').addEventListener('change', (e) => {
-  filterExchange = e.target.value;
-  if (lastData) renderContent(lastData);
-});
-document.getElementById('filterSector').addEventListener('change', (e) => {
-  filterSector = e.target.value;
-  if (lastData) renderContent(lastData);
-});
+document.getElementById('sortSelect').addEventListener('change', (e) => { sortKey = e.target.value; shown = PAGE_SIZE; renderList(); });
+document.getElementById('filterExchange').addEventListener('change', (e) => { filterExchange = e.target.value; shown = PAGE_SIZE; renderList(); });
+document.getElementById('filterSector').addEventListener('change', (e) => { filterSector = e.target.value; shown = PAGE_SIZE; renderList(); });
 
 load(false);
 setInterval(renderMarketStatus, 60000);
