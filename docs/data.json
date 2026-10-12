@@ -1,21 +1,21 @@
 {
-  "generated_at": "12/10/2026 16:49",
-  "generated_at_iso": "2026-10-12T16:49:18.553558+02:00",
+  "generated_at": "12/10/2026 17:45",
+  "generated_at_iso": "2026-10-12T17:45:28.198111+02:00",
   "threshold_pct": 10.0,
   "total_scanned": 4366,
-  "total_risers": 29,
+  "total_risers": 32,
   "total_quality": 1,
   "total_shown": 1,
   "results": [
     {
       "ticker": "WFF",
-      "price": 26.41,
-      "pct_change": 114.9,
+      "price": 18.79,
+      "pct_change": 52.9,
       "name": "WF Holding Limited",
       "category": "NasdaqCM",
       "sector": "Industrials",
-      "market_cap": 1107105536,
-      "day_volume": 14129968,
+      "market_cap": 787675648,
+      "day_volume": 16024406,
       "analyst": {
         "target_mean": null,
         "target_high": null,
@@ -144,7 +144,11 @@
           },
           {
             "t": "2026-10-12T14:30:00+00:00",
-            "c": 26.41
+            "c": 23.9
+          },
+          {
+            "t": "2026-10-12T15:30:00+00:00",
+            "c": 18.79
           }
         ],
         "daily": [
@@ -1150,7 +1154,7 @@
           },
           {
             "t": "2026-10-12T04:00:00+00:00",
-            "c": 26.41
+            "c": 18.79
           }
         ]
       },
@@ -1165,16 +1169,16 @@
           "level": 2
         },
         {
-          "label": "Pas d'actu identifiée",
+          "label": "Volume très inhabituel",
           "level": 2
         },
         {
-          "label": "Volume dans la normale",
-          "level": 1
+          "label": "Pas d'actu identifiée",
+          "level": 2
         }
       ],
       "is_new": false,
-      "since_signal_pct": 114.9,
+      "since_signal_pct": 52.9,
       "since_signal_date": "09/10/2026"
     }
   ],
@@ -13863,17 +13867,17 @@
   },
   "last_signal": {
     "date": "12/10/2026",
-    "generated_at": "12/10/2026 16:49",
+    "generated_at": "12/10/2026 17:45",
     "results": [
       {
         "ticker": "WFF",
-        "price": 26.41,
-        "pct_change": 114.9,
+        "price": 18.79,
+        "pct_change": 52.9,
         "name": "WF Holding Limited",
         "category": "NasdaqCM",
         "sector": "Industrials",
-        "market_cap": 1107105536,
-        "day_volume": 14129968,
+        "market_cap": 787675648,
+        "day_volume": 16024406,
         "analyst": {
           "target_mean": null,
           "target_high": null,
@@ -14002,7 +14006,11 @@
             },
             {
               "t": "2026-10-12T14:30:00+00:00",
-              "c": 26.41
+              "c": 23.9
+            },
+            {
+              "t": "2026-10-12T15:30:00+00:00",
+              "c": 18.79
             }
           ],
           "daily": [
@@ -15008,7 +15016,7 @@
             },
             {
               "t": "2026-10-12T04:00:00+00:00",
-              "c": 26.41
+              "c": 18.79
             }
           ]
         },
@@ -15023,16 +15031,16 @@
             "level": 2
           },
           {
-            "label": "Pas d'actu identifiée",
+            "label": "Volume très inhabituel",
             "level": 2
           },
           {
-            "label": "Volume dans la normale",
-            "level": 1
+            "label": "Pas d'actu identifiée",
+            "level": 2
           }
         ],
         "is_new": false,
-        "since_signal_pct": 114.9,
+        "since_signal_pct": 52.9,
         "since_signal_date": "09/10/2026"
       }
     ]
