@@ -1,47 +1,58 @@
 """
-Scanner boursier — détecte, sur TOUT le NASDAQ et le S&P 500, les actions qui
-prennent +10% (ou plus) dans la journée, et publie les résultats dans un
-fichier JSON (docs/data.json) consommé par un site statique (GitHub Pages).
+Scanner boursier — liste TOUTES les actions cotées aux États-Unis (NASDAQ, NYSE,
+NYSE American), sans seuil de hausse ni filtre de prix / capitalisation / volume,
+et publie le tout dans un fichier JSON (docs/data.json) consommé par un site
+statique (GitHub Pages).
 
-Configuration via variables d'environnement :
-  GAIN_THRESHOLD_PCT   -> optionnel, défaut 10 (en %)
+Pour chaque action : dernier cours, variation du jour, volume, mini-historique
+des 5 dernières séances, nom, bourse, secteur et capitalisation. Des fiches
+détaillées (graphiques 5 jours → 1 an, actualité, consensus d'analystes, repères
+de risque) sont ajoutées pour les titres les plus échangés et ceux qui bougent
+le plus.
 
 Sources de données (gratuites, sans clé API) :
-  - Liste complète du NASDAQ : miroir GitHub des données officielles NASDAQ
-  - Liste du S&P 500 : Wikipedia
-  - Cours : Yahoo Finance (yfinance), téléchargés par lots
+  - Listes NASDAQ / NYSE / NYSE American : miroir GitHub des données officielles
+  - Noms, secteurs, capitalisations : fichiers complets du miroir, Wikipedia
+    (S&P 500), puis Yahoo Finance au compte-gouttes (quelques centaines de
+    titres par scan, les plus échangés d'abord) — la couverture se complète
+    donc scan après scan
+  - Cours et volumes : Yahoo Finance (yfinance), téléchargés par lots
 
-Note sur les catégories : le classement se fait par bourse de cotation réelle
-(ex. "NasdaqGS", "NYSE", "NYSE Arca"...), telle que renvoyée par Yahoo Finance
-pour chaque titre — pas par indice (Nasdaq/S&P 500 servent uniquement de
-listes de tickers à scanner, pas de catégories d'affichage).
+Seuls les symboles techniquement inexploitables (actions préférentielles,
+warrants et autres symboles contenant ^ ou /) sont écartés : ce ne sont pas des
+actions ordinaires et Yahoo Finance ne sait pas les servir.
 """
 
 import io
 import json
 import os
+import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import requests
 import pandas as pd
 import yfinance as yf
 from deep_translator import GoogleTranslator
 
-GAIN_THRESHOLD_PCT = float(os.environ.get("GAIN_THRESHOLD_PCT", 10))
-BATCH_SIZE = 150          # nb de tickers par requête groupée
+BATCH_SIZE = 150           # nb de tickers par requête groupée
 PAUSE_BETWEEN_BATCHES = 2  # secondes, pour ménager l'API gratuite
+MAX_STALE_DAYS = 6         # un titre dont le dernier cours a plus de 6 jours de retard sur le marché est considéré comme radié
 
-# --- Filtres "qualité" — appliqués seulement aux titres qui ont déjà pris 10%+
-# But : éliminer le bruit (penny stocks, micro-caps illiquides) pour ne garder
-# que des entreprises avec une taille et une liquidité réelles.
-PRICE_MIN = float(os.environ.get("PRICE_MIN", 5))              # $ — exclut les penny stocks
-MARKET_CAP_MIN = float(os.environ.get("MARKET_CAP_MIN", 300_000_000))  # 300M$ — exclut les micro/nano-caps
-AVG_VOLUME_MIN = float(os.environ.get("AVG_VOLUME_MIN", 200_000))      # titres/jour — assure la liquidité
+# Fiches détaillées (graphiques longs, actualité, analystes...) : réservées à un
+# sous-ensemble de titres pour garder un scan rapide. Ce n'est PAS un filtre sur
+# la liste : toutes les actions restent affichées sur le site.
+DETAIL_TOP_ACTIVE = int(os.environ.get("DETAIL_TOP_ACTIVE", 30))    # les plus échangés (prix x volume)
+DETAIL_TOP_GAINERS = int(os.environ.get("DETAIL_TOP_GAINERS", 20))  # plus fortes hausses du jour
+DETAIL_TOP_LOSERS = int(os.environ.get("DETAIL_TOP_LOSERS", 10))    # plus fortes baisses du jour
+# Pour les palmarès hausses/baisses, on ignore les titres quasi non échangés
+# (sinon les premières places seraient prises par des valeurs sans volume).
+DETAIL_MIN_DOLLAR_VOLUME = float(os.environ.get("DETAIL_MIN_DOLLAR_VOLUME", 1_000_000))
 
-# Nombre maximum de titres détaillés (avec news) publiés sur le site
-MAX_SHOWN = 50
+# Nombre de titres dont on complète le nom / secteur via Yahoo Finance à chaque scan
+META_FILL_PER_RUN = int(os.environ.get("META_FILL_PER_RUN", 250))
+META_MAX_TRIES = 3
 
 # Où écrire le résultat pour le site statique (GitHub Pages sert /docs)
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "docs")
@@ -49,112 +60,326 @@ OUTPUT_FILE = os.path.join(OUTPUT_DIR, "data.json")
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-
-def get_nasdaq_tickers():
-    """Liste complète des titres cotés au NASDAQ, via un miroir GitHub mis à
-    jour chaque nuit à partir des données officielles NASDAQ (contourne le
-    blocage du serveur ftp.nasdaqtrader.com envers les IP des runners GitHub)."""
-    urls = [
-        "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/main/nasdaq/nasdaq_tickers.txt",
-        "https://raw.githubusercontent.com/deltaray-io/US-Stock-Symbols/main/nasdaq/nasdaq_tickers.txt",
-    ]
-    for url in urls:
-        try:
-            resp = requests.get(url, headers=HEADERS, timeout=20)
-            resp.raise_for_status()
-            tickers = [t.strip() for t in resp.text.splitlines() if t.strip()]
-            if tickers:
-                return tickers
-        except Exception as e:
-            print(f"Source NASDAQ {url} indisponible ({e}), essai suivant...")
-    print("Impossible de récupérer la liste NASDAQ complète depuis toutes les sources.")
-    return []
+RAW_BASES = [
+    "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/main/",
+    "https://raw.githubusercontent.com/deltaray-io/US-Stock-Symbols/main/",
+]
+# Fichiers "complets" du miroir : un objet par action avec symbole, nom, secteur,
+# capitalisation... (une seule requête par bourse, tout est déjà dedans)
+TICKER_SOURCES = [
+    ("NASDAQ", "nasdaq/nasdaq_full_tickers.json", "nasdaq/nasdaq_tickers.txt"),
+    ("NYSE", "nyse/nyse_full_tickers.json", "nyse/nyse_tickers.txt"),
+    ("NYSE American", "amex/amex_full_tickers.json", "amex/amex_tickers.txt"),
+]
+SP500_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 
 
-def get_sp500_tickers():
+# --------------------------------------------------------------------------
+# Normalisation des symboles, noms et secteurs
+# --------------------------------------------------------------------------
+
+def clean_symbol(raw):
+    """Met un symbole au format Yahoo Finance (BRK.B -> BRK-B). Renvoie None
+    pour les symboles inexploitables (préférentielles, warrants : ^ ou /)."""
+    sym = (raw or "").strip().upper() if isinstance(raw, str) else ""
+    if not sym or any(ch in sym for ch in "^/ $"):
+        return None
+    return sym.replace(".", "-")
+
+
+SECTOR_FR = {
+    "technology": "Technologie", "information technology": "Technologie",
+    "healthcare": "Santé", "health care": "Santé",
+    "financial services": "Finance", "financial": "Finance",
+    "financials": "Finance", "finance": "Finance",
+    "consumer cyclical": "Consommation cyclique", "consumer discretionary": "Consommation cyclique",
+    "consumer defensive": "Consommation de base", "consumer staples": "Consommation de base",
+    "energy": "Énergie",
+    "industrials": "Industrie", "industrial": "Industrie",
+    "basic materials": "Matériaux", "materials": "Matériaux",
+    "real estate": "Immobilier",
+    "communication services": "Communication", "telecommunications": "Communication",
+    "telecommunication services": "Communication",
+    "utilities": "Services publics",
+    "miscellaneous": "Divers",
+}
+
+
+def normalize_sector(raw):
+    """Unifie les secteurs venant de sources différentes (Wikipedia/GICS,
+    NASDAQ, Yahoo Finance) sous un même libellé français. None si inconnu."""
+    if not isinstance(raw, str):
+        return None
+    key = raw.strip().lower()
+    if not key or key in ("nan", "none", "n/a", "na"):
+        return None
+    return SECTOR_FR.get(key, raw.strip())
+
+
+NAME_SUFFIX_RE = re.compile(
+    r"\s+(?:(?:Class|Series)\s+[A-Z0-9]+\s+)?"
+    r"(?:Common\s+Stock|Common\s+Shares?|Ordinary\s+Shares?|"
+    r"American\s+Depositary\s+(?:Shares|Receipts?)|Depositary\s+Shares?|Capital\s+Stock)\b.*$",
+    re.IGNORECASE,
+)
+
+
+def clean_name(name):
+    """'Apple Inc. Common Stock' -> 'Apple Inc.' (le NASDAQ ajoute le type de titre)."""
+    if not name or not isinstance(name, str):
+        return None
+    cleaned = NAME_SUFFIX_RE.sub("", name).strip(" -,")
+    return cleaned or name.strip() or None
+
+
+def parse_money(value):
+    """'3,401,234,567' / '$12.5' / '' -> float ou None."""
+    if value is None:
+        return None
+    s = str(value).replace("$", "").replace(",", "").strip()
+    if not s or s.upper() in ("N/A", "NA", "NAN"):
+        return None
     try:
-        resp = requests.get(
-            "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
-            headers=HEADERS, timeout=20,
-        )
+        v = float(s)
+    except ValueError:
+        return None
+    return v if v > 0 else None
+
+
+def round_price(x):
+    """4 décimales sous 1$ (les penny stocks), 2 décimales au-dessus."""
+    return round(x, 4) if x < 1 else round(x, 2)
+
+
+# --------------------------------------------------------------------------
+# Listes de tickers et métadonnées
+# --------------------------------------------------------------------------
+
+def _fetch(path, as_json):
+    for base in RAW_BASES:
+        try:
+            resp = requests.get(base + path, headers=HEADERS, timeout=40)
+            resp.raise_for_status()
+            return resp.json() if as_json else [t for t in resp.text.splitlines() if t.strip()]
+        except Exception as e:
+            print(f"Source {base + path} indisponible ({e}), essai suivant...")
+    return None
+
+
+def get_listings():
+    """Renvoie ({ticker: bourse}, {ticker: {n, g, m}}) pour toutes les actions
+    des listes NASDAQ, NYSE et NYSE American : la bourse, le nom, le secteur et
+    la capitalisation viennent directement du fichier source (aucun filtre)."""
+    mapping, meta = {}, {}
+    for label, json_path, txt_path in TICKER_SOURCES:
+        rows = _fetch(json_path, True)
+        if isinstance(rows, list) and rows:
+            for r in rows:
+                sym = clean_symbol(r.get("symbol")) if isinstance(r, dict) else None
+                if not sym or sym in mapping:
+                    continue
+                mapping[sym] = label
+                meta[sym] = {
+                    "n": clean_name(r.get("name")),
+                    "g": normalize_sector(r.get("sector")),
+                    "m": parse_money(r.get("marketCap")),
+                }
+            continue
+        tickers = _fetch(txt_path, False) or []
+        if not tickers:
+            print(f"Liste {label} introuvable.")
+        for raw in tickers:
+            sym = clean_symbol(raw)
+            if sym and sym not in mapping:
+                mapping[sym] = label
+    return mapping, meta
+
+
+def get_sp500_meta():
+    """Noms et secteurs (GICS) des 500 valeurs du S&P 500, depuis Wikipedia."""
+    try:
+        resp = requests.get(SP500_URL, headers=HEADERS, timeout=20)
         resp.raise_for_status()
-        tables = pd.read_html(io.StringIO(resp.text))
-        return tables[0]["Symbol"].str.replace(".", "-", regex=False).tolist()
+        df = pd.read_html(io.StringIO(resp.text))[0]
+        meta = {}
+        for _, r in df.iterrows():
+            sym = clean_symbol(str(r.get("Symbol", "")))
+            if not sym:
+                continue
+            name = r.get("Security")
+            meta[sym] = {
+                "n": str(name).strip() if isinstance(name, str) and name.strip() else None,
+                "g": normalize_sector(r.get("GICS Sector")),
+            }
+        return meta
     except Exception as e:
         print(f"Impossible de récupérer le S&P 500 ({e}).")
-        return []
+        return {}
+
+
+def build_meta(tickers, sp_meta, nq_meta, old_universe):
+    """Fusionne les sources de métadonnées. Priorité : Wikipedia (noms et
+    secteurs plus propres) > écran NASDAQ > données du scan précédent."""
+    old = {u["t"]: u for u in old_universe if isinstance(u, dict) and u.get("t")}
+    meta = {}
+    for sym in tickers:
+        o, s, q = old.get(sym, {}), sp_meta.get(sym, {}), nq_meta.get(sym, {})
+        meta[sym] = {
+            "n": s.get("n") or q.get("n") or o.get("n"),
+            "g": s.get("g") or q.get("g") or o.get("g"),
+            "m": q.get("m") or o.get("m"),
+            "mt": o.get("mt"),
+        }
+    return meta
+
+
+# --------------------------------------------------------------------------
+# Cours : téléchargement par lots
+# --------------------------------------------------------------------------
+
+def _series(data, ticker, field):
+    """Extrait la colonne `field` d'un ticker, que yfinance renvoie ou non un
+    index à deux niveaux (cas d'un lot ne contenant qu'un seul ticker)."""
+    try:
+        col = data[ticker][field]
+    except Exception:
+        try:
+            col = data[field]
+        except Exception:
+            return None
+    if isinstance(col, pd.DataFrame):
+        col = col.iloc[:, 0]
+    return col
 
 
 def scan_batch(tickers):
-    """Télécharge les cours d'un lot de tickers et renvoie les hausses >= seuil."""
-    winners = []
-    try:
-        data = yf.download(
-            tickers, period="5d", interval="1d",
-            group_by="ticker", threads=True, progress=False,
-        )
-    except Exception as e:
-        print(f"Erreur de téléchargement du lot: {e}")
-        return winners
+    """Télécharge 5 jours de cours pour un lot de tickers et renvoie, pour
+    chacun : dernier cours, variation du jour, volume, 5 dernières clôtures et
+    date de la dernière séance (clé interne "_d")."""
+    rows = []
+    data = None
+    for attempt in range(2):
+        try:
+            data = yf.download(
+                tickers, period="5d", interval="1d",
+                group_by="ticker", threads=True, progress=False,
+            )
+            break
+        except Exception as e:
+            print(f"Erreur de téléchargement du lot (essai {attempt + 1}/2): {e}")
+            time.sleep(5)
+    if data is None or getattr(data, "empty", True):
+        return rows
 
     for ticker in tickers:
         try:
-            closes = data[ticker]["Close"].dropna() if len(tickers) > 1 else data["Close"].dropna()
+            closes = _series(data, ticker, "Close")
+            if closes is None:
+                continue
+            closes = closes.dropna()
             if len(closes) < 2:
                 continue
-            prev_close, last_close = closes.iloc[-2], closes.iloc[-1]
-            pct_change = (last_close - prev_close) / prev_close * 100
-            if pct_change >= GAIN_THRESHOLD_PCT:
-                winners.append({
-                    "ticker": ticker,
-                    "price": round(float(last_close), 2),
-                    "pct_change": round(float(pct_change), 1),
-                })
+            last, prev = float(closes.iloc[-1]), float(closes.iloc[-2])
+            if last <= 0 or prev <= 0:
+                continue
+            volume = None
+            volumes = _series(data, ticker, "Volume")
+            if volumes is not None:
+                v = volumes.reindex(closes.index).iloc[-1]
+                if pd.notna(v) and v > 0:
+                    volume = int(v)
+            rows.append({
+                "t": ticker,
+                "p": round_price(last),
+                "c": round((last - prev) / prev * 100, 2),
+                "v": volume,
+                "s": [round_price(float(x)) for x in closes.iloc[-5:]],
+                "_d": closes.index[-1].date(),
+            })
         except Exception:
             continue
-    return winners
+    return rows
 
 
-def passes_quality_filters(ticker, price):
-    """Vérifie prix, capitalisation et volume moyen, et renvoie aussi le nom
-    de l'entreprise, sa bourse de cotation réelle, son secteur d'activité,
-    sa capitalisation, son volume du jour et son résumé d'activité (en
-    anglais, pas encore traduit) — tout ça récupéré au passage, sans requête
-    supplémentaire. Appelé seulement sur les titres déjà repérés en hausse de
-    10%+, pour limiter le nombre d'appels.
-    Renvoie un dict avec les clés : ok, name, exchange, sector, market_cap,
-    day_volume, avg_volume, summary_raw, analyst."""
-    empty = {
-        "ok": False, "name": None, "exchange": None, "sector": None,
-        "market_cap": None, "day_volume": None, "avg_volume": None, "summary_raw": None,
-        "analyst": None,
-    }
-    if price < PRICE_MIN:
-        return empty
-    try:
-        info = yf.Ticker(ticker).info
-        market_cap = info.get("marketCap") or 0
-        avg_volume = info.get("averageVolume") or info.get("averageDailyVolume10Day") or 0
-        day_volume = info.get("volume") or info.get("regularMarketVolume") or None
-        name = info.get("shortName") or info.get("longName")
-        exchange = info.get("fullExchangeName") or info.get("exchange") or "Bourse inconnue"
-        sector = info.get("sector") or info.get("industry") or "Secteur inconnu"
-        summary_raw = info.get("longBusinessSummary")
-        result = {
-            "ok": False, "name": name, "exchange": exchange, "sector": sector,
-            "market_cap": market_cap or None, "day_volume": day_volume,
-            "avg_volume": avg_volume or None, "summary_raw": summary_raw,
-            "analyst": extract_analyst_target(info),
+def chunked(lst, size):
+    for i in range(0, len(lst), size):
+        yield lst[i:i + size]
+
+
+def scan_all(tickers):
+    all_rows = []
+    batches = list(chunked(tickers, BATCH_SIZE))
+    for i, batch in enumerate(batches):
+        print(f"  Lot {i + 1}/{len(batches)} ({len(batch)} titres)...")
+        all_rows.extend(scan_batch(batch))
+        time.sleep(PAUSE_BETWEEN_BATCHES)
+    return all_rows
+
+
+def drop_stale(rows):
+    """Écarte les titres dont la dernière séance est très en retard sur le
+    reste du marché (titres radiés dont Yahoo garde un vieux cours)."""
+    if not rows:
+        return rows
+    latest = max(r["_d"] for r in rows)
+    cutoff = latest - timedelta(days=MAX_STALE_DAYS)
+    return [r for r in rows if r["_d"] >= cutoff]
+
+
+def assemble_universe(rows, exchange_map, meta):
+    """Construit la liste compacte publiée sur le site. Clés courtes pour
+    garder un fichier léger : t ticker, p prix, c variation %, v volume,
+    s 5 dernières clôtures, n nom, x bourse, g secteur, m capitalisation."""
+    universe = []
+    for r in rows:
+        m = meta.get(r["t"], {})
+        cap = m.get("m")
+        u = {
+            "t": r["t"], "p": r["p"], "c": r["c"], "v": r["v"], "s": r["s"],
+            "n": m.get("n"), "x": exchange_map.get(r["t"]), "g": m.get("g"),
+            "m": int(cap) if cap else None, "mt": m.get("mt"),
         }
-        if market_cap < MARKET_CAP_MIN:
-            return result
-        if avg_volume < AVG_VOLUME_MIN:
-            return result
-        result["ok"] = True
-        return result
-    except Exception:
-        return empty  # par prudence, on écarte si l'info n'est pas récupérable
+        universe.append({k: v for k, v in u.items() if v is not None})
+    universe.sort(key=lambda u: u["t"])  # ordre stable = commits plus légers
+    return universe
 
+
+def dollar_volume(u):
+    return u["p"] * (u.get("v") or 0)
+
+
+def fill_missing_meta(universe, budget):
+    """Complète au compte-gouttes les noms / secteurs / capitalisations
+    manquants via Yahoo Finance, en commençant par les titres les plus
+    échangés. Un titre introuvable est retenté au plus META_MAX_TRIES fois."""
+    if budget <= 0:
+        return 0
+    missing = [u for u in universe if not u.get("n") and (u.get("mt") or 0) < META_MAX_TRIES]
+    missing.sort(key=dollar_volume, reverse=True)
+    filled = 0
+    for u in missing[:budget]:
+        try:
+            info = yf.Ticker(u["t"]).info or {}
+        except Exception:
+            info = {}
+        name = info.get("shortName") or info.get("longName")
+        if name:
+            u["n"] = name
+            sector = normalize_sector(info.get("sector") or info.get("industry"))
+            if sector and not u.get("g"):
+                u["g"] = sector
+            cap = info.get("marketCap")
+            if cap and not u.get("m"):
+                u["m"] = int(cap)
+            filled += 1
+        else:
+            u["mt"] = (u.get("mt") or 0) + 1
+    return filled
+
+
+# --------------------------------------------------------------------------
+# Fiches détaillées
+# --------------------------------------------------------------------------
 
 def extract_analyst_target(info):
     """Extrait le consensus des analystes (objectif de cours, nombre
@@ -214,7 +439,7 @@ def series_to_points(hist):
             t_iso = ts.tz_convert("UTC").isoformat()
         except Exception:
             t_iso = ts.isoformat()
-        points.append({"t": t_iso, "c": round(float(c), 2)})
+        points.append({"t": t_iso, "c": round_price(float(c))})
     return points
 
 
@@ -222,7 +447,7 @@ def get_price_charts(ticker):
     """Récupère deux historiques de cours pour un titre :
     - "intraday" : 5 jours, par pas d'1h (court terme : 1 jour / 5 jours)
     - "daily"    : 1 an, par pas d'1 jour (long terme : 1 mois / 6 mois / 1 an)
-    Appelé seulement sur les titres affichés sur le site (peu nombreux), donc
+    Appelé seulement sur les titres à fiche détaillée (peu nombreux), donc
     deux requêtes dédiées par titre restent raisonnables."""
     try:
         tk = yf.Ticker(ticker)
@@ -231,6 +456,29 @@ def get_price_charts(ticker):
         return {"intraday": intraday, "daily": daily}
     except Exception:
         return {"intraday": [], "daily": []}
+
+
+def get_news_snippet(ticker):
+    """Récupère le titre de l'actualité la plus récente pour un ticker (gratuit,
+    via Yahoo Finance), traduit en français. Retourne None si rien n'est trouvé."""
+    try:
+        news = yf.Ticker(ticker).news
+        if not news:
+            return None
+        item = news[0]
+        # yfinance structure les news sous 'content' depuis les versions récentes
+        content = item.get("content", item)
+        title = content.get("title")
+        link = (content.get("canonicalUrl") or {}).get("url") or content.get("link")
+        if not title:
+            return None
+        try:
+            title = GoogleTranslator(source="auto", target="fr").translate(title)
+        except Exception:
+            pass  # si la traduction échoue, on garde le titre original en anglais
+        return {"title": title, "link": link}
+    except Exception:
+        return None
 
 
 def compute_risk_badges(w):
@@ -291,78 +539,81 @@ def compute_risk_badges(w):
     return badges
 
 
-def enrich_ticker(ticker):
-    """Construit une fiche complète et à jour pour un ticker donné (prix,
-    variation, capitalisation, volume, secteur, graphique, actu, résumé),
-    sans exiger qu'il dépasse le seuil de hausse du jour. Utilisé pour
-    rafraîchir les derniers signaux connus (prix/graphique à la dernière
-    clôture) les jours où aucun nouveau signal n'est détecté."""
+def build_detail(ticker):
+    """Construit la fiche détaillée d'un titre : graphiques, actualité, résumé
+    d'activité, repères de risque et consensus d'analystes. Renvoie
+    (fiche, infos) ou None si rien d'exploitable n'a pu être récupéré."""
     try:
-        tk = yf.Ticker(ticker)
-        info = tk.info
-        daily_hist = tk.history(period="5d", interval="1d")
-        closes = daily_hist["Close"].dropna()
-        if len(closes) < 1:
-            return None
-        last_close = float(closes.iloc[-1])
-        if len(closes) >= 2:
-            prev_close = float(closes.iloc[-2])
-            pct_change = round((last_close - prev_close) / prev_close * 100, 1)
-        else:
-            pct_change = 0.0
+        info = yf.Ticker(ticker).info or {}
         row = {
-            "ticker": ticker,
-            "price": round(last_close, 2),
-            "pct_change": pct_change,
-            "name": info.get("shortName") or info.get("longName") or ticker,
-            "category": info.get("fullExchangeName") or info.get("exchange") or "Bourse inconnue",
-            "sector": info.get("sector") or info.get("industry") or "Secteur inconnu",
             "market_cap": info.get("marketCap") or None,
             "day_volume": info.get("volume") or info.get("regularMarketVolume") or None,
             "avg_volume": info.get("averageVolume") or info.get("averageDailyVolume10Day") or None,
         }
         row["news"] = get_news_snippet(ticker)
         row["chart"] = get_price_charts(ticker)
+        if not row["chart"]["intraday"] and not row["chart"]["daily"]:
+            return None
         row["summary"] = translate_summary(info.get("longBusinessSummary"))
         row["badges"] = compute_risk_badges(row)
         row["analyst"] = extract_analyst_target(info)
-        row.pop("avg_volume", None)
-        return row
-    except Exception:
+        detail = {k: row[k] for k in ("news", "chart", "summary", "badges", "analyst")}
+        extra = {
+            "name": info.get("shortName") or info.get("longName"),
+            "sector": normalize_sector(info.get("sector") or info.get("industry")),
+            "market_cap": row["market_cap"],
+        }
+        return detail, extra
+    except Exception as e:
+        print(f"Fiche détaillée impossible pour {ticker} ({e}).")
         return None
 
 
-def get_news_snippet(ticker):
-    """Récupère le titre de l'actualité la plus récente pour un ticker (gratuit,
-    via Yahoo Finance), traduit en français. Retourne None si rien n'est trouvé."""
-    try:
-        news = yf.Ticker(ticker).news
-        if not news:
-            return None
-        item = news[0]
-        # yfinance structure les news sous 'content' depuis les versions récentes
-        content = item.get("content", item)
-        title = content.get("title")
-        link = (content.get("canonicalUrl") or {}).get("url") or content.get("link")
-        if not title:
-            return None
-        try:
-            title = GoogleTranslator(source="auto", target="fr").translate(title)
-        except Exception:
-            pass  # si la traduction échoue, on garde le titre original en anglais
-        return {"title": title, "link": link}
-    except Exception:
-        return None
+def pick_detail_tickers(universe):
+    """Titres à fiche détaillée : les plus échangés, plus les plus fortes
+    hausses et baisses du jour parmi les titres réellement échangés."""
+    traded = [u for u in universe if dollar_volume(u) >= DETAIL_MIN_DOLLAR_VOLUME]
+    active = sorted(universe, key=dollar_volume, reverse=True)[:DETAIL_TOP_ACTIVE]
+    gainers = sorted(traded, key=lambda u: u["c"], reverse=True)[:DETAIL_TOP_GAINERS]
+    losers = sorted(traded, key=lambda u: u["c"])[:DETAIL_TOP_LOSERS]
+    picks, seen = [], set()
+    for u in active + gainers + losers:
+        if u["t"] not in seen:
+            seen.add(u["t"])
+            picks.append(u["t"])
+    return picks
 
 
-def chunked(lst, size):
-    for i in range(0, len(lst), size):
-        yield lst[i:i + size]
+def build_details(universe):
+    by_ticker = {u["t"]: u for u in universe}
+    picks = pick_detail_tickers(universe)
+    print(f"Fiches détaillées pour {len(picks)} titre(s)...")
+    details = {}
+    for t in picks:
+        res = build_detail(t)
+        if not res:
+            continue
+        detail, extra = res
+        details[t] = detail
+        u = by_ticker[t]
+        # Les infos de la fiche sont les plus fraîches : on en profite pour
+        # compléter / rafraîchir la ligne correspondante.
+        if extra.get("name") and not u.get("n"):
+            u["n"] = extra["name"]
+        if extra.get("sector") and not u.get("g"):
+            u["g"] = extra["sector"]
+        if extra.get("market_cap"):
+            u["m"] = int(extra["market_cap"])
+    return details
 
+
+# --------------------------------------------------------------------------
+# Écriture et point d'entrée
+# --------------------------------------------------------------------------
 
 def load_existing():
-    """Relit le data.json déjà publié (s'il existe), pour pouvoir reporter les
-    résultats de la veille d'un scan à l'autre."""
+    """Relit le data.json déjà publié (s'il existe) : il sert de cache pour les
+    noms / secteurs / capitalisations déjà connus."""
     try:
         with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -370,186 +621,58 @@ def load_existing():
         return None
 
 
-def compute_previous_day(old_data, today_str):
-    """Détermine ce qu'il faut garder comme "résultats de la veille" :
-    - si le dernier data.json publié date d'un autre jour et contenait des
-      résultats, on les archive comme "veille" ;
-    - sinon (même jour, ou dernier scan vide), on reporte simplement la
-      "veille" déjà enregistrée, pour ne jamais la perdre à cause d'un scan
-      du jour qui ne trouve rien."""
-    if not old_data:
-        return None
-    old_generated_at = old_data.get("generated_at") or ""
-    old_date = old_generated_at.split(" ")[0] if old_generated_at else None
-    if old_date and old_date != today_str and old_data.get("results"):
-        return {
-            "date": old_date,
-            "generated_at": old_generated_at,
-            "total_quality": old_data.get("total_quality"),
-            "results": old_data["results"],
-        }
-    return old_data.get("previous_day")
-
-
-def write_results(shown, total_scanned, total_risers, total_quality, now_dt, old_data):
-    """Écrit le JSON consommé par le site statique (docs/index.html), en
-    conservant les résultats de la veille, les "derniers signaux connus"
-    (last_signal), le marquage des signaux tout juste détectés (is_new) et le
-    suivi de performance depuis la détection de chaque titre (tracking)."""
+def write_results(universe, details, now_dt):
+    """Écrit le JSON consommé par le site statique (docs/index.html)."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    today_str = now_dt.strftime("%d/%m/%Y")
-    previous_day = compute_previous_day(old_data, today_str)
-
-    # "Nouveau" : un titre est marqué nouveau s'il ne figurait pas déjà dans
-    # les résultats du scan précédent.
-    old_shown_tickers = {w["ticker"] for w in (old_data or {}).get("results") or []}
-    for w in shown:
-        w["is_new"] = w["ticker"] not in old_shown_tickers
-
-    if shown:
-        last_signal = {
-            "date": today_str,
-            "generated_at": now_dt.strftime("%d/%m/%Y %H:%M"),
-            "results": shown,
-        }
-    else:
-        old_last_signal = (old_data or {}).get("last_signal")
-        last_signal = old_last_signal
-        if old_last_signal and old_last_signal.get("results"):
-            tickers = [w["ticker"] for w in old_last_signal["results"]]
-            refreshed = []
-            for t in tickers:
-                row = enrich_ticker(t)
-                if row:
-                    row["is_new"] = False
-                    refreshed.append(row)
-            if refreshed:
-                refreshed.sort(key=lambda w: w["pct_change"], reverse=True)
-                last_signal = {
-                    "date": old_last_signal.get("date"),
-                    "generated_at": old_last_signal.get("generated_at"),
-                    "results": refreshed,
-                }
-
-    # Suivi de performance depuis la détection : on mémorise le prix au
-    # moment où un titre est détecté pour la première fois, et on calcule
-    # l'évolution depuis, même des jours plus tard. Purement factuel (pas un
-    # conseil) — juste "voici ce qui s'est passé depuis que ce titre a été
-    # repéré".
-    tracking = dict((old_data or {}).get("tracking") or {})
-    for w in shown:
-        t = w["ticker"]
-        if t not in tracking:
-            tracking[t] = {"price": w["price"], "date": today_str}
-    if last_signal and last_signal.get("results"):
-        for w in last_signal["results"]:
-            t = w["ticker"]
-            if t not in tracking:
-                tracking[t] = {"price": w["price"], "date": last_signal.get("date") or today_str}
-
-    def attach_since_signal(rows):
-        for w in rows:
-            tr = tracking.get(w["ticker"])
-            if tr and tr.get("price"):
-                w["since_signal_pct"] = round((w["price"] - tr["price"]) / tr["price"] * 100, 1)
-                w["since_signal_date"] = tr.get("date")
-
-    attach_since_signal(shown)
-    if last_signal and last_signal.get("results"):
-        attach_since_signal(last_signal["results"])
-
-    # On ne garde en mémoire que le suivi des titres encore affichés
-    # quelque part, pour que le fichier ne grossisse pas indéfiniment.
-    active_tickers = {w["ticker"] for w in shown}
-    if last_signal and last_signal.get("results"):
-        active_tickers |= {w["ticker"] for w in last_signal["results"]}
-    tracking = {k: v for k, v in tracking.items() if k in active_tickers}
-
     payload = {
         "generated_at": now_dt.strftime("%d/%m/%Y %H:%M"),
         "generated_at_iso": now_dt.isoformat(),
-        "threshold_pct": GAIN_THRESHOLD_PCT,
-        "total_scanned": total_scanned,
-        "total_risers": total_risers,
-        "total_quality": total_quality,
-        "total_shown": len(shown),
-        "results": shown,
-        "previous_day": previous_day,
-        "last_signal": last_signal,
-        "tracking": tracking,
+        "total_stocks": len(universe),
+        "universe": universe,
+        "details": details,
     }
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    print(f"Résultats écrits dans {OUTPUT_FILE} ({len(shown)} titre(s)).")
+    tmp = OUTPUT_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(tmp, OUTPUT_FILE)  # écriture atomique : jamais de fichier à moitié écrit
+    print(f"Résultats écrits dans {OUTPUT_FILE} ({len(universe)} actions, {len(details)} fiches détaillées).")
 
 
 def main():
-    nasdaq_tickers = get_nasdaq_tickers()
-    sp500_tickers = get_sp500_tickers()
-    tickers = sorted(set(nasdaq_tickers + sp500_tickers))
-
     now_dt = datetime.now(ZoneInfo("Europe/Paris"))
     old_data = load_existing()
+    old_universe = (old_data or {}).get("universe") or []
 
+    exchange_map, nq_meta = get_listings()
+    sp_meta = get_sp500_meta()
+    for sym in sp_meta:
+        exchange_map.setdefault(sym, None)  # valeur du S&P 500 absente des listes : bourse inconnue
+
+    tickers = sorted(exchange_map)
     if not tickers:
-        print("Aucun ticker récupéré, arrêt.")
-        write_results([], 0, 0, 0, now_dt, old_data)
+        print("Aucun ticker récupéré, arrêt (les données précédentes sont conservées).")
         return
 
-    print(f"Scan de {len(tickers)} titres (seuil: +{GAIN_THRESHOLD_PCT}%)...")
+    print(f"Scan de {len(tickers)} actions...")
+    rows = drop_stale(scan_all(tickers))
+    print(f"{len(rows)} actions avec un cours exploitable.")
 
-    all_winners = []
-    batches = list(chunked(tickers, BATCH_SIZE))
-    for i, batch in enumerate(batches):
-        print(f"  Lot {i + 1}/{len(batches)} ({len(batch)} titres)...")
-        all_winners.extend(scan_batch(batch))
-        time.sleep(PAUSE_BETWEEN_BATCHES)
-
-    if not all_winners:
-        print(f"RAS : aucune action n'a pris {GAIN_THRESHOLD_PCT}% ou plus.")
-        write_results([], len(tickers), 0, 0, now_dt, old_data)
+    # Garde-fou : si Yahoo Finance nous a limités en cours de route, on préfère
+    # garder les dernières données complètes plutôt que publier une liste tronquée.
+    if not rows or (old_universe and len(rows) < 0.5 * len(old_universe)):
+        print("Résultat incomplet (téléchargement probablement limité par Yahoo Finance) — "
+              "les données précédentes sont conservées.")
         return
 
-    print(f"{len(all_winners)} titre(s) en hausse de {GAIN_THRESHOLD_PCT}%+, application des filtres qualité...")
+    meta = build_meta([r["t"] for r in rows], sp_meta, nq_meta, old_universe)
+    universe = assemble_universe(rows, exchange_map, meta)
 
-    quality_winners = []
-    for w in all_winners:
-        q = passes_quality_filters(w["ticker"], w["price"])
-        if q["ok"]:
-            w["name"] = q["name"] or w["ticker"]
-            w["category"] = q["exchange"] or "Bourse inconnue"
-            w["sector"] = q["sector"] or "Secteur inconnu"
-            w["market_cap"] = q["market_cap"]
-            w["day_volume"] = q["day_volume"]
-            w["avg_volume"] = q["avg_volume"]
-            w["analyst"] = q["analyst"]
-            w["_summary_raw"] = q["summary_raw"]  # traduit plus bas, seulement pour les titres affichés
-            quality_winners.append(w)
+    filled = fill_missing_meta(universe, META_FILL_PER_RUN)
+    print(f"Noms complétés via Yahoo Finance : {filled}. "
+          f"Sans nom pour l'instant : {sum(1 for u in universe if not u.get('n'))}.")
 
-    if not quality_winners:
-        print(f"{len(all_winners)} titre(s) en hausse mais aucun ne passe les filtres qualité.")
-        write_results([], len(tickers), len(all_winners), 0, now_dt, old_data)
-        return
-
-    # On garde tous les titres qui passent les filtres qualité (triés par
-    # % de hausse), mais on ne va chercher une actu que pour les MAX_SHOWN
-    # premiers, pour limiter le nombre de requêtes.
-    quality_winners.sort(key=lambda w: w["pct_change"], reverse=True)
-    shown = quality_winners[:MAX_SHOWN]
-    for w in shown:
-        w["news"] = get_news_snippet(w["ticker"])
-        w["chart"] = get_price_charts(w["ticker"])
-        w["summary"] = translate_summary(w.pop("_summary_raw", None))
-        w["badges"] = compute_risk_badges(w)
-        w.pop("avg_volume", None)
-
-    # Les titres qualité non affichés gardent quand même leur brouillon de
-    # résumé en interne ; on le retire pour ne pas le publier non traduit.
-    for w in quality_winners:
-        w.pop("_summary_raw", None)
-        w.pop("avg_volume", None)
-
-    write_results(shown, len(tickers), len(all_winners), len(quality_winners), now_dt, old_data)
+    details = build_details(universe)
+    write_results(universe, details, now_dt)
 
 
 if __name__ == "__main__":
