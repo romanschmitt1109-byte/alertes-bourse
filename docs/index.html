@@ -1037,6 +1037,30 @@
     color: var(--text-faint);
   }
   .detail .range-note { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 6px; }
+
+  /* ---- Liste de suivi / portefeuille ---- */
+  .view-seg { margin-top: 12px; }
+  .view-seg button { flex: 1; padding: 8px 14px; font-size: 0.8rem; }
+  .star {
+    appearance: none; border: none; background: none;
+    color: var(--text-faint); font-size: 1rem; line-height: 1;
+    padding: 4px 6px; margin: -4px -2px; cursor: pointer; flex-shrink: 0;
+  }
+  .star.on { color: var(--warn); text-shadow: 0 0 8px var(--warn-soft); }
+  .pf-card {
+    margin-top: 14px; padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  }
+  .pf-main { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+  .pf-label { font-size: 0.68rem; color: var(--text-faint); margin-top: 2px; }
+  .pf-grid { display: flex; gap: 22px; margin-top: 12px; flex-wrap: wrap; }
+  .pf-grid .v { font-size: 0.92rem; font-weight: 600; }
+  .pf-hint { margin-top: 10px; font-size: 0.72rem; line-height: 1.5; color: var(--text-faint); }
+  .watch-tools { margin-top: 14px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.74rem; }
+  .pos { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .pos .sim-input { width: 92px; }
+  .pos .sim-row { flex-wrap: wrap; }
+  .pos-res { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -1069,6 +1093,11 @@
     </div>
 
     <div id="marketStatus"></div>
+
+    <div class="seg view-seg" role="group" aria-label="Vue">
+      <button type="button" id="tabMarket" class="active">Marché</button>
+      <button type="button" id="tabWatch">Suivi <span id="watchCount"></span></button>
+    </div>
 
     <div class="price-panel" id="pricePanel" style="display:none">
       <div class="pp-head">
@@ -1157,6 +1186,14 @@ let shown = PAGE_SIZE;
 let LO = 1, HI = 1000;       // bornes (échelle logarithmique) du slider
 let minP = null, maxP = null; // plage choisie, null = pas de limite
 let filteredCache = [];
+let view = 'market';
+let watch = {};
+try { watch = JSON.parse(localStorage.getItem('scanner_watch') || '{}') || {}; } catch (e) { watch = {}; }
+function saveWatch() {
+  try { localStorage.setItem('scanner_watch', JSON.stringify(watch)); } catch (e) {}
+  const n = Object.keys(watch).length;
+  document.getElementById('watchCount').textContent = n ? '(' + n + ')' : '';
+}
 
 /* ---------- mode compact / détaillé ---------- */
 function getMode() {
@@ -1204,8 +1241,7 @@ async function load(spin) {
 
   setupBounds();
   populateFilters();
-  document.getElementById('pricePanel').style.display = universe.length ? 'block' : 'none';
-  document.getElementById('toolbarWrap').style.display = universe.length ? 'block' : 'none';
+  applyViewChrome();
   renderMarketStatus();
   buildHistogram();
   syncSlider();
@@ -1403,7 +1439,20 @@ function getFiltered() {
   return out;
 }
 
-function renderList() {
+function applyViewChrome() {
+  const on = universe.length > 0 && view === 'market';
+  document.getElementById('pricePanel').style.display = on ? 'block' : 'none';
+  document.getElementById('toolbarWrap').style.display = universe.length ? 'block' : 'none';
+  document.querySelector('.toolbar-filters').style.display = view === 'market' ? 'flex' : 'none';
+  document.getElementById('sortSelect').style.display = view === 'market' ? '' : 'none';
+  document.getElementById('tabMarket').classList.toggle('active', view === 'market');
+  document.getElementById('tabWatch').classList.toggle('active', view === 'watch');
+  saveWatch();
+}
+function setView(v) { view = v; shown = PAGE_SIZE; applyViewChrome(); renderList(); }
+function renderList() { if (view === 'watch') renderWatch(); else renderMarket(); }
+
+function renderMarket() {
   const contentEl = document.getElementById('content');
   filteredCache = getFiltered();
   const total = filteredCache.length;
@@ -1431,6 +1480,13 @@ function renderList() {
       ' de plus (' + (total - shown).toLocaleString('fr-FR') + ' restantes)</button>';
   }
   contentEl.innerHTML = html;
+}
+
+function copyWatchlist() {
+  const text = Object.keys(watch).sort().join('\n');
+  const done = () => { const b = document.getElementById('copyWatch'); if (b) b.textContent = 'Liste copiée ✓'; };
+  try { navigator.clipboard.writeText(text).then(done, () => window.prompt('Copie cette liste :', text)); }
+  catch (e) { window.prompt('Copie cette liste :', text); }
 }
 
 function resetAll() {
@@ -1478,7 +1534,8 @@ function rowHtml(u) {
         '<span class="initials mono">' + escapeHtml(u.t.slice(0, 3)) + '</span>' +
       '</div>' +
       '<div class="identity">' +
-        '<div class="name"><span class="name-text">' + escapeHtml(u.n || u.t) + '</span></div>' +
+        '<div class="name"><span class="name-text">' + escapeHtml(u.n || u.t) + '</span>' +
+          '<button type="button" class="star' + (watch[u.t] ? ' on' : '') + '" aria-label="Suivre ce titre">' + (watch[u.t] ? '★' : '☆') + '</button></div>' +
         '<div class="sub mono">' + sub + '</div>' +
       '</div>' +
       '<div class="figures">' +
@@ -1537,7 +1594,95 @@ function detailHtml(u) {
   } else {
     extra = '<div class="no-detail">Fiche détaillée (résumé, actualité, analystes, graphiques 1 mois → 1 an) disponible pour les titres les plus échangés et ceux qui bougent le plus aujourd\'hui.</div>';
   }
-  return chartHtml + kpis + extra + simulatorHtml();
+  return chartHtml + kpis + (watch[u.t] ? positionHtml(u.t) : '') + extra + simulatorHtml();
+}
+
+function fmtMoney(x) {
+  const sign = x < 0 ? '-' : '';
+  return sign + Math.abs(x).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
+}
+function colorOf(x) { return x > 0 ? 'var(--gain)' : (x < 0 ? 'var(--loss)' : 'var(--text-dim)'); }
+
+function positionHtml(t) {
+  const w = watch[t] || {};
+  return '<div class="pos" data-t="' + escapeAttr(t) + '">' +
+    '<div class="sim-label">Ma position (portefeuille)</div>' +
+    '<div class="sim-row">' +
+      '<input type="text" class="sim-input mono pos-qty" placeholder="Quantité" inputmode="decimal" value="' + escapeAttr(w.qty || '') + '">' +
+      '<span class="sim-unit mono">actions achetées à</span>' +
+      '<input type="text" class="sim-input mono pos-buy" placeholder="Prix $" inputmode="decimal" value="' + escapeAttr(w.buy || '') + '">' +
+    '</div>' +
+    '<div class="pos-res"></div></div>';
+}
+function updatePos(posEl, skipSave) {
+  const t = posEl.dataset.t, u = byTicker[t];
+  if (!u || !watch[t]) return;
+  const qtyStr = posEl.querySelector('.pos-qty').value, buyStr = posEl.querySelector('.pos-buy').value;
+  const qty = parsePrice(qtyStr) || 0, buy = parsePrice(buyStr) || 0;
+  watch[t].qty = qtyStr.trim(); watch[t].buy = buyStr.trim();
+  if (!skipSave) saveWatch();
+  let html = '';
+  if (qty > 0) {
+    const value = qty * u.p;
+    html += '<div class="sim-cell"><span class="v mono">' + fmtMoney(value) + '</span><span class="l">Valeur actuelle</span></div>';
+    if (buy > 0) {
+      const pnl = value - qty * buy, pct = (u.p - buy) / buy * 100;
+      html += '<div class="sim-cell"><span class="v mono" style="color:' + colorOf(pnl) + '">' + (pnl > 0 ? '+' : '') + fmtMoney(pnl) + '</span><span class="l">Gain / perte</span></div>' +
+        '<div class="sim-cell"><span class="v mono" style="color:' + colorOf(pct) + '">' + (pct > 0 ? '+' : '') + pct.toFixed(2) + '%</span><span class="l">Depuis l\'achat</span></div>';
+    }
+  }
+  posEl.querySelector('.pos-res').innerHTML = html;
+  if (view === 'watch') renderPortfolioCard();
+}
+
+function portfolioHtml() {
+  let value = 0, cost = 0, costValue = 0, day = 0, n = 0;
+  for (const t of Object.keys(watch)) {
+    const u = byTicker[t]; if (!u) continue;
+    const qty = parsePrice(watch[t].qty) || 0, buy = parsePrice(watch[t].buy) || 0;
+    if (qty <= 0) continue;
+    n++;
+    const v = qty * u.p;
+    value += v;
+    day += qty * (u.p - u.p / (1 + u.c / 100));
+    if (buy > 0) { cost += qty * buy; costValue += v; }
+  }
+  if (!n) {
+    return '<div class="pf-card"><div class="pf-main mono">Mon suivi</div>' +
+      '<div class="pf-hint">Ouvre la fiche d\'un titre suivi et indique la quantité et ton prix d\'achat : la valeur de ton portefeuille et tes gains/pertes s\'afficheront ici.</div></div>';
+  }
+  const pnl = costValue - cost, pct = cost > 0 ? pnl / cost * 100 : null;
+  return '<div class="pf-card"><div class="pf-main mono">' + fmtMoney(value) + '</div><div class="pf-label">Valeur de mon portefeuille (' + n + ' position' + (n > 1 ? 's' : '') + ')</div>' +
+    '<div class="pf-grid">' +
+      '<div><div class="v mono" style="color:' + colorOf(day) + '">' + (day > 0 ? '+' : '') + fmtMoney(day) + '</div><div class="pf-label">Aujourd\'hui</div></div>' +
+      (cost > 0 ? '<div><div class="v mono" style="color:' + colorOf(pnl) + '">' + (pnl > 0 ? '+' : '') + fmtMoney(pnl) + ' (' + (pct > 0 ? '+' : '') + pct.toFixed(2) + '%)</div><div class="pf-label">Gain / perte total</div></div>' : '') +
+    '</div>' +
+    '<div class="pf-hint">Calculé en dollars à partir des derniers cours du scan, sur les positions où tu as indiqué une quantité.</div></div>';
+}
+function renderPortfolioCard() {
+  const el = document.getElementById('pfCard');
+  if (el) el.outerHTML = portfolioHtml().replace('<div class="pf-card">', '<div class="pf-card" id="pfCard">');
+}
+
+function renderWatch() {
+  const contentEl = document.getElementById('content');
+  const all = Object.keys(watch);
+  const q = searchQuery.trim().toLowerCase();
+  const items = all.map(t => byTicker[t]).filter(Boolean)
+    .filter(u => !q || u.t.toLowerCase().includes(q) || (u.n || '').toLowerCase().includes(q))
+    .sort((a, b) => (a.n || a.t).localeCompare(b.n || b.t, 'en'));
+  const missing = all.filter(t => !byTicker[t]);
+  let html = portfolioHtml().replace('<div class="pf-card">', '<div class="pf-card" id="pfCard">');
+  if (!all.length) {
+    html += '<div class="empty-filter">Ta liste de suivi est vide. Dans l\'onglet Marché, touche l\'étoile ☆ à côté d\'une action pour la suivre.</div>';
+  } else {
+    html += '<div class="list-meta"><span>' + items.length + ' titre' + (items.length > 1 ? 's' : '') + ' suivi' + (items.length > 1 ? 's' : '') + '</span></div>';
+    html += '<div class="list" id="rows">' + items.map(rowHtml).join('') + '</div>';
+    if (missing.length) html += '<div class="pf-hint">Introuvable dans le dernier scan : ' + missing.map(escapeHtml).join(', ') + '.</div>';
+    html += '<div class="watch-tools"><button type="button" class="link-btn" id="copyWatch">Copier ma liste pour watchlist.txt</button></div>' +
+      '<div class="pf-hint">Les fiches complètes (résumé, actualité, analystes, graphiques 1 mois → 1 an) sont préparées par le scanner : colle cette liste dans un fichier <b>watchlist.txt</b> à la racine du dépôt GitHub pour qu\'elles soient disponibles pour tous tes titres suivis. Ta liste et tes positions restent enregistrées dans ce navigateur uniquement.</div>';
+  }
+  contentEl.innerHTML = html;
 }
 
 function analystHtml(a, price) {
@@ -1662,6 +1807,8 @@ function openRow(rowEl) {
     }
     const sim = rowEl.querySelector('.sim');
     if (sim) updateSim(sim);
+    const pos = rowEl.querySelector('.pos');
+    if (pos) updatePos(pos, true);
     requestAnimationFrame(() => rowEl.classList.add('open'));
   } else {
     rowEl.classList.toggle('open');
@@ -1673,6 +1820,18 @@ const contentRoot = document.getElementById('content');
 contentRoot.addEventListener('click', (e) => {
   if (e.target.closest('#moreBtn')) { shown += PAGE_SIZE; renderList(); return; }
   if (e.target.closest('#resetAll')) { resetAll(); return; }
+  if (e.target.closest('#copyWatch')) { copyWatchlist(); return; }
+  const star = e.target.closest('.star');
+  if (star) {
+    const row = star.closest('.row'), t = row.dataset.t;
+    if (watch[t]) delete watch[t]; else watch[t] = { qty: '', buy: '' };
+    saveWatch();
+    if (view === 'watch') { renderWatch(); return; }
+    star.classList.toggle('on', !!watch[t]);
+    star.textContent = watch[t] ? '★' : '☆';
+    row.classList.remove('open'); delete row.dataset.built;   // la fiche sera reconstruite avec/sans "Ma position"
+    return;
+  }
   const rangeBtn = e.target.closest('.range-btn');
   if (rangeBtn) {
     e.stopPropagation();
@@ -1686,6 +1845,8 @@ contentRoot.addEventListener('click', (e) => {
 contentRoot.addEventListener('input', (e) => {
   const sim = e.target.closest('.sim');
   if (sim) updateSim(sim);
+  const pos = e.target.closest('.pos');
+  if (pos) updatePos(pos);
 });
 contentRoot.addEventListener('change', (e) => {
   const sim = e.target.closest('.sim');
@@ -1721,6 +1882,9 @@ function escapeAttr(str) {
 
 /* ---------- barre d'outils ---------- */
 document.getElementById('refreshBtn').addEventListener('click', () => load(true));
+document.getElementById('tabMarket').addEventListener('click', () => setView('market'));
+document.getElementById('tabWatch').addEventListener('click', () => setView('watch'));
+saveWatch();
 const searchInput = document.getElementById('searchInput');
 const searchBox = document.getElementById('searchBox');
 searchInput.addEventListener('input', (e) => {
