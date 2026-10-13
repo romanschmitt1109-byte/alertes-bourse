@@ -2,9 +2,16 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Scanner</title>
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Scanner">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAChUlEQVR42u3dQW7qMBCA4YB6mW65BuftNbrlOl0gIUQLpI7teDzft6ye2qf6ZyYFFJYFAAAAAAAAAAAAAAAAAAAAAAAAAACAtA5+BYGcLuffX/z+/BKHLF5pkcjR732CMlb+G5MjXRbtRojJgThyjI26+0UcU5VRtw9xII40Y6Pi8BAH4kAciANxuBrd1YfDkIXJkauMKq+wmBwGxlNelZ0wi1ovzForyrBW7BFrJXMZ1d8pKI5JBkaL95CKY/Qy7k/du89l0ePgxTHJwBCHLAbK4srzHMowOYYvY6gsTI6BDFiGybH/2BgzC5NDGW94bcUeMTlGGhshynDN0buMKFmYHIjD2BCHMsSBOIwNcShDHHnLsFaYcGyIw0IRhzLEgTiMDXEoQxyIw9gQhzJMDqwV8o6NZYK3Cd6fXIvjSVtG+MnxcHKnyznD62HiKH9MV+wj89gIvFbWHNvGM0teRtTJsfLYrJhck6PbpyUaG8Hi6Hb/JGUEWysbd4QVM+3kqHi0bx/uxkakyVH3Qf/6uykjUhwt1kGHJ0jEEbKM23ee455uGa85uj2IbydtocSIY8vNk8qeCFFGjLWy8bZaBefnUiNGHFVuuNbo8Z1tbIy1Vqrfiq/nsyMmR6Qy0p7obHG0u31nlT7SRnaIlcXS+FVWZYwyOQoGRvFRWTGRJsded4L+189NntQxVRn9r1fEEaYMpz50HIN8rsCLy5fr1wXU+5pjwE+cePgvaWKHOLr9yUqwOCb7iBrXHMqgcRzKEEedw1ZGurWy8siVkTEOZYij/OyVkfpP2WcXp7IwOf5OQRnisErYsFwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFr5AeECJ6sPlzUHAAAAAElFTkSuQmCC">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAChUlEQVR42u3dQW7qMBCA4YB6mW65BuftNbrlOl0gIUQLpI7teDzft6ye2qf6ZyYFFJYFAAAAAAAAAAAAAAAAAAAAAAAAAACAtA5+BYGcLuffX/z+/BKHLF5pkcjR732CMlb+G5MjXRbtRojJgThyjI26+0UcU5VRtw9xII40Y6Pi8BAH4kAciANxuBrd1YfDkIXJkauMKq+wmBwGxlNelZ0wi1ovzForyrBW7BFrJXMZ1d8pKI5JBkaL95CKY/Qy7k/du89l0ePgxTHJwBCHLAbK4srzHMowOYYvY6gsTI6BDFiGybH/2BgzC5NDGW94bcUeMTlGGhshynDN0buMKFmYHIjD2BCHMsSBOIwNcShDHHnLsFaYcGyIw0IRhzLEgTiMDXEoQxyIw9gQhzJMDqwV8o6NZYK3Cd6fXIvjSVtG+MnxcHKnyznD62HiKH9MV+wj89gIvFbWHNvGM0teRtTJsfLYrJhck6PbpyUaG8Hi6Hb/JGUEWysbd4QVM+3kqHi0bx/uxkakyVH3Qf/6uykjUhwt1kGHJ0jEEbKM23ee455uGa85uj2IbydtocSIY8vNk8qeCFFGjLWy8bZaBefnUiNGHFVuuNbo8Z1tbIy1Vqrfiq/nsyMmR6Qy0p7obHG0u31nlT7SRnaIlcXS+FVWZYwyOQoGRvFRWTGRJsded4L+189NntQxVRn9r1fEEaYMpz50HIN8rsCLy5fr1wXU+5pjwE+cePgvaWKHOLr9yUqwOCb7iBrXHMqgcRzKEEedw1ZGurWy8siVkTEOZYij/OyVkfpP2WcXp7IwOf5OQRnisErYsFwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFr5AeECJ6sPlzUHAAAAAElFTkSuQmCC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1122,6 +1129,75 @@
   .hd-detail .detail { display: block; opacity: 1; grid-template-rows: none; overflow: visible; }
   .hd-detail .detail-inner { padding: 4px 0 12px; }
   .inv-note { font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); padding: 8px 0 10px; }
+
+  /* ======== Finitions ======== */
+  body { padding-bottom: calc(92px + env(safe-area-inset-bottom)); padding-top: calc(20px + env(safe-area-inset-top)); }
+  :focus-visible { outline: 2px solid var(--gain); outline-offset: 2px; }
+  .view-seg {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; margin: 0;
+    display: flex; justify-content: center; gap: 4px; border-radius: 0; border: none;
+    border-top: 1px solid var(--line);
+    background: rgba(12, 12, 14, 0.78);
+    -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+  }
+  .view-seg button {
+    flex: 1; max-width: 190px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 0.66rem; font-weight: 500; padding: 6px 4px; border-radius: 12px; background: none;
+    color: var(--text-faint); transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .view-seg button:active { transform: scale(0.94); }
+  .view-seg button.active { background: none; color: var(--gain); }
+  .view-seg button.active svg { filter: drop-shadow(0 0 6px var(--gain-soft)); }
+  .view-seg b { font-weight: 600; }
+
+  /* squelette de chargement */
+  #skel { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  #skel.hidden { display: none; }
+  .sk-row { display: grid; grid-template-columns: 38px 1fr 64px; gap: 12px; align-items: center; padding: 14px; border-bottom: 1px solid var(--line); }
+  .sk-row:last-child { border-bottom: none; }
+  .sk-row i, .sk-row b, .sk-row u { display: block; background: linear-gradient(90deg, var(--surface-raised) 25%, #26262b 50%, var(--surface-raised) 75%); background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+  .sk-row i { width: 36px; height: 36px; border-radius: 50%; }
+  .sk-row b { height: 10px; border-radius: 5px; margin: 5px 0; width: 70%; }
+  .sk-row b + b { width: 38%; }
+  .sk-row u { height: 26px; border-radius: 8px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* apparition des lignes (uniquement au changement d'onglet / chargement) */
+  #content.anim .row, #content.anim .inv-card, #content.anim .pf-card, #content.anim .inv-block, #content.anim .inv-hero { animation: rowIn 0.38s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* pourcentage en pastille, comme les applis de bourse */
+  .nums .pct { display: inline-block; padding: 3px 8px; border-radius: 8px; background: color-mix(in srgb, var(--gain) 14%, transparent); font-size: 0.9rem; }
+  .nums .pct.loss { background: color-mix(in srgb, var(--loss) 14%, transparent); }
+  .nums .pct.flat { background: var(--surface-raised); }
+  .nums { text-align: right; }
+
+  /* palmarès du jour */
+  #movers { margin-top: 16px; }
+  .mv-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .mv-tab { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--text-dim); font-family: inherit; font-size: 0.72rem; font-weight: 500; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .mv-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .mv-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; scroll-padding-left: 16px; scrollbar-width: none; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+  .mv-scroll::-webkit-scrollbar { display: none; }
+  .mv-card { flex: 0 0 132px; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer; transition: transform 0.12s ease, background 0.12s ease; }
+  .mv-card:active { transform: scale(0.96); background: var(--surface-raised); }
+  .mv-card .top { display: flex; align-items: center; gap: 8px; }
+  .mv-card .avatar { width: 28px; height: 28px; }
+  .mv-card .tk { font-size: 0.82rem; font-weight: 600; }
+  .mv-card .pc { margin-top: 10px; font-size: 1rem; font-weight: 700; }
+  .mv-card .pr { font-size: 0.68rem; color: var(--text-faint); margin-top: 2px; }
+  .mv-card svg { width: 100%; height: 22px; margin-top: 8px; display: block; }
+  .mv-card svg path.line { fill: none; stroke-width: 1.5; }
+
+  /* largeur du marché haussier / baissier */
+  .breadth { display: flex; height: 5px; border-radius: 3px; overflow: hidden; gap: 2px; margin-top: 14px; flex-basis: 100%; }
+  .breadth i { display: block; height: 100%; }
+
+  /* message éphémère */
+  #toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 80; background: var(--surface-raised); color: var(--text); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; font-weight: 500; box-shadow: 0 8px 24px #000a; transition: opacity 0.2s ease, transform 0.2s ease; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  @media (prefers-reduced-motion: reduce) { #content.anim * { animation: none !important; } .sk-row * { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -1155,11 +1231,11 @@
 
     <div id="marketStatus"></div>
 
-    <div class="seg view-seg" role="group" aria-label="Vue">
-      <button type="button" id="tabMarket" class="active">Marché</button>
-      <button type="button" id="tabWatch">Suivi <span id="watchCount"></span></button>
-      <button type="button" id="tabInv">Investisseurs</button>
-    </div>
+    <nav class="seg view-seg" role="tablist" aria-label="Navigation">
+      <button type="button" id="tabMarket" class="active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 4 8-10"/><path d="M15 5h5v5"/></svg><span>Marché</span></button>
+      <button type="button" id="tabWatch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg><span>Suivi <b id="watchCount"></b></span></button>
+      <button type="button" id="tabInv"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3.2 3.2 0 010 5.6M18 14.3c1.9.8 3 2.6 3 5.7"/></svg><span>Investisseurs</span></button>
+    </nav>
 
     <div class="price-panel" id="pricePanel" style="display:none">
       <div class="pp-head">
@@ -1181,6 +1257,7 @@
     </div>
 
     <div class="stats" id="stats"></div>
+    <div id="movers" style="display:none"></div>
 
     <div class="toolbar-wrap" id="toolbarWrap">
       <div class="toolbar">
@@ -1211,7 +1288,9 @@
       </div>
     </div>
 
+    <div id="skel" aria-hidden="true"><div class="sk-row"><i></i><div><b></b><b></b></div><u></u></div><div class="sk-row"><i></i><div><b></b><b></b></div><u></u></div><div class="sk-row"><i></i><div><b></b><b></b></div><u></u></div><div class="sk-row"><i></i><div><b></b><b></b></div><u></u></div><div class="sk-row"><i></i><div><b></b><b></b></div><u></u></div><div class="sk-row"><i></i><div><b></b><b></b></div><u></u></div><div class="sk-row"><i></i><div><b></b><b></b></div><u></u></div></div>
     <div id="content"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
 
     <footer>Mis à jour automatiquement à chaque scan — données Yahoo Finance.</footer>
   </div>
@@ -1237,6 +1316,8 @@ const CHIPS = [
 ];
 
 let lastData = null;
+let lastLoad = 0;
+let moverMode = 'up';
 let universe = [];
 let byTicker = {};
 let details = {};
@@ -1308,13 +1389,67 @@ async function load(spin) {
   buildHistogram();
   syncSlider();
   renderStats();
+  renderMovers();
   shown = PAGE_SIZE;
+  hideSkel();
+  playIn();
+  lastLoad = Date.now();
   renderList();
   contentEl.classList.add('ready');
   if (spin) setTimeout(() => btn.classList.remove('spinning'), 400);
 }
 
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+function playIn() {
+  const c = document.getElementById('content');
+  c.classList.add('anim');
+  setTimeout(() => c.classList.remove('anim'), 700);
+}
+function hideSkel() { const k = document.getElementById('skel'); if (k) k.classList.add('hidden'); }
+
+function renderMovers() {
+  const el = document.getElementById('movers');
+  if (!el) return;
+  const traded = universe.filter(u => u.v && u.p * u.v >= 2e6);
+  const lists = {
+    up: traded.slice().sort((a, b) => b.c - a.c).slice(0, 10),
+    down: traded.slice().sort((a, b) => a.c - b.c).slice(0, 10),
+    act: traded.slice().sort((a, b) => b.p * b.v - a.p * a.v).slice(0, 10),
+  };
+  const labels = { up: 'Hausses', down: 'Baisses', act: 'Plus échangés' };
+  const list = lists[moverMode];
+  el.innerHTML = '<div class="mv-tabs">' + Object.keys(labels).map(k =>
+    '<button type="button" class="mv-tab' + (k === moverMode ? ' active' : '') + '" data-k="' + k + '">' + labels[k] + '</button>').join('') + '</div>' +
+    '<div class="mv-scroll">' + list.map(u => {
+      const spark = (u.s && u.s.length >= 2) ? '<svg viewBox="0 0 100 22" preserveAspectRatio="none">' + sparkline(u.s, 100, 22) + '</svg>' : '';
+      return '<div class="mv-card" data-t="' + escapeAttr(u.t) + '">' +
+        '<div class="top"><div class="avatar"><img src="' + escapeAttr(logoUrl(u.t)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><span class="initials mono">' + escapeHtml(u.t.slice(0, 3)) + '</span></div><span class="tk mono">' + escapeHtml(u.t) + '</span></div>' +
+        '<div class="pc mono" style="color:' + colorOf(u.c) + '">' + (u.c > 0 ? '+' : '') + u.c.toFixed(2) + '%</div>' +
+        '<div class="pr mono">' + fmtPrice(u.p) + ' $</div>' + spark + '</div>';
+    }).join('') + '</div>';
+}
+document.getElementById('movers').addEventListener('click', (e) => {
+  const tab = e.target.closest('.mv-tab');
+  if (tab) { moverMode = tab.dataset.k; renderMovers(); return; }
+  const card = e.target.closest('.mv-card');
+  if (card) {
+    searchQuery = card.dataset.t;
+    document.getElementById('searchInput').value = searchQuery;
+    document.getElementById('searchBox').classList.add('has-value');
+    shown = PAGE_SIZE; renderList();
+    document.getElementById('toolbarWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+
 function showStatus(msg) {
+  hideSkel();
   document.getElementById('stats').innerHTML = '';
   document.getElementById('pricePanel').style.display = 'none';
   document.getElementById('toolbarWrap').style.display = 'none';
@@ -1351,7 +1486,10 @@ function renderStats() {
     '<div class="stat"><span class="v">' + escapeHtml(lastData.generated_at || '—') + '</span><span class="l">Dernier scan</span></div>' +
     '<div class="stat"><span class="v">' + universe.length.toLocaleString('fr-FR') + '</span><span class="l">Actions</span></div>' +
     '<div class="stat"><span class="v gain">' + up.toLocaleString('fr-FR') + '</span><span class="l">En hausse</span></div>' +
-    '<div class="stat"><span class="v" style="color:var(--loss)">' + down.toLocaleString('fr-FR') + '</span><span class="l">En baisse</span></div>';
+    '<div class="stat"><span class="v" style="color:var(--loss)">' + down.toLocaleString('fr-FR') + '</span><span class="l">En baisse</span></div>' +
+    '<div class="breadth" title="Hausses / baisses"><i style="width:' + (up / universe.length * 100).toFixed(1) + '%;background:var(--gain)"></i>' +
+    '<i style="width:' + ((universe.length - up - down) / universe.length * 100).toFixed(1) + '%;background:var(--line)"></i>' +
+    '<i style="flex:1;background:var(--loss)"></i></div>';
 }
 
 /* ---------- slider de prix (échelle logarithmique) ---------- */
@@ -1506,13 +1644,15 @@ function applyViewChrome() {
   document.getElementById('pricePanel').style.display = on ? 'block' : 'none';
   document.getElementById('toolbarWrap').style.display = (universe.length && view !== 'investors') ? 'block' : 'none';
   document.getElementById('tabInv').classList.toggle('active', view === 'investors');
+  document.getElementById('movers').style.display = (universe.length && view === 'market') ? 'block' : 'none';
+  document.getElementById('stats').style.display = view === 'market' ? 'flex' : 'none';
   document.querySelector('.toolbar-filters').style.display = view === 'market' ? 'flex' : 'none';
   document.getElementById('sortSelect').style.display = view === 'market' ? '' : 'none';
   document.getElementById('tabMarket').classList.toggle('active', view === 'market');
   document.getElementById('tabWatch').classList.toggle('active', view === 'watch');
   saveWatch();
 }
-function setView(v) { view = v; shown = PAGE_SIZE; applyViewChrome(); renderList(); }
+function setView(v) { view = v; shown = PAGE_SIZE; applyViewChrome(); playIn(); window.scrollTo({ top: 0, behavior: 'smooth' }); renderList(); }
 function renderList() {
   if (view === 'watch') renderWatch();
   else if (view === 'investors') renderInvestors();
@@ -2069,6 +2209,7 @@ contentRoot.addEventListener('click', (e) => {
     const row = star.closest('.row'), t = row ? row.dataset.t : star.dataset.t;
     if (watch[t]) delete watch[t]; else watch[t] = { qty: '', buy: '' };
     saveWatch();
+    showToast(watch[t] ? '★ ' + t + ' ajouté au suivi' : t + ' retiré du suivi');
     if (!row) {   // étoile depuis l'onglet Investisseurs
       document.querySelectorAll('.star[data-t="' + t + '"]').forEach(b => { b.classList.toggle('on', !!watch[t]); b.textContent = watch[t] ? '★' : '☆'; });
       document.querySelectorAll('.hd-item[data-t="' + t + '"]').forEach(it => { delete it.dataset.built; if (it.classList.contains('open')) buildItem(it); });
@@ -2155,6 +2296,10 @@ document.getElementById('filterSector').addEventListener('change', (e) => { filt
 
 load(false);
 setInterval(renderMarketStatus, 60000);
+// actualisation automatique au retour sur l'appli si les données ont plus de 10 minutes
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && lastLoad && Date.now() - lastLoad > 10 * 60000 && !document.querySelector('.row.open')) load(false);
+});
 </script>
 </body>
 </html>
