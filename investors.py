@@ -49,7 +49,21 @@ INVESTORS = [
     ("1649339", "Scion Asset Management", "Michael Burry"),
     ("1350694", "Bridgewater Associates", "Ray Dalio"),
     ("1061768", "Baupost Group", "Seth Klarman"),
+    ("1656456", "Appaloosa", "David Tepper"),
+    ("1040273", "Third Point", "Dan Loeb"),
+    ("921669", "Icahn", "Carl Icahn"),
+    ("1536411", "Duquesne Family Office", "Stanley Druckenmiller"),
+    ("1549575", "Dalal Street", "Mohnish Pabrai"),
+    ("1167483", "Tiger Global", "Chase Coleman"),
+    ("1709323", "Himalaya Capital", "Li Lu"),
+    ("1345471", "Trian Fund", "Nelson Peltz"),
+    ("1791786", "Elliott Management", "Paul Singer"),
+    ("1029160", "Soros Fund Management", "George Soros"),
+    ("1112520", "Akre Capital", "Chuck Akre"),
+    ("1061165", "Lone Pine Capital", "Stephen Mandel"),
 ]
+QUARTERS_13F = 3   # derniers 13F lus : positions actuelles + achats des 2 derniers trimestres
+CONVERGENCE_MIN = 2
 
 FORM4_FORMS = {"4", "4/A"}
 OWNERSHIP_FORMS = {"SC 13D", "SC 13D/A", "SC 13G", "SC 13G/A",
@@ -153,7 +167,8 @@ NAME_DROP = {"INC", "CORP", "CORPORATION", "CO", "COMPANY", "LTD", "LIMITED", "P
 
 
 def norm_name(name):
-    words = re.sub(r"[^A-Z0-9 ]", " ", (name or "").upper().replace("&", " AND ")).split()
+    name = re.sub(r"\(.*?\)", " ", name or "")   # « Alphabet Inc. (Class A) » -> « Alphabet Inc. »
+    words = re.sub(r"[^A-Z0-9 ]", " ", name.upper().replace("&", " AND ")).split()
     words = [w for w in words if w not in NAME_DROP]
     return " ".join(words)
 
@@ -204,6 +219,12 @@ def parse_infotable(xml_text):
         g = out.setdefault(key, {"name": d.get("nameOfIssuer"), "value": 0.0, "shares": 0.0})
         g["value"] += value
         g["shares"] += shares
+    # Certains déclarants (ex. Baupost, Duquesne) indiquent encore les montants en
+    # milliers de dollars : le prix implicite par action est alors absurde (< 1 $).
+    units = sorted(g["value"] / g["shares"] for g in out.values() if g["shares"] > 0 and g["value"] > 0)
+    if units and units[len(units) // 2] < 1:
+        for g in out.values():
+            g["value"] *= 1000
     return out
 
 
@@ -224,10 +245,9 @@ def build_holdings(table, name_map):
             "others_pct": round(max(0.0, 100 - sum(t["pct"] for t in top)), 2)}
 
 
-def fetch_holdings(inv, rows13f, name_map):
-    """Positions du dernier 13F : on repère le fichier « information table » dans
-    le dossier du dépôt (son nom varie selon le déclarant)."""
-    form, fdate, acc, rdate = rows13f
+def fetch_table(inv, acc):
+    """Tableau d'un 13F : on repère le fichier « information table » dans le
+    dossier du dépôt (son nom varie selon le déclarant)."""
     base = f"https://www.sec.gov/Archives/edgar/data/{int(inv['cik'])}/{acc.replace('-', '')}/"
     index = get(base + "index.json", as_json=True)
     names = [i.get("name", "") for i in ((index or {}).get("directory") or {}).get("item", [])]
@@ -236,13 +256,83 @@ def fetch_holdings(inv, rows13f, name_map):
     for n in xmls[:2]:
         text = get(base + n)
         table = parse_infotable(text) if text else {}
-        h = build_holdings(table, name_map) if table else None
-        if h:
-            h["period"] = rdate
-            h["filed"] = fdate
-            h["link"] = base
-            return h
-    return None
+        if table:
+            return table, base
+    return None, base
+
+
+def quarter_label(iso):
+    """'2026-06-30' -> 'T2 2026'."""
+    try:
+        y, m = int(iso[:4]), int(iso[5:7])
+    except (TypeError, ValueError):
+        return None
+    return f"T{(m - 1) // 3 + 1} {y}"
+
+
+MIN_WEIGHT = 0.1      # % du portefeuille : en dessous, un achat est jugé anecdotique
+MIN_ADD_PCT = 10      # % : un renforcement plus petit n'est pas compté comme un achat
+
+
+def quarter_changes(cur, prev, name_map):
+    """Compare deux 13F consécutifs (positions en nombre d'actions, par CUSIP) :
+    nouvelles positions et renforcements (achats), allègements et sorties (ventes).
+    Seuls les achats significatifs sont retenus : au moins MIN_WEIGHT % du
+    portefeuille, et pour un renforcement au moins +MIN_ADD_PCT % d'actions
+    (sinon les gros fonds à mille lignes noieraient le radar)."""
+    total = sum(h["value"] for h in cur.values()) or 1
+    buys, sells = [], []
+    for key in set(cur) | set(prev):
+        c, p = cur.get(key), prev.get(key)
+        cs, ps = (c or {}).get("shares", 0), (p or {}).get("shares", 0)
+        ref = c or p
+        unit = (c["value"] / cs) if c and cs else ((p["value"] / ps) if p and ps else 0)
+        row = {"name": (ref["name"] or "").title(), "ticker": name_map.get(norm_name(ref["name"]))}
+        if ps <= 0 and cs > 0:
+            row.update(kind="new", value=round(c["value"]), shares=round(cs))
+            buys.append(row)
+        elif cs > ps * 1.01:
+            row.update(kind="add", value=round((cs - ps) * unit), shares=round(cs - ps), pct=round((cs / ps - 1) * 100, 1))
+            buys.append(row)
+        elif cs <= 0 < ps:
+            row.update(kind="exit", value=round(p["value"]), shares=round(ps))
+            sells.append(row)
+        elif cs < ps * 0.99:
+            row.update(kind="cut", value=round((ps - cs) * unit), shares=round(ps - cs), pct=round((cs / ps - 1) * 100, 1))
+            sells.append(row)
+    for b in buys:
+        b["w"] = round(b["value"] / total * 100, 2)
+    buys = [b for b in buys if b["w"] >= MIN_WEIGHT and (b["kind"] == "new" or b["pct"] >= MIN_ADD_PCT)]
+    buys.sort(key=lambda r: r["value"], reverse=True)
+    sells.sort(key=lambda r: r["value"], reverse=True)
+    # tous les achats identifiés (pour le radar de convergence), les plus gros des autres
+    buys = [b for b in buys if b["ticker"]] + [b for b in buys if not b["ticker"]][:5]
+    return buys, sells[:15]
+
+
+def fetch_13f(inv, rows13f, name_map, old):
+    """Positions du dernier 13F et achats / ventes des trimestres précédents.
+    Si les dépôts n'ont pas changé depuis le passage précédent, on réutilise
+    le résultat déjà publié (aucune requête)."""
+    accs = [r[2] for r in rows13f]
+    if old and old.get("accs") == accs and old.get("holdings"):
+        return old["holdings"], old.get("quarters") or [], accs
+    tables = []
+    holdings = None
+    for i, (form, fdate, acc, rdate) in enumerate(rows13f):
+        table, base = fetch_table(inv, acc)
+        if not table:
+            break
+        tables.append((table, rdate))
+        if i == 0:
+            holdings = build_holdings(table, name_map)
+            if holdings:
+                holdings.update(period=rdate, filed=fdate, link=base)
+    quarters = []
+    for (cur, rdate), (prev, prev_date) in zip(tables, tables[1:]):
+        buys, sells = quarter_changes(cur, prev, name_map)
+        quarters.append({"period": rdate, "label": quarter_label(rdate), "prev": prev_date, "buys": buys, "sells": sells})
+    return holdings, quarters, accs if tables else []
 
 
 def filing_url(cik, accession, doc):
@@ -255,7 +345,9 @@ def raw_xml_doc(primary):
     return primary.split("/")[-1]
 
 
-def fetch_investor(inv, since, name_map=None):
+def fetch_investor(inv, since, name_map=None, old=None):
+    name_map = name_map or {}
+    old = old or {}
     data = get(f"https://data.sec.gov/submissions/CIK{int(inv['cik']):010d}.json", as_json=True)
     if not data:
         return None
@@ -263,12 +355,18 @@ def fetch_investor(inv, since, name_map=None):
     rows = list(zip(recent.get("form", []), recent.get("filingDate", []),
                     recent.get("accessionNumber", []), recent.get("primaryDocument", [])))
     reports = recent.get("reportDate", [])
-    latest_13f = None
-    for i, r in enumerate(rows):
-        if r[0] == "13F-HR":
-            latest_13f = (r[0], r[1], r[2], reports[i] if i < len(reports) else None)
-            break
-    holdings = fetch_holdings(inv, latest_13f, name_map) if latest_13f else None
+    rows13f, periods = [], set()
+    for i, r in enumerate(rows):   # du plus récent au plus ancien ; un seul 13F par trimestre
+        rdate = reports[i] if i < len(reports) else None
+        if r[0] == "13F-HR" and rdate and rdate not in periods:
+            periods.add(rdate)
+            rows13f.append((r[0], r[1], r[2], rdate))
+            if len(rows13f) >= QUARTERS_13F:
+                break
+    holdings, quarters, accs = fetch_13f(inv, rows13f, name_map, old) if rows13f else (None, [], [])
+
+    # formulaires 4 : seuls les dépôts pas encore lus sont téléchargés
+    f4_seen = {a: d for a, d in (old.get("f4_seen") or []) if d >= since}
     moves, filings, last_13f = [], [], None
     form4_count = 0
     for form, fdate, acc, doc in rows:   # du plus récent au plus ancien
@@ -276,18 +374,27 @@ def fetch_investor(inv, since, name_map=None):
             last_13f = {"date": fdate, "form": form, "link": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={int(inv['cik'])}&type=13F"}
         if fdate < since:
             continue
-        if form in FORM4_FORMS and form4_count < MAX_FORM4_PER_INVESTOR:
+        if form in FORM4_FORMS and acc not in f4_seen and form4_count < MAX_FORM4_PER_INVESTOR:
             form4_count += 1
             xml = get(filing_url(inv["cik"], acc, raw_xml_doc(doc))) if doc else None
-            for m in parse_form4(xml) if xml else []:
+            if xml is None:
+                continue
+            f4_seen[acc] = fdate
+            for m in parse_form4(xml):
                 m["filed"] = fdate
                 m["link"] = filing_url(inv["cik"], acc, doc)
                 moves.append(m)
         elif form.upper() in OWNERSHIP_FORMS:
             filings.append({"date": fdate, "form": form, "link": filing_url(inv["cik"], acc, doc)})
     # fusion des fractions d'ordre, en gardant la date de dépôt la plus récente
+    if "f4_seen" in old:   # (un ancien fichier sans cette clé : tout est relu, pour ne rien compter deux fois)
+        moves += [m for m in (old.get("moves") or []) if (m.get("filed") or "") >= since]
+    meta = {}
+    for m in moves:
+        k = (m["date"], m["ticker"], m["action"])
+        if k not in meta or (m.get("filed") or "") > (meta[k].get("filed") or ""):
+            meta[k] = m
     merged = merge_moves(moves)
-    meta = {(m["date"], m["ticker"], m["action"]): m for m in moves}
     for m in merged:
         src = meta.get((m["date"], m["ticker"], m["action"]), {})
         m["filed"] = src.get("filed")
@@ -297,7 +404,55 @@ def fetch_investor(inv, since, name_map=None):
     return {
         "cik": inv["cik"], "name": inv["name"], "person": inv.get("person"),
         "moves": merged, "filings": filings[:5], "last_13f": last_13f, "holdings": holdings,
+        "quarters": quarters, "accs": accs, "f4_seen": sorted(f4_seen.items()),
     }
+
+
+def build_convergence(investors):
+    """Radar de convergence : actions achetées par au moins CONVERGENCE_MIN
+    investisseurs suivis au cours d'un même trimestre — d'après les 13F
+    (nouvelle position ou renforcement) et les formulaires 4 (achats déclarés)."""
+    groups = {}
+    for inv in investors:
+        who = inv.get("person") or inv["name"]
+        for q in inv.get("quarters") or []:
+            for b in q["buys"]:
+                if not b.get("ticker"):
+                    continue
+                g = groups.setdefault((b["ticker"], q["label"]), {"t": b["ticker"], "name": b["name"], "q": q["label"],
+                                                                  "end": q["period"], "who": {}})
+                g["who"][who] = {"who": who, "fund": inv["name"], "kind": b["kind"], "value": b["value"],
+                                 "pct": b.get("pct"), "w": b.get("w"), "src": "13F"}
+        for m in inv.get("moves") or []:
+            if m["action"] != "Achat" or not m.get("ticker"):
+                continue
+            label = quarter_label(m["date"])
+            g = groups.setdefault((m["ticker"], label), {"t": m["ticker"], "name": (m.get("issuer") or "").title(),
+                                                         "q": label, "end": m["date"], "who": {}})
+            e = g["who"].get(who)
+            if e and e["src"] == "13F":
+                e["f4"] = (e.get("f4") or 0) + (m.get("value") or 0)
+                e["date"] = max(e.get("date") or "", m["date"])
+            elif e:
+                e["value"] += m.get("value") or 0
+                e["date"] = max(e["date"], m["date"])
+            else:
+                g["who"][who] = {"who": who, "fund": inv["name"], "kind": "f4", "value": m.get("value") or 0,
+                                 "date": m["date"], "src": "F4"}
+    out = []
+    for g in groups.values():
+        if len(g["who"]) < CONVERGENCE_MIN:
+            continue
+        who = sorted(g["who"].values(), key=lambda w: w["value"] or 0, reverse=True)
+        out.append({"t": g["t"], "name": g["name"], "q": g["q"], "count": len(who),
+                    "value": sum(w["value"] or 0 for w in who), "who": who})
+    def qkey(label):
+        q, y = label.split()
+        return int(y) * 10 + int(q[1:])
+    out.sort(key=lambda c: (qkey(c["q"]), c["count"], c["value"]), reverse=True)
+    # les 3 trimestres les plus récents, 30 titres au plus par trimestre
+    labels = sorted({c["q"] for c in out}, key=qkey, reverse=True)[:3]
+    return [c for q in labels for c in [c for c in out if c["q"] == q][:30]]
 
 
 def main():
@@ -305,21 +460,30 @@ def main():
     since = (now - timedelta(days=LOOKBACK_DAYS)).strftime("%Y-%m-%d")
     result = []
     name_map = load_name_map()
+    try:
+        with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+            previous = {i["cik"]: i for i in json.load(f).get("investors", [])}
+    except Exception:
+        previous = {}
     for inv in load_investors():
         print(f"{inv['name']}...")
-        res = fetch_investor(inv, since, name_map)
+        res = fetch_investor(inv, since, name_map, previous.get(inv["cik"]))
         if res:
             result.append(res)
+        elif inv["cik"] in previous:
+            result.append(previous[inv["cik"]])   # SEC injoignable pour cet investisseur : on garde l'ancien résultat
     if not result:
         print("ERREUR : aucune donnée récupérée auprès de la SEC (voir les messages « Échec » ci-dessus).")
         return 1
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    payload = {"generated_at": now.strftime("%d/%m/%Y %H:%M"), "lookback_days": LOOKBACK_DAYS, "investors": result}
+    payload = {"generated_at": now.strftime("%d/%m/%Y %H:%M"), "lookback_days": LOOKBACK_DAYS,
+               "convergence": build_convergence(result), "investors": result}
     tmp = OUTPUT_FILE + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp, OUTPUT_FILE)
-    print(f"Écrit {OUTPUT_FILE} : {sum(len(i['moves']) for i in result)} mouvement(s).")
+    print(f"Écrit {OUTPUT_FILE} : {sum(len(i['moves']) for i in result)} mouvement(s), "
+          f"{len(payload['convergence'])} convergence(s).")
 
 
 if __name__ == "__main__":

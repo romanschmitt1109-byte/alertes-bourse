@@ -16,7 +16,7 @@ concurrency:
 jobs:
   investors:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +41,8 @@ jobs:
             echo "Aucun changement."
           else
             git commit -m "Mise à jour des mouvements d'investisseurs"
-            git pull --rebase origin main || true
-            git push
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              sleep 5
+            done
           fi

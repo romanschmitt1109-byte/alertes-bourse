@@ -631,6 +631,80 @@ def build_details(universe):
 
 
 # --------------------------------------------------------------------------
+# Historique mensuel (simulateur « Et si » du site)
+# --------------------------------------------------------------------------
+
+HISTORY_FILE = os.path.join(OUTPUT_DIR, "history.json")
+HISTORY_PERIOD = os.environ.get("HISTORY_PERIOD", "5y")
+BENCHMARKS = ["SPY", "QQQ"]   # S&P 500 et Nasdaq 100, pour comparer
+
+
+def _sig(x):
+    """Arrondi à 4 chiffres significatifs : largement assez pour un simulateur,
+    et un fichier deux fois plus léger."""
+    return float(f"{x:.4g}")
+
+
+def history_is_fresh(now_dt):
+    try:
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            return json.load(f).get("date") == now_dt.strftime("%Y-%m-%d")
+    except Exception:
+        return False
+
+
+def build_history(tickers, now_dt):
+    """Cours de clôture mensuels sur 5 ans (ajustés des divisions d'actions et
+    des dividendes) de toutes les actions, mis à jour une fois par jour.
+    Format : {"months": ["2021-11", ...], "h": {ticker: [cours ou null, ...]}}."""
+    if history_is_fresh(now_dt):
+        print("Historique mensuel déjà à jour aujourd'hui.")
+        return
+    all_tickers = BENCHMARKS + [t for t in tickers if t not in BENCHMARKS]
+    series = {}
+    batches = list(chunked(all_tickers, BATCH_SIZE))
+    for i, batch in enumerate(batches):
+        print(f"  Historique : lot {i + 1}/{len(batches)}...")
+        data = None
+        for attempt in range(2):
+            try:
+                data = yf.download(batch, period=HISTORY_PERIOD, interval="1mo", group_by="ticker",
+                                   auto_adjust=True, threads=True, progress=False)
+                break
+            except Exception as e:
+                print(f"Erreur de téléchargement de l'historique (essai {attempt + 1}/2): {e}")
+                time.sleep(5)
+        if data is None or getattr(data, "empty", True):
+            continue
+        for t in batch:
+            closes = _series(data, t, "Close")
+            if closes is not None:
+                closes = closes.dropna()
+                closes = closes[closes > 0]
+                if len(closes) >= 2:
+                    series[t] = closes
+        time.sleep(PAUSE_BETWEEN_BATCHES)
+    if len(series) < 0.5 * len(all_tickers):
+        print(f"Historique incomplet ({len(series)} titres) : l'ancien fichier est conservé.")
+        return
+    months = sorted({ts.strftime("%Y-%m") for s in series.values() for ts in s.index})
+    pos = {m: i for i, m in enumerate(months)}
+    hist = {}
+    for t, s in series.items():
+        row = [None] * len(months)
+        for ts, c in s.items():
+            row[pos[ts.strftime("%Y-%m")]] = _sig(float(c))
+        hist[t] = row
+    payload = {"generated_at": now_dt.strftime("%d/%m/%Y %H:%M"), "date": now_dt.strftime("%Y-%m-%d"),
+               "months": months, "bench": BENCHMARKS, "h": hist}
+    tmp = HISTORY_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(tmp, HISTORY_FILE)
+    print(f"Historique écrit dans {HISTORY_FILE} ({len(hist)} titres, {len(months)} mois).")
+
+
+# --------------------------------------------------------------------------
 # Écriture et point d'entrée
 # --------------------------------------------------------------------------
 
@@ -696,6 +770,11 @@ def main():
 
     details = build_details(universe)
     write_results(universe, details, now_dt)
+
+    try:
+        build_history([u["t"] for u in universe], now_dt)
+    except Exception as e:   # l'historique est un bonus : il ne doit jamais faire échouer le scan
+        print(f"Historique mensuel non mis à jour ({e}).")
 
 
 if __name__ == "__main__":

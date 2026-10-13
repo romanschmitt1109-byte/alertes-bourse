@@ -1164,7 +1164,7 @@
   @keyframes shimmer { to { background-position: -200% 0; } }
 
   /* apparition des lignes (uniquement au changement d'onglet / chargement) */
-  #content.anim .row, #content.anim .inv-card, #content.anim .pf-card, #content.anim .inv-block, #content.anim .inv-hero { animation: rowIn 0.38s cubic-bezier(.2,.7,.2,1) both; }
+  #content.anim .row, #content.anim .inv-card, #content.anim .pf-card, #content.anim .inv-block, #content.anim .inv-hero, #content.anim .cv-card, #content.anim .wi-card, #content.anim .map { animation: rowIn 0.38s cubic-bezier(.2,.7,.2,1) both; }
   @keyframes rowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
   /* pourcentage en pastille, comme les applis de bourse */
@@ -1198,6 +1198,101 @@
   #toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 80; background: var(--surface-raised); color: var(--text); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; font-weight: 500; box-shadow: 0 8px 24px #000a; transition: opacity 0.2s ease, transform 0.2s ease; white-space: nowrap; }
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
   @media (prefers-reduced-motion: reduce) { #content.anim * { animation: none !important; } .sk-row * { animation: none !important; } }
+
+  /* ======== Navigation à 6 onglets ======== */
+  .view-seg { gap: 0; padding-left: 4px; padding-right: 4px; }
+  .view-seg button { padding: 6px 2px; min-width: 0; }
+  .view-seg button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .view-seg i { font-style: normal; }
+  .view-seg .lbl-short { display: none; }
+  @media (max-width: 520px) { .view-seg .lbl-long { display: none; } .view-seg .lbl-short { display: inline; } }
+
+  /* ======== Puces de réglage communes ======== */
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .chips .mv-tab { padding: 6px 11px; }
+  .chips-label { font-size: 0.66rem; color: var(--text-faint); align-self: center; margin-right: 2px; }
+  .intro { margin-top: 14px; font-size: 0.78rem; line-height: 1.5; color: var(--text-dim); }
+  .intro b { color: var(--text); font-weight: 600; }
+
+  /* ======== Carte du marché ======== */
+  .map { position: relative; margin-top: 12px; border-radius: 12px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); touch-action: manipulation; }
+  .msec { position: absolute; box-sizing: border-box; border: 1px solid var(--bg); }
+  .msec-h { position: absolute; left: 0; right: 0; top: 0; height: 15px; padding: 0 5px; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.02em; color: var(--text-dim); background: var(--bg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; line-height: 15px; }
+  .tile { position: absolute; box-sizing: border-box; border: 1px solid var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; color: #fff; text-align: center; line-height: 1.1; }
+  .tile b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; }
+  .tile span { font-family: "IBM Plex Mono", ui-monospace, monospace; opacity: 0.9; }
+  .tile.sel { outline: 2px solid #fff; outline-offset: -2px; z-index: 2; }
+  .map-legend { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.64rem; color: var(--text-faint); }
+  .map-legend .grad { flex: 1; height: 6px; border-radius: 3px; }
+  .map-info { margin-top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  .mi-head { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; }
+  .mi-head .avatar { width: 40px; height: 40px; }
+  .mi-name { font-size: 0.92rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mi-sub { font-size: 0.7rem; color: var(--text-faint); margin-top: 2px; }
+  .mi-num { text-align: right; }
+  .mi-num .pct { font-size: 1rem; font-weight: 700; }
+  .mi-num .price { font-size: 0.72rem; color: var(--text-dim); }
+  .mi-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .btn { appearance: none; border: 1px solid var(--line); background: var(--surface-raised); color: var(--text); font-family: inherit; font-size: 0.74rem; font-weight: 500; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+  .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn:active { transform: scale(0.97); }
+  .sec-list { margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 2px 14px; }
+  .sec-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); font-size: 0.8rem; cursor: pointer; }
+  .sec-row:first-child { border-top: none; }
+  .sec-row .n { font-size: 0.68rem; color: var(--text-faint); }
+  .sec-row .bar { width: 60px; height: 6px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+  .sec-row .bar i { position: absolute; top: 0; bottom: 0; }
+
+  /* ======== Radar de convergence ======== */
+  .cv-card { margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  .cv-head { display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; }
+  .cv-head .avatar { width: 38px; height: 38px; }
+  .cv-t { font-size: 0.9rem; font-weight: 600; }
+  .cv-n { font-size: 0.7rem; color: var(--text-faint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cv-count { text-align: right; }
+  .cv-count .v { font-size: 1.15rem; font-weight: 700; color: var(--gain); }
+  .cv-count .l { font-size: 0.62rem; color: var(--text-faint); }
+  .cv-dots { display: flex; gap: 3px; margin-top: 10px; }
+  .cv-dots i { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
+  .cv-dots i.on { background: var(--gain); box-shadow: 0 0 6px var(--gain-soft); }
+  .cv-who { margin-top: 10px; display: grid; gap: 7px; }
+  .cv-w { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; font-size: 0.76rem; }
+  .cv-w .inv-av { width: 26px; height: 26px; font-size: 0.58rem; }
+  .cv-w .k { display: block; font-size: 0.66rem; color: var(--text-faint); margin-top: 1px; }
+  .cv-w .val { text-align: right; font-size: 0.74rem; }
+  .cv-w .val .k { text-align: right; }
+  .cv-more { margin-top: 10px; }
+  .cv-more > summary { list-style: none; cursor: pointer; text-align: center; font-size: 0.76rem; color: var(--gain); padding: 10px; }
+  .cv-more > summary::-webkit-details-marker { display: none; }
+
+  /* ======== Radar des initiés ======== */
+  .ins-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 5px; border: 1px solid var(--line); color: var(--text-faint); margin-left: 6px; vertical-align: middle; font-weight: 500; }
+  .ins-up { color: var(--gain); }
+  .cl-names { margin-top: 8px; font-size: 0.7rem; line-height: 1.55; color: var(--text-dim); }
+  .cl-names b { color: var(--text); font-weight: 500; }
+
+  /* ======== Et si ======== */
+  .wi-card { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .wi-q { font-size: 0.95rem; font-weight: 600; line-height: 1.6; }
+  .wi-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: 0.82rem; color: var(--text-dim); }
+  .wi-in { appearance: none; background: var(--bg); border: 1px solid var(--line); color: var(--text); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.95rem; border-radius: 10px; padding: 9px 11px; width: 120px; }
+  .wi-in.tk { width: 100%; font-family: inherit; font-size: 0.86rem; }
+  .wi-in:focus { outline: none; border-color: var(--gain); }
+  .wi-search { position: relative; flex: 1; min-width: 180px; }
+  .wi-sugg { margin-top: 6px; display: grid; gap: 4px; }
+  .wi-sugg button { appearance: none; text-align: left; border: 1px solid var(--line); background: var(--surface-raised); color: var(--text); font-family: inherit; font-size: 0.78rem; padding: 8px 10px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+  .wi-sugg button span { color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wi-pick { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .wi-pick .avatar { width: 34px; height: 34px; }
+  .wi-big { font-size: 1.9rem; font-weight: 700; margin-top: 4px; }
+  .wi-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+  .wi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
+  .wi-cell { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .wi-cell .v { font-size: 0.95rem; font-weight: 600; }
+  .wi-cell .l { font-size: 0.64rem; color: var(--text-faint); margin-top: 3px; line-height: 1.4; }
+  .wi-chart { width: 100%; height: 150px; margin-top: 14px; display: block; overflow: visible; }
+  .wi-legend { display: flex; gap: 14px; font-size: 0.66rem; color: var(--text-faint); margin-top: 6px; flex-wrap: wrap; }
+  .wi-legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -1233,8 +1328,11 @@
 
     <nav class="seg view-seg" role="tablist" aria-label="Navigation">
       <button type="button" id="tabMarket" class="active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 4 8-10"/><path d="M15 5h5v5"/></svg><span>Marché</span></button>
+      <button type="button" id="tabMap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M12 3v18M3 13h9M12 9h9M16.5 9v12"/></svg><span>Carte</span></button>
       <button type="button" id="tabWatch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg><span>Suivi <b id="watchCount"></b></span></button>
-      <button type="button" id="tabInv"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3.2 3.2 0 010 5.6M18 14.3c1.9.8 3 2.6 3 5.7"/></svg><span>Investisseurs</span></button>
+      <button type="button" id="tabInv"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3.2 3.2 0 010 5.6M18 14.3c1.9.8 3 2.6 3 5.7"/></svg><span><i class="lbl-long">Investisseurs</i><i class="lbl-short">Fonds</i></span></button>
+      <button type="button" id="tabIns"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="M11 11l4.5-4.5"/><circle cx="11" cy="11" r="3.5"/><path d="M21 21l-4.6-4.6"/></svg><span>Initiés</span></button>
+      <button type="button" id="tabWhatif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span>Et si</span></button>
     </nav>
 
     <div class="price-panel" id="pricePanel" style="display:none">
@@ -1292,7 +1390,7 @@
     <div id="content"></div>
     <div id="toast" role="status" aria-live="polite"></div>
 
-    <footer>Mis à jour automatiquement à chaque scan — données Yahoo Finance.</footer>
+    <footer>Mis à jour automatiquement — données Yahoo Finance et SEC EDGAR.</footer>
   </div>
 
 <script>
@@ -1642,8 +1740,11 @@ function getFiltered() {
 function applyViewChrome() {
   const on = universe.length > 0 && view === 'market';
   document.getElementById('pricePanel').style.display = on ? 'block' : 'none';
-  document.getElementById('toolbarWrap').style.display = (universe.length && view !== 'investors') ? 'block' : 'none';
+  document.getElementById('toolbarWrap').style.display = (universe.length && (view === 'market' || view === 'watch')) ? 'block' : 'none';
   document.getElementById('tabInv').classList.toggle('active', view === 'investors');
+  document.getElementById('tabMap').classList.toggle('active', view === 'map');
+  document.getElementById('tabIns').classList.toggle('active', view === 'insiders');
+  document.getElementById('tabWhatif').classList.toggle('active', view === 'whatif');
   document.getElementById('movers').style.display = (universe.length && view === 'market') ? 'block' : 'none';
   document.getElementById('stats').style.display = view === 'market' ? 'flex' : 'none';
   document.querySelector('.toolbar-filters').style.display = view === 'market' ? 'flex' : 'none';
@@ -1656,6 +1757,9 @@ function setView(v) { view = v; shown = PAGE_SIZE; applyViewChrome(); playIn(); 
 function renderList() {
   if (view === 'watch') renderWatch();
   else if (view === 'investors') renderInvestors();
+  else if (view === 'map') renderMap();
+  else if (view === 'insiders') renderInsiders();
+  else if (view === 'whatif') renderWhatif();
   else renderMarket();
 }
 
@@ -1756,6 +1860,8 @@ async function renderInvestors() {
   let html = '<div class="inv-hero"><div><div class="v mono">' + invs.length + '</div><div class="l">Investisseurs</div></div>' +
     '<div><div class="v mono">' + allMoves.length + '</div><div class="l">Mouvements (' + invData.lookback_days + ' j)</div></div>' +
     '<div><div class="v mono">' + escapeHtml((invData.generated_at || '').split(' ')[1] || '') + '</div><div class="l">Mis à jour le ' + escapeHtml((invData.generated_at || '').split(' ')[0] || '') + '</div></div></div>';
+
+  html += convergenceHtml(invData);
 
   if (allMoves.length) {
     html += '<div class="sec-title">Derniers mouvements</div><div class="inv-block">' +
@@ -2202,6 +2308,51 @@ function openRow(rowEl) {
 const contentRoot = document.getElementById('content');
 contentRoot.addEventListener('click', (e) => {
   if (e.target.closest('#moreBtn')) { shown += PAGE_SIZE; renderList(); return; }
+  // carte du marché
+  const mapCtl = e.target.closest('[data-map-period], [data-map-size], [data-map-sector], #mapBack');
+  if (mapCtl) {
+    if (mapCtl.dataset.mapPeriod) mapPeriod = mapCtl.dataset.mapPeriod;
+    else if (mapCtl.dataset.mapSize) mapSize = parseInt(mapCtl.dataset.mapSize, 10);
+    else { mapSector = mapCtl.dataset.mapSector || null; mapSel = null; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    renderMap(); return;
+  }
+  const tile = e.target.closest('.tile');
+  if (tile) {
+    mapSel = tile.dataset.t;
+    document.querySelectorAll('.tile.sel').forEach(x => x.classList.remove('sel'));
+    tile.classList.add('sel');
+    renderMapInfo();
+    const info = document.getElementById('mapInfo');
+    if (info) info.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+  const goM = e.target.closest('[data-goto-market]');
+  if (goM) { gotoMarket(goM.dataset.gotoMarket); return; }
+  const goW = e.target.closest('[data-goto-whatif]');
+  if (goW) { wiTicker = goW.dataset.gotoWhatif; wiQuery = ''; setView('whatif'); return; }
+  // radar de convergence
+  const cvQ = e.target.closest('[data-cv-q]');
+  if (cvQ) { cvQuarter = cvQ.dataset.cvQ; renderInvestors(); return; }
+  // radar des initiés
+  const insCtl = e.target.closest('[data-ins-days], [data-ins-min], [data-ins-role], [data-ins-sort]');
+  if (insCtl) {
+    const d = insCtl.dataset;
+    if (d.insDays) insDays = parseInt(d.insDays, 10);
+    if (d.insMin) insMin = parseInt(d.insMin, 10);
+    if (d.insRole) insRole = d.insRole;
+    if (d.insSort) insSort = d.insSort;
+    insShown = 40; renderInsiders(); return;
+  }
+  if (e.target.closest('#insMore')) { insShown += 40; renderInsiders(); return; }
+  // et si
+  const wiT = e.target.closest('[data-wi-t]');
+  if (wiT) { wiTicker = wiT.dataset.wiT; wiQuery = ''; renderWhatif(); return; }
+  const wiM = e.target.closest('[data-wi-m]');
+  if (wiM) {
+    wiMonths = parseInt(wiM.dataset.wiM, 10);
+    document.querySelectorAll('[data-wi-m]').forEach(b => b.classList.toggle('active', b === wiM));
+    renderWiResult(); return;
+  }
   if (e.target.closest('#resetAll')) { resetAll(); return; }
   if (e.target.closest('#copyWatch')) { copyWatchlist(); return; }
   const star = e.target.closest('.star');
@@ -2239,7 +2390,14 @@ contentRoot.addEventListener('click', (e) => {
   const row = e.target.closest('.row');
   if (row) openRow(row);
 });
+let wiTimer = null;
 contentRoot.addEventListener('input', (e) => {
+  if (e.target.id === 'wiAmount') {
+    wiAmount = parsePrice(e.target.value) || 0;
+    clearTimeout(wiTimer); wiTimer = setTimeout(renderWiResult, 250);
+    return;
+  }
+  if (e.target.id === 'wiQuery') { wiQuery = e.target.value; renderWiSugg(); return; }
   const pos = e.target.closest('.pos');
   if (pos) updatePos(pos);
 });
@@ -2271,11 +2429,447 @@ function escapeAttr(str) {
   return escapeHtml(str).replaceAll('"', '&quot;');
 }
 
+/* ==========================================================================
+   Carte du marché
+   ========================================================================== */
+let mapSize = 300, mapPeriod = '1j', mapSector = null, mapSel = null;
+function chg5(u) { return (u.s && u.s.length >= 2 && u.s[0] > 0) ? (u.p / u.s[0] - 1) * 100 : null; }
+function mapChange(u) { return mapPeriod === '5j' ? chg5(u) : u.c; }
+function heatColor(pct, scale) {
+  if (pct == null) return 'rgb(44,44,48)';
+  const t = Math.min(1, Math.abs(pct) / scale);
+  const from = [44, 44, 48], to = pct >= 0 ? [24, 150, 64] : [200, 42, 36];
+  return 'rgb(' + from.map((f, i) => Math.round(f + (to[i] - f) * Math.sqrt(t))).join(',') + ')';
+}
+function worstRatio(row, side) {
+  let sum = 0, max = 0, min = Infinity;
+  for (const r of row) { sum += r.a; if (r.a > max) max = r.a; if (r.a < min) min = r.a; }
+  const s2 = side * side, sum2 = sum * sum;
+  return Math.max(s2 * max / sum2, sum2 / (s2 * min));
+}
+// treemap « squarifié » : des rectangles aussi carrés que possible
+function squarify(items, x, y, w, h) {
+  const out = [];
+  const total = items.reduce((a, it) => a + it.value, 0);
+  if (!total || w <= 0 || h <= 0) return out;
+  const k = (w * h) / total;
+  let rest = items.map(it => ({ it, a: it.value * k }));
+  while (rest.length) {
+    const side = Math.min(w, h);
+    let row = [rest[0]], i = 1, worst = worstRatio(row, side);
+    while (i < rest.length) {
+      const cand = row.concat(rest[i]);
+      const wc = worstRatio(cand, side);
+      if (wc > worst) break;
+      row = cand; worst = wc; i++;
+    }
+    const area = row.reduce((a, r) => a + r.a, 0);
+    if (w >= h) {
+      const rw = area / h; let yy = y;
+      row.forEach(r => { const rh = r.a / rw; out.push({ it: r.it, x, y: yy, w: rw, h: rh }); yy += rh; });
+      x += rw; w -= rw;
+    } else {
+      const rh = area / w; let xx = x;
+      row.forEach(r => { const rw = r.a / rh; out.push({ it: r.it, x: xx, y, w: rw, h: rh }); xx += rw; });
+      y += rh; h -= rh;
+    }
+    rest = rest.slice(i);
+  }
+  return out;
+}
+function mapStocks() {
+  return universe.filter(u => u.m && u.g && (!mapSector || u.g === mapSector))
+    .sort((a, b) => b.m - a.m).slice(0, mapSector ? Math.max(mapSize, 150) : mapSize);
+}
+function sectorStats(list) {
+  const by = {};
+  for (const u of list) {
+    const c = mapChange(u);
+    const s = (by[u.g] ||= { name: u.g, cap: 0, wsum: 0, wcap: 0, n: 0, list: [] });
+    s.cap += u.m; s.n++; s.list.push(u);
+    if (c != null) { s.wsum += c * u.m; s.wcap += u.m; }
+  }
+  return Object.values(by).map(s => ({ ...s, chg: s.wcap ? s.wsum / s.wcap : null })).sort((a, b) => b.cap - a.cap);
+}
+function renderMap() {
+  const el = document.getElementById('content');
+  if (!universe.length) return;
+  const scale = mapPeriod === '5j' ? 8 : 3;
+  const chip = (attr, val, cur, label) => '<button type="button" class="mv-tab' + (val === cur ? ' active' : '') + '" ' + attr + '="' + val + '">' + label + '</button>';
+  let html = '<div class="intro">Les <b>' + (mapSector ? 'plus grandes sociétés du secteur ' + escapeHtml(mapSector) : mapSize + ' plus grandes capitalisations') + '</b>, regroupées par secteur. Taille = capitalisation, couleur = variation' + (mapPeriod === '5j' ? ' sur 5 séances' : ' du jour') + '. Touche une case pour le détail.</div>' +
+    '<div class="chips">' + chip('data-map-period', '1j', mapPeriod, 'Jour') + chip('data-map-period', '5j', mapPeriod, '5 séances') +
+    (mapSector ? '<button type="button" class="mv-tab" id="mapBack">← Tout le marché</button>'
+      : chip('data-map-size', '100', String(mapSize), 'Top 100') + chip('data-map-size', '300', String(mapSize), 'Top 300') + chip('data-map-size', '600', String(mapSize), 'Top 600')) + '</div>' +
+    '<div class="map" id="map"></div>' +
+    '<div class="map-legend"><span class="mono">−' + scale + ' %</span><span class="grad" style="background:linear-gradient(90deg,' + heatColor(-scale, scale) + ',' + heatColor(0, scale) + ',' + heatColor(scale, scale) + ')"></span><span class="mono">+' + scale + ' %</span></div>' +
+    '<div id="mapInfo"></div>' +
+    '<div class="sec-title">' + (mapSector ? 'Secteur' : 'Secteurs') + ' (moyenne pondérée par la capitalisation)</div><div class="sec-list" id="secList"></div>';
+  el.innerHTML = html;
+  drawMap();
+}
+function drawMap() {
+  const box = document.getElementById('map');
+  if (!box) return;
+  const W = box.clientWidth || 340;
+  const H = Math.round(Math.min(Math.max(W * 1.25, 420), 900));
+  box.style.height = H + 'px';
+  const scale = mapPeriod === '5j' ? 8 : 3;
+  const stocks = mapStocks();
+  const sectors = sectorStats(stocks);
+  let html = '';
+  const secRects = squarify(sectors.map(s => ({ value: s.cap, s })), 0, 0, W, H);
+  for (const r of secRects) {
+    const s = r.it.s;
+    const head = (r.w > 46 && r.h > 40) ? 15 : 0;
+    html += '<div class="msec" style="left:' + r.x.toFixed(1) + 'px;top:' + r.y.toFixed(1) + 'px;width:' + r.w.toFixed(1) + 'px;height:' + r.h.toFixed(1) + 'px">' +
+      (head ? '<div class="msec-h" data-map-sector="' + escapeAttr(s.name) + '">' + escapeHtml(s.name) + '</div>' : '');
+    const tiles = squarify(s.list.map(u => ({ value: u.m, u })), 0, head, r.w - 2, r.h - head - 2);
+    for (const t of tiles) {
+      const u = t.it.u, c = mapChange(u);
+      const m = Math.min(t.w, t.h);
+      let label = '';
+      if (t.w > 30 && t.h > 18) {
+        const fs = Math.max(8, Math.min(22, m / 3.2, t.w / (u.t.length * 0.75)));
+        label = '<b style="font-size:' + fs.toFixed(0) + 'px">' + escapeHtml(u.t) + '</b>' +
+          (t.h > fs * 2.4 && c != null ? '<span style="font-size:' + Math.max(7, fs * 0.62).toFixed(0) + 'px">' + (c > 0 ? '+' : '') + c.toFixed(1) + '%</span>' : '');
+      }
+      html += '<div class="tile' + (u.t === mapSel ? ' sel' : '') + '" data-t="' + escapeAttr(u.t) + '" style="left:' + t.x.toFixed(1) + 'px;top:' + t.y.toFixed(1) + 'px;width:' + t.w.toFixed(1) + 'px;height:' + t.h.toFixed(1) + 'px;background:' + heatColor(c, scale) + '">' + label + '</div>';
+    }
+    html += '</div>';
+  }
+  box.innerHTML = html;
+  const maxAbs = Math.max(0.5, ...sectors.map(s => Math.abs(s.chg || 0)));
+  document.getElementById('secList').innerHTML = sectors.map(s => {
+    const w = Math.min(50, Math.abs(s.chg || 0) / maxAbs * 50);
+    return '<div class="sec-row" data-map-sector="' + escapeAttr(s.name) + '"><div>' + escapeHtml(s.name) + '<div class="n">' + s.n + ' sociétés · ' + formatBig(s.cap) + '$</div></div>' +
+      '<div class="bar"><i style="background:' + colorOf(s.chg || 0) + ';' + ((s.chg || 0) >= 0 ? 'left:50%' : 'right:50%') + ';width:' + w.toFixed(0) + '%"></i></div>' +
+      '<div class="mono" style="color:' + colorOf(s.chg || 0) + ';min-width:56px;text-align:right">' + (s.chg == null ? '—' : (s.chg > 0 ? '+' : '') + s.chg.toFixed(2) + '%') + '</div></div>';
+  }).join('');
+  renderMapInfo();
+}
+function renderMapInfo() {
+  const el = document.getElementById('mapInfo');
+  if (!el) return;
+  const u = mapSel && byTicker[mapSel];
+  if (!u) { el.innerHTML = ''; return; }
+  const c5 = chg5(u);
+  el.innerHTML = '<div class="map-info"><div class="mi-head">' +
+    '<div class="avatar"><img src="' + escapeAttr(logoUrl(u.t)) + '" alt="" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><span class="initials mono">' + escapeHtml(u.t.slice(0, 3)) + '</span></div>' +
+    '<div style="min-width:0"><div class="mi-name">' + escapeHtml(u.n || u.t) + starBtn(u.t) + '</div><div class="mi-sub mono">' + escapeHtml(u.t) + ' · ' + formatBig(u.m) + '$ · ' + escapeHtml(u.g || '') + '</div></div>' +
+    '<div class="mi-num"><div class="pct mono" style="color:' + colorOf(u.c) + '">' + (u.c > 0 ? '+' : '') + u.c.toFixed(2) + '%</div><div class="price mono">' + fmtPrice(u.p) + ' $' + (c5 != null ? ' · 5 j ' + (c5 > 0 ? '+' : '') + c5.toFixed(1) + '%' : '') + '</div></div></div>' +
+    (u.s && u.s.length >= 2 ? '<svg class="chart-big" viewBox="0 0 300 60" preserveAspectRatio="none" style="height:60px;margin-top:10px">' + sparkline(u.s, 300, 60, true) + '</svg>' : '') +
+    '<div class="mi-actions"><button type="button" class="btn primary" data-goto-market="' + escapeAttr(u.t) + '">Voir la fiche</button><button type="button" class="btn" data-goto-whatif="' + escapeAttr(u.t) + '">Et si j\'avais investi ?</button></div></div>';
+}
+let mapResizeTimer = null;
+window.addEventListener('resize', () => {
+  if (view !== 'map') return;
+  clearTimeout(mapResizeTimer);
+  mapResizeTimer = setTimeout(drawMap, 150);
+});
+function gotoMarket(t) {
+  searchQuery = t;
+  document.getElementById('searchInput').value = t;
+  document.getElementById('searchBox').classList.add('has-value');
+  setView('market');
+  setTimeout(() => { const r = document.querySelector('.row[data-t="' + t + '"]'); if (r) openRow(r); }, 50);
+}
+
+/* ==========================================================================
+   Radar de convergence (onglet Investisseurs)
+   ========================================================================== */
+let cvQuarter = null;
+const CV_KIND = { new: 'Nouvelle position', add: 'Renforcement', f4: 'Achat déclaré (formulaire 4)' };
+function convergenceHtml(data) {
+  const all = data.convergence || [];
+  const total = (data.investors || []).length;
+  let html = '<div class="sec-title">Radar de convergence</div>';
+  if (!all.length) {
+    return html + '<div class="inv-block"><div class="inv-note">Aucune action achetée par plusieurs investisseurs suivis au cours d\'un même trimestre pour l\'instant' +
+      (data.investors && data.investors.some(i => i.quarters) ? '.' : ' — le radar sera calculé au prochain passage du workflow « Suivi des investisseurs ».') + '</div></div>';
+  }
+  const quarters = [...new Set(all.map(c => c.q))];
+  if (!quarters.includes(cvQuarter)) cvQuarter = quarters[0];
+  const list = all.filter(c => c.q === cvQuarter);
+  html += '<div class="intro">Les actions <b>achetées par au moins 2 des ' + total + ' investisseurs suivis</b> au cours du même trimestre : nouvelles positions et renforcements d\'au moins 10 % (formulaires 13F), plus les achats déclarés au fil de l\'eau (formulaire 4).</div>' +
+    '<div class="chips">' + quarters.map(q => '<button type="button" class="mv-tab' + (q === cvQuarter ? ' active' : '') + '" data-cv-q="' + escapeAttr(q) + '">' + escapeHtml(q) + ' <span style="opacity:.6">(' + all.filter(c => c.q === q).length + ')</span></button>').join('') + '</div>';
+  const card = (c) => {
+    const u = byTicker[c.t];
+    const dots = '<div class="cv-dots" title="' + c.count + ' sur ' + total + '">' + Array.from({ length: total }, (_, i) => '<i' + (i < c.count ? ' class="on"' : '') + '></i>').join('') + '</div>';
+    const who = c.who.map(w => {
+      let kind = CV_KIND[w.kind] || w.kind;
+      if (w.kind === 'add' && w.pct != null) kind += ' +' + Math.round(w.pct) + ' %';
+      if (w.kind === 'f4' && w.date) kind = 'Achat déclaré le ' + fmtDate(w.date);
+      if (w.f4) kind += ' · + achat déclaré';
+      return '<div class="cv-w"><div class="inv-av">' + escapeHtml(initialsOf(w.who)) + '</div>' +
+        '<div style="min-width:0">' + escapeHtml(w.who) + '<span class="k">' + escapeHtml(kind) + '</span></div>' +
+        '<div class="val mono">' + (w.value ? formatBig(w.value) + ' $' : '—') + (w.w ? '<span class="k">' + String(w.w).replace('.', ',') + ' % du portef.</span>' : '') + '</div></div>';
+    }).join('');
+    return '<div class="cv-card"><div class="cv-head">' +
+      '<div class="avatar"><img src="' + escapeAttr(logoUrl(c.t)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><span class="initials mono">' + escapeHtml(c.t.slice(0, 3)) + '</span></div>' +
+      '<div style="min-width:0"><div class="cv-t mono">' + escapeHtml(c.t) + starBtn(c.t) + '</div><div class="cv-n">' + escapeHtml((u && u.n) || c.name || '') +
+        (u ? ' · <span class="mono" style="color:' + colorOf(u.c) + '">' + fmtPrice(u.p) + ' $ (' + (u.c > 0 ? '+' : '') + u.c.toFixed(1) + '%)</span>' : '') + '</div></div>' +
+      '<div class="cv-count"><div class="v mono">' + c.count + '<span style="font-size:.7rem;color:var(--text-faint)">/' + total + '</span></div><div class="l">investisseurs</div></div></div>' +
+      dots + '<div class="cv-who">' + who + '</div></div>';
+  };
+  html += list.slice(0, 6).map(card).join('');
+  if (list.length > 6) html += '<details class="cv-more"><summary>Voir les ' + (list.length - 6) + ' autres convergences du ' + escapeHtml(cvQuarter) + '</summary>' + list.slice(6).map(card).join('') + '</details>';
+  return html;
+}
+
+/* ==========================================================================
+   Radar des initiés (tout le marché)
+   ========================================================================== */
+let insData = null, insFailed = false, insLoading = false;
+let insDays = 30, insMin = 0, insSort = 'recent', insRole = 'all', insShown = 40;
+function insLink(b) {
+  return 'https://www.sec.gov/Archives/edgar/data/' + encodeURIComponent(b.c) + '/' + b.a.replace(/-/g, '') + '/' + b.a + '-index.htm';
+}
+function isExec(b) { return /Directeur|Président|Vice|Dirigeant/.test(b.r || ''); }
+function insFiltered() {
+  const since = new Date(Date.now() - insDays * 864e5).toISOString().slice(0, 10);
+  return (insData.buys || []).filter(b => (b.f || '') >= since && (b.v || 0) >= insMin && (insRole === 'all' || isExec(b)));
+}
+function insClusters(list) {
+  const by = {};
+  for (const b of list) {
+    if (b.plan) continue;
+    const g = (by[b.t] ||= { t: b.t, n: b.n, owners: {}, v: 0, sh: 0, first: b.d, last: b.d });
+    g.owners[b.o] = g.owners[b.o] || { o: b.o, r: b.r, v: 0 };
+    g.owners[b.o].v += b.v || 0;
+    g.v += b.v || 0; g.sh += b.sh || 0;
+    if (b.d < g.first) g.first = b.d;
+    if (b.d > g.last) g.last = b.d;
+  }
+  return Object.values(by).filter(g => Object.keys(g.owners).length >= 2)
+    .sort((a, b) => Object.keys(b.owners).length - Object.keys(a.owners).length || b.v - a.v);
+}
+// gain depuis l'achat, sauf si le prix payé est incohérent avec le cours actuel
+// (action étrangère payée dans une autre devise que le titre coté aux États-Unis)
+function insGain(t, price) {
+  const u = byTicker[t];
+  if (!u || !price) return null;
+  const r = u.p / price;
+  return r > 0.4 && r < 2.5 ? gainPct(u.p, price) : null;
+}
+function insRow(b) {
+  const g = insGain(b.t, b.p);
+  const before = b.post && b.post > b.sh ? b.post - b.sh : null;
+  const grow = before ? (b.sh / before * 100) : null;
+  return stockItem('<div class="mv"><span class="mv-pill buy">ACHAT</span>' +
+    '<div class="mv-main"><span class="mono">' + escapeHtml(b.t) + '</span>' + starBtn(b.t) + (b.plan ? '<span class="ins-tag" title="Au moins 3 initiés ont acheté le même jour au même prix : probablement un plan collectif automatique">plan</span>' : '') +
+      '<span class="sub">' + escapeHtml(b.o || '') + (b.r ? ' · ' + escapeHtml(b.r) : '') + ' · ' + escapeHtml(((byTicker[b.t] && byTicker[b.t].n) || b.n || '')) + '</span></div>' +
+    '<div class="mv-val mono"><span class="mv-gain" style="color:' + colorOf(g || 0) + '">' + fmtGain(g) + '</span><span class="sub">depuis l\'achat</span></div>' +
+    '<div class="mv-meta"><span>' + formatBig(b.v) + ' $ à ' + fmtPrice(b.p) + ' $ · le ' + fmtDate(b.d) +
+      (grow != null ? ' · <span class="ins-up">' + (grow >= 1000 ? '×' + Math.round(b.post / before) : '+' + Math.round(grow) + ' %') + ' de sa position</span>' : (b.post && b.post <= b.sh ? ' · <span class="ins-up">première position</span>' : '')) + '</span>' +
+      '<a href="' + escapeAttr(insLink(b)) + '" target="_blank" rel="noopener">SEC</a></div></div>');
+}
+async function renderInsiders() {
+  const el = document.getElementById('content');
+  if (!insData && !insFailed) {
+    el.innerHTML = '<div class="status">Chargement des achats d\'initiés…</div>';
+    if (insLoading) return;
+    insLoading = true;
+    try {
+      const res = await fetch('insiders.json?t=' + Date.now());
+      if (!res.ok) throw new Error(res.status);
+      insData = await res.json();
+    } catch (e) { insFailed = true; }
+    insLoading = false;
+    if (view !== 'insiders') return;
+  }
+  if (!insData) {
+    el.innerHTML = '<div class="status">Pas encore de données sur les initiés. Lance le workflow « Radar des initiés » (onglet Actions du dépôt GitHub) : il se met ensuite à jour tout seul toutes les 30 minutes.</div>';
+    return;
+  }
+  const list = insFiltered();
+  const clusters = insClusters(list);
+  const companies = new Set(list.map(b => b.t)).size;
+  const total = list.reduce((a, b) => a + (b.v || 0), 0);
+  const chip = (attr, val, cur, label) => '<button type="button" class="mv-tab' + (String(val) === String(cur) ? ' active' : '') + '" ' + attr + '="' + val + '">' + label + '</button>';
+  let html = '<div class="intro">Les <b>achats en bourse</b> déclarés à la SEC par les dirigeants, administrateurs et gros actionnaires <b>de toutes les sociétés américaines</b>, avec leur propre argent. Les ventes, attributions gratuites et exercices d\'options sont écartés.</div>' +
+    '<div class="inv-hero"><div><div class="v mono">' + list.length.toLocaleString('fr-FR') + '</div><div class="l">Achats (' + insDays + ' j)</div></div>' +
+    '<div><div class="v mono">' + companies.toLocaleString('fr-FR') + '</div><div class="l">Sociétés</div></div>' +
+    '<div><div class="v mono">' + formatBig(total) + '$</div><div class="l">Montant total</div></div></div>' +
+    '<div class="chips"><span class="chips-label">Période</span>' + chip('data-ins-days', 7, insDays, '7 jours') + chip('data-ins-days', 30, insDays, '30 jours') + '</div>' +
+    '<div class="chips"><span class="chips-label">Montant</span>' + chip('data-ins-min', 0, insMin, 'Tous') + chip('data-ins-min', 100000, insMin, '≥ 100 k$') + chip('data-ins-min', 1000000, insMin, '≥ 1 M$') + '</div>' +
+    '<div class="chips"><span class="chips-label">Qui</span>' + chip('data-ins-role', 'all', insRole, 'Tous') + chip('data-ins-role', 'exec', insRole, 'Dirigeants seulement') + '</div>';
+  if (clusters.length) {
+    const clCard = (g) => {
+      const owners = Object.values(g.owners).sort((a, b) => b.v - a.v);
+      const u = byTicker[g.t];
+      const avg = g.sh ? g.v / g.sh : null;
+      const gain = insGain(g.t, avg);
+      return '<div class="cv-card"><div class="cv-head">' +
+        '<div class="avatar"><img src="' + escapeAttr(logoUrl(g.t)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><span class="initials mono">' + escapeHtml(g.t.slice(0, 3)) + '</span></div>' +
+        '<div style="min-width:0"><div class="cv-t mono">' + escapeHtml(g.t) + starBtn(g.t) + '</div><div class="cv-n">' + escapeHtml((u && u.n) || g.n || '') + '</div></div>' +
+        '<div class="cv-count"><div class="v mono">' + owners.length + '</div><div class="l">initiés</div></div></div>' +
+        '<div class="wi-grid" style="grid-template-columns:repeat(3,1fr)"><div class="wi-cell"><div class="v mono">' + formatBig(g.v) + '$</div><div class="l">achetés</div></div>' +
+        '<div class="wi-cell"><div class="v mono">' + (avg ? fmtPrice(avg) + '$' : '—') + '</div><div class="l">prix moyen</div></div>' +
+        '<div class="wi-cell"><div class="v mono" style="color:' + colorOf(gain || 0) + '">' + fmtGain(gain) + '</div><div class="l">depuis</div></div></div>' +
+        '<div class="cl-names">' + owners.slice(0, 6).map(o => '<b>' + escapeHtml(o.o) + '</b>' + (o.r ? ' (' + escapeHtml(o.r) + ')' : '') + ' ' + formatBig(o.v) + '$').join(' · ') +
+        (owners.length > 6 ? ' · et ' + (owners.length - 6) + ' autres' : '') +
+        ' — du ' + fmtDate(g.first) + ' au ' + fmtDate(g.last) + '</div></div>';
+    };
+    html += '<div class="sec-title">Achats groupés : plusieurs initiés d\'une même société</div>' + clusters.slice(0, 5).map(clCard).join('') +
+      (clusters.length > 5 ? '<details class="cv-more"><summary>Voir les ' + (clusters.length - 5) + ' autres achats groupés</summary>' + clusters.slice(5, 40).map(clCard).join('') + '</details>' : '');
+  }
+  const sorted = list.slice().sort(insSort === 'value'
+    ? (a, b) => (b.v || 0) - (a.v || 0)
+    : (a, b) => (b.f || '').localeCompare(a.f || '') || (b.d || '').localeCompare(a.d || '') || (b.v || 0) - (a.v || 0));
+  html += '<div class="sec-title" style="display:flex;justify-content:space-between;align-items:center">Tous les achats<span class="chips" style="margin:0">' +
+    chip('data-ins-sort', 'recent', insSort, 'Récents') + chip('data-ins-sort', 'value', insSort, 'Plus gros') + '</span></div>';
+  html += sorted.length ? '<div class="inv-block">' + sorted.slice(0, insShown).map(insRow).join('') + '</div>' : '<div class="empty-filter">Aucun achat ne correspond à ces filtres.</div>';
+  if (sorted.length > insShown) html += '<button type="button" class="more-btn" id="insMore">Afficher ' + Math.min(40, sorted.length - insShown) + ' de plus (' + (sorted.length - insShown) + ' restants)</button>';
+  html += '<div class="pf-hint">Source : formulaires 4 de la SEC (EDGAR), déposés au plus tard 2 jours ouvrés après l\'opération. Mis à jour le ' + escapeHtml(insData.generated_at || '') + '. « plan » : au moins 3 initiés ont acheté le même jour au même prix, sans doute un plan collectif automatique (exclu des achats groupés). Un achat d\'initié est un fait, pas une recommandation.</div>';
+  el.innerHTML = html;
+}
+
+/* ==========================================================================
+   Et si… j'avais investi ?
+   ========================================================================== */
+let histData = null, histFailed = false, histLoading = false;
+let wiTicker = null, wiAmount = 1000, wiMonths = 12, wiQuery = '';
+const wiLive = {};
+const WI_PERIODS = [[1, '1 mois'], [6, '6 mois'], [12, '1 an'], [24, '2 ans'], [36, '3 ans'], [60, '5 ans']];
+function fmtMonth(ym) {
+  try { return 'fin ' + new Date(ym + '-15T12:00:00Z').toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }); } catch (e) { return ym; }
+}
+function wiDefaultTicker() {
+  const w = Object.keys(watch).find(t => byTicker[t]);
+  return w || (byTicker.AAPL ? 'AAPL' : (universe[0] && universe[0].t));
+}
+async function wiSeries(t) {
+  if (histData && histData.h && histData.h[t]) return { months: histData.months, v: histData.h[t] };
+  if (wiLive[t] !== undefined) return wiLive[t];
+  // pas (encore) dans l'historique publié : on tente Yahoo Finance en direct
+  try {
+    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(t) + '?range=5y&interval=1mo');
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    const res = j.chart.result[0], ts = res.timestamp, cl = (res.indicators.adjclose || [{}])[0].adjclose || res.indicators.quote[0].close;
+    const months = [], v = [];
+    ts.forEach((x, i) => { const m = new Date(x * 1000).toISOString().slice(0, 7); if (cl[i] != null && !months.includes(m)) { months.push(m); v.push(cl[i]); } });
+    wiLive[t] = months.length >= 2 ? { months, v } : null;
+  } catch (e) { wiLive[t] = null; }
+  return wiLive[t];
+}
+async function renderWhatif() {
+  const el = document.getElementById('content');
+  if (!wiTicker || !byTicker[wiTicker]) wiTicker = wiDefaultTicker();
+  if (!histData && !histFailed) {
+    el.innerHTML = '<div class="status">Chargement de l\'historique des cours…</div>';
+    if (histLoading) return;
+    histLoading = true;
+    try {
+      const res = await fetch('history.json?t=' + Math.floor(Date.now() / 3600e3));
+      if (!res.ok) throw new Error(res.status);
+      histData = await res.json();
+    } catch (e) { histFailed = true; }
+    histLoading = false;
+    if (view !== 'whatif') return;
+  }
+  const quick = [...new Set([...Object.keys(watch).filter(t => byTicker[t]), 'AAPL', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA'])].filter(t => byTicker[t]).slice(0, 10);
+  el.innerHTML = '<div class="wi-card"><div class="wi-q">Et si j\'avais investi…</div>' +
+    '<div class="wi-line"><input type="text" class="wi-in" id="wiAmount" inputmode="decimal" value="' + escapeAttr(String(wiAmount)) + '" aria-label="Montant"><span>$ dans</span></div>' +
+    '<div class="wi-line"><div class="wi-search"><input type="text" class="wi-in tk" id="wiQuery" placeholder="Rechercher une action (ticker ou nom)" autocomplete="off" autocapitalize="off" spellcheck="false" value="' + escapeAttr(wiQuery) + '"><div class="wi-sugg" id="wiSugg"></div></div></div>' +
+    '<div id="wiPick"></div>' +
+    '<div class="chips">' + quick.map(t => '<button type="button" class="mv-tab' + (t === wiTicker ? ' active' : '') + '" data-wi-t="' + escapeAttr(t) + '">' + escapeHtml(t) + '</button>').join('') + '</div>' +
+    '<div class="wi-line" style="margin-top:14px">il y a…</div>' +
+    '<div class="chips" style="margin-top:6px">' + WI_PERIODS.map(([m, l]) => '<button type="button" class="mv-tab' + (m === wiMonths ? ' active' : '') + '" data-wi-m="' + m + '">' + l + '</button>').join('') + '</div></div>' +
+    '<div id="wiResult"></div>' +
+    '<div class="pf-hint">Calcul à partir des cours de fin de mois ajustés des divisions d\'actions et des dividendes (dividendes réinvestis), en dollars, hors frais, impôts et effet de change. Le S&amp;P 500 est représenté par le fonds SPY. Les performances passées ne préjugent pas des performances futures.</div>';
+  renderWiSugg();
+  renderWiResult();
+}
+function renderWiSugg() {
+  const box = document.getElementById('wiSugg');
+  if (!box) return;
+  const q = wiQuery.trim().toLowerCase();
+  if (!q) { box.innerHTML = ''; return; }
+  const hits = universe.filter(u => u.t.toLowerCase().startsWith(q) || (u.n || '').toLowerCase().includes(q))
+    .sort((a, b) => (b.t.toLowerCase() === q) - (a.t.toLowerCase() === q) || (b.m || 0) - (a.m || 0)).slice(0, 6);
+  box.innerHTML = hits.map(u => '<button type="button" data-wi-t="' + escapeAttr(u.t) + '"><b class="mono">' + escapeHtml(u.t) + '</b><span>' + escapeHtml(u.n || '') + '</span></button>').join('') ||
+    '<div class="pf-hint" style="margin:0">Aucune action trouvée.</div>';
+}
+function wiChart(points, bench) {
+  const W = 300, H = 150, all = points.concat(bench ? bench.filter(v => v != null) : []);
+  const min = Math.min(...all), max = Math.max(...all), span = (max - min) || 1;
+  const xy = (v, i, n) => [(i / (n - 1) * W).toFixed(1), (H - 6 - (v - min) / span * (H - 12)).toFixed(1)];
+  const path = (arr) => 'M' + arr.map((v, i) => v == null ? null : xy(v, i, arr.length).join(',')).filter(Boolean).join(' L');
+  const base = H - 6 - (points[0] - min) / span * (H - 12);
+  const col = points[points.length - 1] >= points[0] ? 'var(--gain)' : 'var(--loss)';
+  return '<svg class="wi-chart" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+    '<line x1="0" x2="' + W + '" y1="' + base.toFixed(1) + '" y2="' + base.toFixed(1) + '" stroke="var(--line)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>' +
+    (bench ? '<path d="' + path(bench) + '" fill="none" stroke="var(--text-faint)" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' : '') +
+    '<path d="' + path(points) + ' L' + W + ',' + H + ' L0,' + H + ' Z" fill="' + col + '" opacity="0.12"/>' +
+    '<path d="' + path(points) + '" fill="none" stroke="' + col + '" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>';
+}
+async function renderWiResult() {
+  const box = document.getElementById('wiResult');
+  const pick = document.getElementById('wiPick');
+  if (!box) return;
+  const t = wiTicker, u = byTicker[t];
+  if (pick) pick.innerHTML = u ? '<div class="wi-pick"><div class="avatar"><img src="' + escapeAttr(logoUrl(t)) + '" alt="" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><span class="initials mono">' + escapeHtml(t.slice(0, 3)) + '</span></div><div><div class="mono" style="font-weight:600">' + escapeHtml(t) + '</div><div class="mi-sub">' + escapeHtml(u.n || '') + '</div></div></div>' : '';
+  if (!u) { box.innerHTML = ''; return; }
+  const amount = wiAmount;
+  if (!(amount > 0)) { box.innerHTML = '<div class="wi-card"><div class="wi-sub">Indique un montant.</div></div>'; return; }
+  box.innerHTML = '<div class="wi-card"><div class="wi-sub">Calcul…</div></div>';
+  const [s, b] = await Promise.all([wiSeries(t), wiSeries('SPY')]);
+  if (wiTicker !== t || !document.getElementById('wiResult')) return;
+  if (!s) {
+    box.innerHTML = '<div class="wi-card"><div class="wi-sub">' + (histData ? 'Pas d\'historique disponible pour ' + escapeHtml(t) + '.' : 'L\'historique des cours n\'est pas encore prêt : il est préparé une fois par jour par le scanner. Réessaie après le prochain scan.') + '</div></div>';
+    return;
+  }
+  // dernier mois connu, puis mois de départ (N mois plus tôt)
+  let last = s.v.length - 1;
+  while (last > 0 && s.v[last] == null) last--;
+  let start = Math.max(0, last - wiMonths), note = '';
+  while (start < last && s.v[start] == null) start++;
+  if (last - start < wiMonths) note = escapeHtml(t) + ' n\'a d\'historique que depuis ' + fmtMonth(s.months[start]).replace('fin ', '') + ' : le calcul part de là.';
+  if (start >= last) { box.innerHTML = '<div class="wi-card"><div class="wi-sub">Historique trop court pour ' + escapeHtml(t) + '.</div></div>'; return; }
+  const p0 = s.v[start];
+  const pts = [];
+  for (let i = start; i <= last; i++) if (s.v[i] != null) pts.push({ m: s.months[i], v: amount * s.v[i] / p0 });
+  pts[pts.length - 1].v = amount * u.p / p0;   // valeur finale au dernier cours du scan
+  const final = pts[pts.length - 1].v, gain = final - amount, pct = gain / amount * 100;
+  const months = last - start;
+  const yearly = months >= 12 ? (Math.pow(final / amount, 12 / months) - 1) * 100 : null;
+  let worst = pts[0], best = pts[0];
+  for (const p of pts) { if (p.v < worst.v) worst = p; if (p.v > best.v) best = p; }
+  let bench = null, bFinal = null;
+  if (b) {
+    const bi = b.months.indexOf(s.months[start]);
+    if (bi >= 0 && b.v[bi]) {
+      const bm = {}; b.months.forEach((m, i) => { bm[m] = b.v[i]; });
+      bench = pts.map(p => bm[p.m] != null ? amount * bm[p.m] / b.v[bi] : null);
+      for (let i = bench.length - 1; i >= 0; i--) if (bench[i] != null) { bFinal = bench[i]; break; }
+    }
+  }
+  const sign = (x) => (x > 0 ? '+' : '');
+  let html = '<div class="wi-card"><div class="wi-sub">' + fmtMoney(amount) + ' dans <b class="mono">' + escapeHtml(t) + '</b> à ' + fmtMonth(s.months[start]) + ' vaudraient aujourd\'hui</div>' +
+    '<div class="wi-big mono" style="color:' + colorOf(gain) + '">' + fmtMoney(final) + '</div>' +
+    '<div class="wi-sub"><span class="mono" style="color:' + colorOf(gain) + ';font-weight:600">' + sign(gain) + fmtMoney(gain) + ' (' + sign(pct) + pct.toFixed(1).replace('.', ',') + ' %)</span>' +
+      (yearly != null ? ' · soit <span class="mono">' + sign(yearly) + yearly.toFixed(1).replace('.', ',') + ' %</span> par an' : '') + '</div>' +
+    wiChart(pts.map(p => p.v), bench) +
+    '<div class="wi-legend"><span><i style="border-color:' + colorOf(gain) + '"></i>' + escapeHtml(t) + '</span>' + (bench ? '<span><i style="border-color:var(--text-faint);border-top-style:dashed"></i>S&amp;P 500</span>' : '') +
+      '<span style="margin-left:auto">' + fmtMonth(pts[0].m).replace('fin ', '') + ' → aujourd\'hui</span></div>' +
+    '<div class="wi-grid">' +
+      (bFinal != null ? '<div class="wi-cell"><div class="v mono" style="color:' + colorOf(bFinal - amount) + '">' + fmtMoney(bFinal) + '</div><div class="l">Le même montant dans le S&amp;P 500 (' + sign(bFinal / amount - 1) + ((bFinal / amount - 1) * 100).toFixed(1).replace('.', ',') + ' %)</div></div>' +
+        '<div class="wi-cell"><div class="v mono" style="color:' + colorOf(final - bFinal) + '">' + sign(final - bFinal) + fmtMoney(final - bFinal) + '</div><div class="l">' + (final >= bFinal ? 'de mieux' : 'de moins') + ' que le S&amp;P 500</div></div>' : '') +
+      '<div class="wi-cell"><div class="v mono" style="color:' + colorOf(worst.v - amount) + '">' + fmtMoney(worst.v) + '</div><div class="l">Au pire moment (' + fmtMonth(worst.m) + ')' + (worst.v < amount ? ', soit ' + ((worst.v / amount - 1) * 100).toFixed(0) + ' %' : '') + '</div></div>' +
+      '<div class="wi-cell"><div class="v mono" style="color:' + colorOf(best.v - amount) + '">' + fmtMoney(best.v) + '</div><div class="l">Au meilleur moment (' + (best === pts[pts.length - 1] ? 'aujourd\'hui' : fmtMonth(best.m)) + ')</div></div>' +
+    '</div>' + (note ? '<div class="pf-hint">' + note + '</div>' : '') + '</div>';
+  box.innerHTML = html;
+}
+
 /* ---------- barre d'outils ---------- */
 document.getElementById('refreshBtn').addEventListener('click', () => load(true));
 document.getElementById('tabMarket').addEventListener('click', () => setView('market'));
 document.getElementById('tabWatch').addEventListener('click', () => setView('watch'));
 document.getElementById('tabInv').addEventListener('click', () => setView('investors'));
+document.getElementById('tabMap').addEventListener('click', () => setView('map'));
+document.getElementById('tabIns').addEventListener('click', () => setView('insiders'));
+document.getElementById('tabWhatif').addEventListener('click', () => setView('whatif'));
 saveWatch();
 const searchInput = document.getElementById('searchInput');
 const searchBox = document.getElementById('searchBox');
