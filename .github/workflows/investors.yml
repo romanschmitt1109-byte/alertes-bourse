@@ -27,6 +27,9 @@ jobs:
       - run: pip install requests
 
       - name: Récupérer les mouvements
+        env:
+          # La SEC exige un nom + une adresse e-mail de contact pour les programmes automatiques
+          SEC_USER_AGENT: "AlertesBourse romansgk1109@gmail.com"
         run: python investors.py
 
       - name: Publier
