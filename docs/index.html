@@ -1078,6 +1078,18 @@
   .mv-val .sub { display: block; font-size: 0.66rem; color: var(--text-faint); font-weight: 400; margin-top: 2px; }
   .mv-meta { grid-column: 1 / -1; font-size: 0.68rem; color: var(--text-faint); display: flex; justify-content: space-between; gap: 8px; }
   .mv-meta a, .inv-note a { color: var(--text-dim); }
+  .hd-title { margin-top: 14px; font-size: 0.82rem; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+  .hd-title span { font-weight: 400; font-size: 0.7rem; color: var(--text-faint); }
+  .hd-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); margin-top: 9px; }
+  .hd-row .avatar { width: 34px; height: 34px; }
+  .hd-main { min-width: 0; font-size: 0.84rem; font-weight: 600; }
+  .hd-main .sub { display: block; font-size: 0.68rem; font-weight: 400; color: var(--text-faint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hd-pct { text-align: right; font-size: 0.84rem; font-weight: 600; min-width: 64px; }
+  .hd-pct .sub { display: block; font-size: 0.66rem; font-weight: 400; margin-top: 2px; }
+  .hd-bar { grid-column: 2 / -1; height: 3px; border-radius: 2px; background: var(--line); margin-top: -2px; }
+  .hd-bar i { display: block; height: 100%; border-radius: 2px; background: var(--gain); }
+  details.hd-more summary { cursor: pointer; font-size: 0.74rem; color: var(--gain); padding: 10px 0 4px; list-style: none; }
+  details.hd-more summary::-webkit-details-marker { display: none; }
   .inv-note { font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); padding: 8px 0 10px; }
 </style>
 </head>
@@ -1502,6 +1514,25 @@ async function renderInvestors() {
     html += '<div class="inv-card"><div class="inv-head"><div><div class="inv-name">' + escapeHtml(inv.name) + '</div>' +
       (inv.person ? '<div class="inv-person">' + escapeHtml(inv.person) + '</div>' : '') + '</div>' +
       '<div class="inv-cnt">' + inv.moves.length + ' mouvement' + (inv.moves.length > 1 ? 's' : '') + '</div></div>';
+    if (inv.holdings && inv.holdings.top && inv.holdings.top.length) {
+      const h = inv.holdings, maxPct = Math.max(...h.top.map(x => x.pct), 1);
+      const hdRow = (x) => {
+        const u = x.ticker ? byTicker[x.ticker] : null;
+        const init = escapeHtml((x.ticker || x.name || '?').slice(0, 3).toUpperCase());
+        const avatar = '<div class="avatar">' + (x.ticker ? '<img src="' + escapeAttr(logoUrl(x.ticker)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' : '') +
+          '<span class="initials mono"' + (x.ticker ? '' : ' style="display:flex"') + '>' + init + '</span></div>';
+        const star = u ? '<button type="button" class="star' + (watch[x.ticker] ? ' on' : '') + '" data-t="' + escapeAttr(x.ticker) + '" aria-label="Suivre ce titre">' + (watch[x.ticker] ? '★' : '☆') + '</button>' : '';
+        const day = u ? '<span class="sub mono" style="color:' + colorOf(u.c) + '">' + (u.c > 0 ? '+' : '') + u.c.toFixed(2) + '% auj.</span>' : '<span class="sub">' + formatBig(x.value) + ' $</span>';
+        return '<div class="hd-row">' + avatar +
+          '<div class="hd-main"><span class="mono">' + escapeHtml(x.ticker || x.name) + '</span>' + star + '<span class="sub">' + escapeHtml(x.ticker ? x.name : 'Titre non identifié') + '</span></div>' +
+          '<div class="hd-pct mono">' + x.pct.toFixed(2) + '%' + day + '</div>' +
+          '<div class="hd-bar"><i style="width:' + Math.max(2, x.pct / maxPct * 100).toFixed(0) + '%"></i></div></div>';
+      };
+      html += '<div class="hd-title">Portefeuille<span>au ' + fmtDate(h.period) + ' · ' + formatBig(h.total) + ' $</span></div>' +
+        h.top.slice(0, 5).map(hdRow).join('') +
+        (h.top.length > 5 ? '<details class="hd-more"><summary>Voir les ' + (h.top.length - 5) + ' autres positions</summary>' + h.top.slice(5).map(hdRow).join('') + '</details>' : '') +
+        '<div class="inv-note">Autres positions : ' + h.others_pct.toFixed(2) + '% du portefeuille (' + h.count + ' lignes au total). Données du formulaire 13F déposé le ' + fmtDate(h.filed) + (h.link ? ' — <a href="' + escapeAttr(h.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '.</div>';
+    }
     if (!inv.moves.length) {
       html += '<div class="inv-note">Aucun achat ni vente déclaré récemment. Cet investisseur ne publie en général que ses positions trimestrielles (formulaire 13F)' +
         (inv.last_13f ? ' — dernier dépôt le ' + fmtDate(inv.last_13f.date) + ' (<a href="' + escapeAttr(inv.last_13f.link) + '" target="_blank" rel="noopener">voir</a>)' : '') + '.</div>';
