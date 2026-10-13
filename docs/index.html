@@ -1590,11 +1590,61 @@ function detailHtml(u) {
         ? '<div class="news">' + escapeHtml(det.news.title) + ' — <a href="' + escapeAttr(det.news.link) + '" target="_blank" rel="noopener">lire</a></div>'
         : '<div class="news">' + escapeHtml(det.news.title) + '</div>';
     }
-    extra += analystHtml(det.analyst, u.p);
+    if (det.newsList && det.newsList.length) {
+      extra += '<div class="badges-label">Actualité</div>' + det.newsList.map(n =>
+        '<div class="news">' + escapeHtml(n.title) + (n.src ? ' <span style="color:var(--text-faint)">· ' + escapeHtml(n.src) + '</span>' : '') +
+        (n.link ? ' — <a href="' + escapeAttr(n.link) + '" target="_blank" rel="noopener">lire</a>' : '') + '</div>').join('');
+    } else if (det.live) {
+      extra += '<div class="no-detail">Aucune actualité récente trouvée pour ce titre.</div>';
+    }
+    if (!det.live) extra += analystHtml(det.analyst, u.p);
+    else extra += '<div class="no-detail">Résumé de l\'entreprise et avis d\'analystes : ajoute ce titre dans watchlist.txt (voir l\'onglet Suivi) pour les recevoir au prochain scan.</div>';
+  } else if (watch[u.t]) {
+    extra = '<div class="no-detail live-box">Chargement de l\'actualité et des graphiques…</div>';
   } else {
     extra = '<div class="no-detail">Fiche détaillée (résumé, actualité, analystes, graphiques 1 mois → 1 an) disponible pour les titres les plus échangés et ceux qui bougent le plus aujourd\'hui.</div>';
   }
   return chartHtml + kpis + (watch[u.t] ? positionHtml(u.t) : '') + extra + simulatorHtml();
+}
+
+const liveTried = {};
+function yahooPoints(res, intraday) {
+  try {
+    const r = res.chart.result[0], ts = r.timestamp, cl = r.indicators.quote[0].close, out = [];
+    for (let i = 0; i < ts.length; i++) if (cl[i] != null) out.push({ t: new Date(ts[i] * 1000).toISOString(), c: Math.round(cl[i] * 10000) / 10000 });
+    return out;
+  } catch (e) { return []; }
+}
+async function loadLive(rowEl, t) {
+  if (liveTried[t]) return;
+  liveTried[t] = true;
+  const base = 'https://query1.finance.yahoo.com/';
+  const get = (u) => fetch(u).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  const [d, i, n] = await Promise.allSettled([
+    get(base + 'v8/finance/chart/' + encodeURIComponent(t) + '?range=1y&interval=1d'),
+    get(base + 'v8/finance/chart/' + encodeURIComponent(t) + '?range=5d&interval=60m'),
+    get(base + 'v1/finance/search?q=' + encodeURIComponent(t) + '&quotesCount=0&newsCount=6'),
+  ]);
+  const daily = d.status === 'fulfilled' ? yahooPoints(d.value) : [];
+  const intraday = i.status === 'fulfilled' ? yahooPoints(i.value) : [];
+  let newsList = [];
+  if (n.status === 'fulfilled' && n.value && Array.isArray(n.value.news)) {
+    newsList = n.value.news.filter(x => x.title).slice(0, 6).map(x => ({ title: x.title, link: x.link, src: x.publisher }));
+  }
+  const box = rowEl.querySelector('.live-box');
+  if (!daily.length && !intraday.length && !newsList.length) {
+    if (box) box.textContent = 'Infos en direct indisponibles pour le moment. Ajoute ce titre dans watchlist.txt (onglet Suivi) pour que le scanner les prépare.';
+    liveTried[t] = false;
+    return;
+  }
+  details[t] = { live: true, chart: { daily, intraday }, newsList };
+  if (!rowEl.isConnected) return;
+  const u = byTicker[t];
+  rowEl.querySelector('.detail-inner').innerHTML = detailHtml(u);
+  const def = pickDefaultRange(details[t].chart);
+  if (def) drawRange(rowEl, def);
+  const sim = rowEl.querySelector('.sim'); if (sim) updateSim(sim);
+  const pos = rowEl.querySelector('.pos'); if (pos) updatePos(pos, true);
 }
 
 function fmtMoney(x) {
@@ -1683,6 +1733,8 @@ function renderWatch() {
       '<div class="pf-hint">Les fiches complètes (résumé, actualité, analystes, graphiques 1 mois → 1 an) sont préparées par le scanner : colle cette liste dans un fichier <b>watchlist.txt</b> à la racine du dépôt GitHub pour qu\'elles soient disponibles pour tous tes titres suivis. Ta liste et tes positions restent enregistrées dans ce navigateur uniquement.</div>';
   }
   contentEl.innerHTML = html;
+  // Onglet Suivi : toutes les fiches sont ouvertes d'emblée (actualité, graphiques, infos...)
+  contentEl.querySelectorAll('.row').forEach(openRow);
 }
 
 function analystHtml(a, price) {
@@ -1809,6 +1861,7 @@ function openRow(rowEl) {
     if (sim) updateSim(sim);
     const pos = rowEl.querySelector('.pos');
     if (pos) updatePos(pos, true);
+    if (watch[u.t] && !details[u.t]) loadLive(rowEl, u.t);
     requestAnimationFrame(() => rowEl.classList.add('open'));
   } else {
     rowEl.classList.toggle('open');
@@ -1830,6 +1883,8 @@ contentRoot.addEventListener('click', (e) => {
     star.classList.toggle('on', !!watch[t]);
     star.textContent = watch[t] ? '★' : '☆';
     row.classList.remove('open'); delete row.dataset.built;   // la fiche sera reconstruite avec/sans "Ma position"
+    if (watch[t]) openRow(row);                                // étoile ajoutée : on affiche tout de suite la fiche complète
+    if (watch[t]) openRow(row);                                // l'étoile affiche tout de suite les infos
     return;
   }
   const rangeBtn = e.target.closest('.range-btn');
