@@ -1069,7 +1069,7 @@
   .inv-cnt { display: flex; align-items: center; gap: 8px; }
   .inv-chev { font-size: 1rem; color: var(--text-faint); transition: transform 0.2s ease; }
   details.inv-card[open] .inv-chev { transform: rotate(180deg); }
-  .inv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .inv-head-unused { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .inv-name { font-size: 0.95rem; font-weight: 600; }
   .inv-person { font-size: 0.72rem; color: var(--text-faint); margin-top: 2px; }
   .inv-cnt { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; }
@@ -1096,6 +1096,30 @@
   .hd-bar i { display: block; height: 100%; border-radius: 2px; background: var(--gain); }
   details.hd-more summary { cursor: pointer; font-size: 0.74rem; color: var(--gain); padding: 10px 0 4px; list-style: none; }
   details.hd-more summary::-webkit-details-marker { display: none; }
+  .inv-hero { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .inv-hero .v { font-size: 1.1rem; font-weight: 700; }
+  .inv-hero .l { font-size: 0.66rem; color: var(--text-faint); margin-top: 2px; }
+  .sec-title { margin: 22px 2px 0; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); letter-spacing: 0.02em; }
+  .inv-block { margin-top: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 14px 4px; }
+  .inv-block .mv:first-of-type, .inv-block .hd-item:first-child .hd-row { border-top: none; }
+  .inv-card .inv-sum { display: grid; grid-template-columns: 42px 1fr auto; gap: 4px 12px; align-items: center; }
+  .inv-card > summary { padding-bottom: 12px; }
+  .inv-av { width: 42px; height: 42px; border-radius: 50%; background: var(--surface-raised); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); }
+  .inv-id { min-width: 0; }
+  .inv-right { text-align: right; }
+  .inv-total { font-size: 0.92rem; font-weight: 600; }
+  .inv-right .inv-cnt { justify-content: flex-end; margin-top: 2px; }
+  .alloc { grid-column: 1 / -1; display: flex; gap: 2px; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .alloc i { display: block; height: 100%; }
+  .inv-card .inv-prev { grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; white-space: normal; margin-top: 2px; font-size: 0.68rem; color: var(--text-dim); }
+  .inv-prev span { display: inline-flex; align-items: center; gap: 5px; }
+  .inv-prev b { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .hd-item.has { cursor: pointer; }
+  .hd-item.has .hd-row:active, .hd-item.has .mv:active { background: var(--surface-raised); }
+  .hd-detail { display: none; }
+  .hd-item.open .hd-detail { display: block; }
+  .hd-detail .detail { display: block; opacity: 1; grid-template-rows: none; overflow: visible; }
+  .hd-detail .detail-inner { padding: 4px 0 12px; }
   .inv-note { font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); padding: 8px 0 10px; }
 </style>
 </head>
@@ -1500,6 +1524,42 @@ function fmtDate(iso) {
   const p = iso.slice(0, 10).split('-');
   return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso;
 }
+const INV_COLORS = ['#32D74B', '#0A84FF', '#FF9F0A', '#BF5AF2', '#64D2FF'];
+function initialsOf(str) {
+  const w = String(str || '?').replace(/[^A-Za-zÀ-ÿ ]/g, '').split(/\s+/).filter(Boolean);
+  return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
+}
+function stockItem(inner, ticker) {
+  const ok = ticker && byTicker[ticker];
+  return '<div class="hd-item' + (ok ? ' has' : '') + '"' + (ok ? ' data-t="' + escapeAttr(ticker) + '"' : '') + '>' + inner +
+    (ok ? '<div class="hd-detail"><div class="detail"><div class="detail-inner"></div></div></div>' : '') + '</div>';
+}
+function starBtn(t) {
+  if (!t || !byTicker[t]) return '';
+  return '<button type="button" class="star' + (watch[t] ? ' on' : '') + '" data-t="' + escapeAttr(t) + '" aria-label="Suivre ce titre">' + (watch[t] ? '★' : '☆') + '</button>';
+}
+function holdingRow(x, maxPct) {
+  const u = x.ticker ? byTicker[x.ticker] : null;
+  const init = escapeHtml((x.ticker || initialsOf(x.name)).slice(0, 3).toUpperCase());
+  const avatar = '<div class="avatar">' + (x.ticker ? '<img src="' + escapeAttr(logoUrl(x.ticker)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' : '') +
+    '<span class="initials mono"' + (x.ticker ? '' : ' style="display:flex"') + '>' + init + '</span></div>';
+  const day = u ? '<span class="sub mono" style="color:' + colorOf(u.c) + '">' + fmtPrice(u.p) + ' $ · ' + (u.c > 0 ? '+' : '') + u.c.toFixed(2) + '%</span>' : '<span class="sub">' + formatBig(x.value) + ' $</span>';
+  return stockItem('<div class="hd-row">' + avatar +
+    '<div class="hd-main"><span class="mono">' + escapeHtml(x.ticker || x.name) + '</span>' + starBtn(x.ticker) + '<span class="sub">' + escapeHtml(x.ticker ? x.name : 'Titre non identifié') + '</span></div>' +
+    '<div class="hd-pct mono">' + x.pct.toFixed(2) + '%' + day + '</div>' +
+    '<div class="hd-bar"><i style="width:' + Math.min(100, Math.max(2, x.pct / maxPct * 100)).toFixed(0) + '%"></i></div></div>', x.ticker);
+}
+function moveRow(m, who) {
+  const buy = m.action === 'Achat';
+  return stockItem('<div class="mv"><span class="mv-pill ' + (buy ? 'buy' : 'sell') + '">' + (buy ? 'ACHAT' : 'VENTE') + '</span>' +
+    '<div class="mv-main"><span class="mono">' + escapeHtml(m.ticker) + '</span>' + starBtn(m.ticker) +
+      '<span class="sub">' + (who ? escapeHtml(who) + ' · ' : '') + escapeHtml(m.issuer || '') + '</span></div>' +
+    '<div class="mv-val mono">' + (m.value ? formatBig(m.value) + ' $' : '—') +
+      '<span class="sub">' + (m.shares ? m.shares.toLocaleString('fr-FR') + ' actions' + (m.price ? ' à ' + m.price + ' $' : '') : '') + '</span></div>' +
+    '<div class="mv-meta"><span>Opération du ' + fmtDate(m.date) + ' · déclarée le ' + fmtDate(m.filed) + '</span>' +
+      (m.link ? '<a href="' + escapeAttr(m.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '</div></div>', m.ticker);
+}
+
 async function renderInvestors() {
   const el = document.getElementById('content');
   if (!invData && !invFailed) {
@@ -1515,56 +1575,82 @@ async function renderInvestors() {
     el.innerHTML = '<div class="status">Pas encore de données sur les investisseurs. Ajoute investors.py et investors.yml au dépôt, puis lance le workflow « Suivi des investisseurs » (onglet Actions).</div>';
     return;
   }
-  let html = '<div class="pf-hint" style="margin-top:14px">Mouvements déclarés à la SEC par de grands investisseurs, sur les ' + invData.lookback_days + ' derniers jours. Mis à jour : ' + escapeHtml(invData.generated_at) + '.</div>';
-  for (const inv of invData.investors) {
-    const preview = (inv.holdings && inv.holdings.top ? inv.holdings.top.slice(0, 4).map(x => (x.ticker || x.name.split(' ')[0]) + ' ' + Math.round(x.pct) + '%').join(' · ') : '');
-    html += '<details class="inv-card"><summary class="inv-head"><div style="min-width:0"><div class="inv-name">' + escapeHtml(inv.name) + '</div>' +
-      (inv.person ? '<div class="inv-person">' + escapeHtml(inv.person) + '</div>' : '') +
-      (preview ? '<div class="inv-prev mono">' + escapeHtml(preview) + '</div>' : '') + '</div>' +
-      '<div class="inv-cnt">' + inv.moves.length + ' mouvement' + (inv.moves.length > 1 ? 's' : '') + '<span class="inv-chev">⌄</span></div></summary>';
-    if (inv.holdings && inv.holdings.top && inv.holdings.top.length) {
-      const h = inv.holdings, maxPct = Math.max(...h.top.map(x => x.pct), 1);
-      const hdRow = (x) => {
-        const u = x.ticker ? byTicker[x.ticker] : null;
-        const init = escapeHtml((x.ticker || x.name || '?').slice(0, 3).toUpperCase());
-        const avatar = '<div class="avatar">' + (x.ticker ? '<img src="' + escapeAttr(logoUrl(x.ticker)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' : '') +
-          '<span class="initials mono"' + (x.ticker ? '' : ' style="display:flex"') + '>' + init + '</span></div>';
-        const star = u ? '<button type="button" class="star' + (watch[x.ticker] ? ' on' : '') + '" data-t="' + escapeAttr(x.ticker) + '" aria-label="Suivre ce titre">' + (watch[x.ticker] ? '★' : '☆') + '</button>' : '';
-        const day = u ? '<span class="sub mono" style="color:' + colorOf(u.c) + '">' + (u.c > 0 ? '+' : '') + u.c.toFixed(2) + '% auj.</span>' : '<span class="sub">' + formatBig(x.value) + ' $</span>';
-        return '<div class="hd-row">' + avatar +
-          '<div class="hd-main"><span class="mono">' + escapeHtml(x.ticker || x.name) + '</span>' + star + '<span class="sub">' + escapeHtml(x.ticker ? x.name : 'Titre non identifié') + '</span></div>' +
-          '<div class="hd-pct mono">' + x.pct.toFixed(2) + '%' + day + '</div>' +
-          '<div class="hd-bar"><i style="width:' + Math.max(2, x.pct / maxPct * 100).toFixed(0) + '%"></i></div></div>';
-      };
-      html += '<div class="hd-title">Portefeuille<span>au ' + fmtDate(h.period) + ' · ' + formatBig(h.total) + ' $</span></div>' +
-        h.top.slice(0, 5).map(hdRow).join('') +
-        (h.top.length > 5 ? '<details class="hd-more"><summary>Voir les ' + (h.top.length - 5) + ' autres positions</summary>' + h.top.slice(5).map(hdRow).join('') + '</details>' : '') +
-        '<div class="inv-note">Autres positions : ' + h.others_pct.toFixed(2) + '% du portefeuille (' + h.count + ' lignes au total). Données du formulaire 13F déposé le ' + fmtDate(h.filed) + (h.link ? ' — <a href="' + escapeAttr(h.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '.</div>';
+  const invs = invData.investors;
+  const allMoves = [];
+  invs.forEach(inv => inv.moves.forEach(m => allMoves.push({ m, who: inv.person || inv.name })));
+  allMoves.sort((a, b) => (b.m.filed || '').localeCompare(a.m.filed || '') || (b.m.date || '').localeCompare(a.m.date || ''));
+
+  // titres détenus par plusieurs investisseurs
+  const common = {};
+  invs.forEach(inv => ((inv.holdings && inv.holdings.top) || []).forEach(x => {
+    if (!x.ticker) return;
+    (common[x.ticker] ||= { x, who: [] }).who.push({ name: inv.person || inv.name, pct: x.pct });
+  }));
+  const shared = Object.values(common).filter(c => c.who.length >= 2)
+    .sort((a, b) => b.who.length - a.who.length || Math.max(...b.who.map(w => w.pct)) - Math.max(...a.who.map(w => w.pct))).slice(0, 8);
+
+  let html = '<div class="inv-hero"><div><div class="v mono">' + invs.length + '</div><div class="l">Investisseurs</div></div>' +
+    '<div><div class="v mono">' + allMoves.length + '</div><div class="l">Mouvements (' + invData.lookback_days + ' j)</div></div>' +
+    '<div><div class="v mono">' + escapeHtml((invData.generated_at || '').split(' ')[1] || '') + '</div><div class="l">Mis à jour le ' + escapeHtml((invData.generated_at || '').split(' ')[0] || '') + '</div></div></div>';
+
+  if (allMoves.length) {
+    html += '<div class="sec-title">Derniers mouvements</div><div class="inv-block">' +
+      allMoves.slice(0, 6).map(o => moveRow(o.m, o.who)).join('') + '</div>';
+  }
+  if (shared.length) {
+    html += '<div class="sec-title">Détenus par plusieurs investisseurs</div><div class="inv-block">' +
+      shared.map(c => holdingRow({ name: c.x.name, ticker: c.x.ticker, value: c.x.value, pct: Math.max(...c.who.map(w => w.pct)) }, Math.max(...shared.map(z => Math.max(...z.who.map(w => w.pct)))))
+        .replace('<span class="sub">' + escapeHtml(c.x.name) + '</span>', '<span class="sub">' + c.who.length + ' investisseurs : ' + escapeHtml(c.who.map(w => w.name.split(' ').pop()).join(', ')) + '</span>')).join('') + '</div>';
+  }
+
+  html += '<div class="sec-title">Portefeuilles</div>';
+  invs.forEach((inv, idx) => {
+    const h = inv.holdings;
+    const top = (h && h.top) || [];
+    const maxPct = Math.max(...top.map(x => x.pct), 1);
+    const alloc = top.length ? '<div class="alloc">' + top.slice(0, 5).map((x, i) => '<i style="width:' + x.pct + '%;background:' + INV_COLORS[i] + '"></i>').join('') +
+      '<i style="flex:1;background:var(--line)"></i></div>' : '';
+    const preview = top.slice(0, 4).map((x, i) => '<span><b style="background:' + INV_COLORS[i] + '"></b>' + escapeHtml(x.ticker || x.name.split(' ')[0]) + ' ' + Math.round(x.pct) + '%</span>').join('');
+    html += '<details class="inv-card"><summary class="inv-sum">' +
+      '<div class="inv-av">' + escapeHtml(initialsOf(inv.person || inv.name)) + '</div>' +
+      '<div class="inv-id"><div class="inv-name">' + escapeHtml(inv.person || inv.name) + '</div><div class="inv-person">' + escapeHtml(inv.person ? inv.name : '') + '</div></div>' +
+      '<div class="inv-right"><div class="inv-total mono">' + (h ? formatBig(h.total) + ' $' : '—') + '</div><div class="inv-cnt">' + inv.moves.length + ' mouv.<span class="inv-chev">⌄</span></div></div>' +
+      alloc + (preview ? '<div class="inv-prev">' + preview + '</div>' : '') + '</summary>';
+    if (top.length) {
+      html += '<div class="hd-title">Positions<span>au ' + fmtDate(h.period) + ' · ' + h.count + ' lignes</span></div>' +
+        top.slice(0, 5).map(x => holdingRow(x, maxPct)).join('') +
+        (top.length > 5 ? '<details class="hd-more"><summary>Voir les ' + (top.length - 5) + ' autres positions</summary>' + top.slice(5).map(x => holdingRow(x, maxPct)).join('') + '</details>' : '') +
+        '<div class="inv-note">Autres positions : ' + h.others_pct.toFixed(2) + '% du portefeuille. Formulaire 13F déposé le ' + fmtDate(h.filed) + (h.link ? ' — <a href="' + escapeAttr(h.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '.</div>';
     }
-    if (!inv.moves.length) {
-      html += '<div class="inv-note">Aucun achat ni vente déclaré récemment. Cet investisseur ne publie en général que ses positions trimestrielles (formulaire 13F)' +
-        (inv.last_13f ? ' — dernier dépôt le ' + fmtDate(inv.last_13f.date) + ' (<a href="' + escapeAttr(inv.last_13f.link) + '" target="_blank" rel="noopener">voir</a>)' : '') + '.</div>';
-    }
-    for (const m of inv.moves) {
-      const buy = m.action === 'Achat';
-      const inList = !!byTicker[m.ticker];
-      html += '<div class="mv"><span class="mv-pill ' + (buy ? 'buy' : 'sell') + '">' + (buy ? 'ACHAT' : 'VENTE') + '</span>' +
-        '<div class="mv-main"><span class="mono">' + escapeHtml(m.ticker) + '</span>' +
-          (inList ? '<button type="button" class="star' + (watch[m.ticker] ? ' on' : '') + '" data-t="' + escapeAttr(m.ticker) + '" aria-label="Suivre ce titre">' + (watch[m.ticker] ? '★' : '☆') + '</button>' : '') +
-          '<span class="sub">' + escapeHtml(m.issuer || '') + '</span></div>' +
-        '<div class="mv-val mono">' + (m.value ? formatBig(m.value) + ' $' : '—') +
-          '<span class="sub">' + (m.shares ? m.shares.toLocaleString('fr-FR') + ' actions' + (m.price ? ' à ' + m.price + ' $' : '') : '') + '</span></div>' +
-        '<div class="mv-meta"><span>Opération du ' + fmtDate(m.date) + ' · déclarée le ' + fmtDate(m.filed) + '</span>' +
-          (m.link ? '<a href="' + escapeAttr(m.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '</div></div>';
+    if (inv.moves.length) {
+      html += '<div class="hd-title">Mouvements récents<span>' + inv.moves.length + '</span></div>' + inv.moves.map(m => moveRow(m)).join('');
+    } else {
+      html += '<div class="inv-note">Aucun achat ni vente déclaré récemment : cet investisseur ne publie en général que ses positions trimestrielles (13F).</div>';
     }
     if (inv.filings && inv.filings.length) {
       html += '<div class="inv-note">Déclarations de participation : ' + inv.filings.map(f =>
         '<a href="' + escapeAttr(f.link) + '" target="_blank" rel="noopener">' + escapeHtml(f.form) + ' (' + fmtDate(f.date) + ')</a>').join(' · ') + '</div>';
     }
     html += '</details>';
-  }
-  html += '<div class="pf-hint">Source : SEC EDGAR. Un formulaire 4 est déposé au plus tard 2 jours ouvrés après l\'opération ; il ne concerne que les dirigeants et les actionnaires de plus de 10 % d\'une société. Ce sont des opérations passées, pas des conseils : suivre un investisseur ne garantit rien.</div>';
+  });
+  html += '<div class="pf-hint">Source : SEC EDGAR. Touche une action pour ouvrir sa fiche. Un formulaire 4 est déposé au plus tard 2 jours ouvrés après l\'opération (dirigeants et actionnaires de plus de 10 % uniquement) ; le 13F est trimestriel, avec jusqu\'à 45 jours de retard. Ce sont des opérations passées, pas des conseils : suivre un investisseur ne garantit rien.</div>';
   el.innerHTML = html;
+}
+
+function buildItem(item) {
+  const t = item.dataset.t, u = byTicker[t];
+  if (!u) return;
+  item.querySelector('.detail-inner').innerHTML = detailHtml(u);
+  item.dataset.built = '1';
+  const det = details[t];
+  if (det && det.chart) { const def = pickDefaultRange(det.chart); if (def) drawRange(item, def); }
+  const pos = item.querySelector('.pos'); if (pos) updatePos(pos, true);
+  if (watch[t] && !det) loadLive(item, t);
+}
+function toggleItem(item) {
+  if (!item.dataset.t) return;
+  if (!item.dataset.built) buildItem(item);
+  item.classList.toggle('open');
 }
 
 function renderMarket() {
@@ -1959,6 +2045,7 @@ contentRoot.addEventListener('click', (e) => {
     saveWatch();
     if (!row) {   // étoile depuis l'onglet Investisseurs
       document.querySelectorAll('.star[data-t="' + t + '"]').forEach(b => { b.classList.toggle('on', !!watch[t]); b.textContent = watch[t] ? '★' : '☆'; });
+      document.querySelectorAll('.hd-item[data-t="' + t + '"]').forEach(it => { delete it.dataset.built; if (it.classList.contains('open')) buildItem(it); });
       return;
     }
     if (view === 'watch') { renderWatch(); return; }
@@ -1972,7 +2059,13 @@ contentRoot.addEventListener('click', (e) => {
   const rangeBtn = e.target.closest('.range-btn');
   if (rangeBtn) {
     e.stopPropagation();
-    drawRange(rangeBtn.closest('.row'), rangeBtn.dataset.range);
+    drawRange(rangeBtn.closest('.row, .hd-item'), rangeBtn.dataset.range);
+    return;
+  }
+  const hdItem = e.target.closest('.hd-item');
+  if (hdItem) {
+    if (e.target.closest('.hd-detail') || e.target.closest('a')) return;
+    toggleItem(hdItem);
     return;
   }
   if (e.target.closest('.detail')) return;       // clic dans la fiche : on ne la referme pas
