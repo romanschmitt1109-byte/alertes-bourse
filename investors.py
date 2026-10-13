@@ -38,7 +38,8 @@ PAUSE = 0.2  # l'EDGAR tolère 10 requêtes/seconde au maximum
 
 # La SEC demande de s'identifier dans le User-Agent.
 HEADERS = {"User-Agent": os.environ.get(
-    "SEC_USER_AGENT", "alertes-bourse-scanner (github.com/romanschmitt1109-byte/alertes-bourse)")}
+    "SEC_USER_AGENT", "AlertesBourse/1.0 (contact: romanschmitt1109-byte@users.noreply.github.com)"),
+    "Accept-Encoding": "gzip, deflate"}
 
 INVESTORS = [
     ("1067983", "Berkshire Hathaway", "Warren Buffett"),
@@ -203,8 +204,8 @@ def main():
         if res:
             result.append(res)
     if not result:
-        print("Aucune donnée récupérée, fichier précédent conservé.")
-        return
+        print("ERREUR : aucune donnée récupérée auprès de la SEC (voir les messages « Échec » ci-dessus).")
+        return 1
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     payload = {"generated_at": now.strftime("%d/%m/%Y %H:%M"), "lookback_days": LOOKBACK_DAYS, "investors": result}
     tmp = OUTPUT_FILE + ".tmp"
