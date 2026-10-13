@@ -33,6 +33,8 @@ OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "docs")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "investors.json")
 INVESTORS_FILE = os.environ.get("INVESTORS_FILE", "investors.txt")
 LOOKBACK_DAYS = int(os.environ.get("INVESTORS_LOOKBACK_DAYS", 120))
+TOP_HOLDINGS = int(os.environ.get("TOP_HOLDINGS", 25))
+DATA_FILE = os.path.join(OUTPUT_DIR, "data.json")
 MAX_FORM4_PER_INVESTOR = int(os.environ.get("MAX_FORM4_PER_INVESTOR", 25))
 PAUSE = 0.2  # l'EDGAR tolère 10 requêtes/seconde au maximum
 
@@ -146,6 +148,103 @@ def merge_moves(moves):
     return out
 
 
+NAME_DROP = {"INC", "CORP", "CORPORATION", "CO", "COMPANY", "LTD", "LIMITED", "PLC", "LLC", "LP", "NV", "SA", "AG",
+             "HOLDINGS", "HLDGS", "HOLDING", "GROUP", "THE", "DEL", "NEW", "COM", "ADR", "ADS", "SPONSORED", "CL", "CLASS"}
+
+
+def norm_name(name):
+    words = re.sub(r"[^A-Z0-9 ]", " ", (name or "").upper().replace("&", " AND ")).split()
+    words = [w for w in words if w not in NAME_DROP]
+    return " ".join(words)
+
+
+def load_name_map():
+    """Associe le nom normalisé d'une société à son ticker, d'après la liste du
+    scan (docs/data.json). En cas de doublon (ex. Alphabet A et C), on garde le
+    titre le plus échangé."""
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            universe = json.load(f).get("universe") or []
+    except Exception:
+        return {}
+    best = {}
+    for u in universe:
+        key = norm_name(u.get("n"))
+        if not key:
+            continue
+        score = (u.get("v") or 0) * (u.get("p") or 0)
+        if key not in best or score > best[key][0]:
+            best[key] = (score, u["t"])
+    return {k: v[1] for k, v in best.items()}
+
+
+def parse_infotable(xml_text):
+    """Lit un tableau 13F : {cusip: {name, value, shares}} pour les actions
+    (les options d'achat / de vente et les obligations sont ignorées). Depuis
+    2023 les valeurs sont en dollars."""
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return {}
+    out = {}
+    for el in root.iter():
+        if el.tag.split("}")[-1] != "infoTable":
+            continue
+        d = {}
+        for child in el.iter():
+            d[child.tag.split("}")[-1]] = (child.text or "").strip()
+        if d.get("putCall") or d.get("sshPrnamtType", "SH") != "SH":
+            continue
+        try:
+            value = float(d.get("value", "0"))
+            shares = float(d.get("sshPrnamt", "0"))
+        except ValueError:
+            continue
+        key = d.get("cusip") or d.get("nameOfIssuer")
+        g = out.setdefault(key, {"name": d.get("nameOfIssuer"), "value": 0.0, "shares": 0.0})
+        g["value"] += value
+        g["shares"] += shares
+    return out
+
+
+def build_holdings(table, name_map):
+    total = sum(h["value"] for h in table.values())
+    if total <= 0:
+        return None
+    rows = sorted(table.values(), key=lambda h: h["value"], reverse=True)
+    top = []
+    for h in rows[:TOP_HOLDINGS]:
+        top.append({
+            "name": (h["name"] or "").title(),
+            "ticker": name_map.get(norm_name(h["name"])),
+            "value": round(h["value"]), "shares": round(h["shares"]),
+            "pct": round(h["value"] / total * 100, 2),
+        })
+    return {"total": round(total), "count": len(rows), "top": top,
+            "others_pct": round(max(0.0, 100 - sum(t["pct"] for t in top)), 2)}
+
+
+def fetch_holdings(inv, rows13f, name_map):
+    """Positions du dernier 13F : on repère le fichier « information table » dans
+    le dossier du dépôt (son nom varie selon le déclarant)."""
+    form, fdate, acc, rdate = rows13f
+    base = f"https://www.sec.gov/Archives/edgar/data/{int(inv['cik'])}/{acc.replace('-', '')}/"
+    index = get(base + "index.json", as_json=True)
+    names = [i.get("name", "") for i in ((index or {}).get("directory") or {}).get("item", [])]
+    xmls = [n for n in names if n.lower().endswith(".xml") and "primary_doc" not in n.lower()]
+    xmls.sort(key=lambda n: ("infotable" not in n.lower(), n))
+    for n in xmls[:2]:
+        text = get(base + n)
+        table = parse_infotable(text) if text else {}
+        h = build_holdings(table, name_map) if table else None
+        if h:
+            h["period"] = rdate
+            h["filed"] = fdate
+            h["link"] = base
+            return h
+    return None
+
+
 def filing_url(cik, accession, doc):
     return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession.replace('-', '')}/{doc}"
 
@@ -156,13 +255,20 @@ def raw_xml_doc(primary):
     return primary.split("/")[-1]
 
 
-def fetch_investor(inv, since):
+def fetch_investor(inv, since, name_map=None):
     data = get(f"https://data.sec.gov/submissions/CIK{int(inv['cik']):010d}.json", as_json=True)
     if not data:
         return None
     recent = (data.get("filings") or {}).get("recent") or {}
     rows = list(zip(recent.get("form", []), recent.get("filingDate", []),
                     recent.get("accessionNumber", []), recent.get("primaryDocument", [])))
+    reports = recent.get("reportDate", [])
+    latest_13f = None
+    for i, r in enumerate(rows):
+        if r[0] == "13F-HR":
+            latest_13f = (r[0], r[1], r[2], reports[i] if i < len(reports) else None)
+            break
+    holdings = fetch_holdings(inv, latest_13f, name_map) if latest_13f else None
     moves, filings, last_13f = [], [], None
     form4_count = 0
     for form, fdate, acc, doc in rows:   # du plus récent au plus ancien
@@ -190,7 +296,7 @@ def fetch_investor(inv, since):
     merged.sort(key=lambda m: (m.get("date") or "", m.get("filed") or ""), reverse=True)
     return {
         "cik": inv["cik"], "name": inv["name"], "person": inv.get("person"),
-        "moves": merged, "filings": filings[:5], "last_13f": last_13f,
+        "moves": merged, "filings": filings[:5], "last_13f": last_13f, "holdings": holdings,
     }
 
 
@@ -198,9 +304,10 @@ def main():
     now = datetime.now(ZoneInfo("Europe/Paris"))
     since = (now - timedelta(days=LOOKBACK_DAYS)).strftime("%Y-%m-%d")
     result = []
+    name_map = load_name_map()
     for inv in load_investors():
         print(f"{inv['name']}...")
-        res = fetch_investor(inv, since)
+        res = fetch_investor(inv, since, name_map)
         if res:
             result.append(res)
     if not result:
