@@ -1063,6 +1063,12 @@
   .pos-res { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 
   .inv-card { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 14px 6px; }
+  details.inv-card > summary { list-style: none; cursor: pointer; padding-bottom: 8px; }
+  details.inv-card > summary::-webkit-details-marker { display: none; }
+  .inv-prev { margin-top: 6px; font-size: 0.68rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inv-cnt { display: flex; align-items: center; gap: 8px; }
+  .inv-chev { font-size: 1rem; color: var(--text-faint); transition: transform 0.2s ease; }
+  details.inv-card[open] .inv-chev { transform: rotate(180deg); }
   .inv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .inv-name { font-size: 0.95rem; font-weight: 600; }
   .inv-person { font-size: 0.72rem; color: var(--text-faint); margin-top: 2px; }
@@ -1511,9 +1517,11 @@ async function renderInvestors() {
   }
   let html = '<div class="pf-hint" style="margin-top:14px">Mouvements déclarés à la SEC par de grands investisseurs, sur les ' + invData.lookback_days + ' derniers jours. Mis à jour : ' + escapeHtml(invData.generated_at) + '.</div>';
   for (const inv of invData.investors) {
-    html += '<div class="inv-card"><div class="inv-head"><div><div class="inv-name">' + escapeHtml(inv.name) + '</div>' +
-      (inv.person ? '<div class="inv-person">' + escapeHtml(inv.person) + '</div>' : '') + '</div>' +
-      '<div class="inv-cnt">' + inv.moves.length + ' mouvement' + (inv.moves.length > 1 ? 's' : '') + '</div></div>';
+    const preview = (inv.holdings && inv.holdings.top ? inv.holdings.top.slice(0, 4).map(x => (x.ticker || x.name.split(' ')[0]) + ' ' + Math.round(x.pct) + '%').join(' · ') : '');
+    html += '<details class="inv-card"><summary class="inv-head"><div style="min-width:0"><div class="inv-name">' + escapeHtml(inv.name) + '</div>' +
+      (inv.person ? '<div class="inv-person">' + escapeHtml(inv.person) + '</div>' : '') +
+      (preview ? '<div class="inv-prev mono">' + escapeHtml(preview) + '</div>' : '') + '</div>' +
+      '<div class="inv-cnt">' + inv.moves.length + ' mouvement' + (inv.moves.length > 1 ? 's' : '') + '<span class="inv-chev">⌄</span></div></summary>';
     if (inv.holdings && inv.holdings.top && inv.holdings.top.length) {
       const h = inv.holdings, maxPct = Math.max(...h.top.map(x => x.pct), 1);
       const hdRow = (x) => {
@@ -1553,7 +1561,7 @@ async function renderInvestors() {
       html += '<div class="inv-note">Déclarations de participation : ' + inv.filings.map(f =>
         '<a href="' + escapeAttr(f.link) + '" target="_blank" rel="noopener">' + escapeHtml(f.form) + ' (' + fmtDate(f.date) + ')</a>').join(' · ') + '</div>';
     }
-    html += '</div>';
+    html += '</details>';
   }
   html += '<div class="pf-hint">Source : SEC EDGAR. Un formulaire 4 est déposé au plus tard 2 jours ouvrés après l\'opération ; il ne concerne que les dirigeants et les actionnaires de plus de 10 % d\'une société. Ce sont des opérations passées, pas des conseils : suivre un investisseur ne garantit rien.</div>';
   el.innerHTML = html;
