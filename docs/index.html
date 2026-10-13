@@ -1130,6 +1130,49 @@
   .hd-detail .detail-inner { padding: 4px 0 12px; }
   .inv-note { font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); padding: 8px 0 10px; }
 
+  /* ======== Radar, carte du marché, « et si ? » ======== */
+  .sub-seg { margin-top: 14px; }
+  .sub-seg button { flex: 1; padding: 8px 6px; }
+  .chip-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; font-size: 0.7rem; color: var(--text-faint); }
+  .chip-row button { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--text-dim); font: inherit; font-size: 0.7rem; padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+  .chip-row button.active { color: var(--gain); border-color: var(--gain); }
+  .cv { padding: 12px 0; border-top: 1px solid var(--line); }
+  .cv:first-child { border-top: none; }
+  .cv-head { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; }
+  .cv-head .avatar { width: 34px; height: 34px; }
+  .cv-name { min-width: 0; font-size: 0.86rem; font-weight: 600; }
+  .cv-name .sub { display: block; font-size: 0.68rem; font-weight: 400; color: var(--text-faint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cv-right { text-align: right; }
+  .cv-badge { display: inline-block; font-size: 0.64rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--gain) 16%, transparent); color: var(--gain); }
+  .cv-badge.sell { background: color-mix(in srgb, var(--loss) 16%, transparent); color: var(--loss); }
+  .cv-gain { display: block; font-size: 0.74rem; font-weight: 600; margin-top: 4px; }
+  .cv-actors { margin: 8px 0 0 44px; display: grid; gap: 4px; font-size: 0.7rem; color: var(--text-dim); }
+  .cv-actors > div { display: flex; justify-content: space-between; gap: 8px; }
+  .cv-actors span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cv-actors .k { font-size: 0.6rem; color: var(--text-faint); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-right: 6px; }
+  .mode-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 14px 2px 8px; font-size: 0.72rem; color: var(--text-faint); }
+  .mode-row .seg { flex: none; }
+  .tm-wrap { position: relative; width: 100%; background: #000; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+  .tm-sec { position: absolute; border: 1px solid #000; background: #0b0b0d; overflow: hidden; }
+  .tm-sec > i { position: absolute; left: 4px; top: 2px; font-style: normal; font-size: 0.56rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); white-space: nowrap; }
+  .tm-tile { position: absolute; border: 1px solid #000; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; color: #fff; line-height: 1.15; transition: filter 0.15s ease; }
+  .tm-tile:active { filter: brightness(1.35); }
+  .tm-tile.sel { outline: 2px solid #fff; outline-offset: -2px; z-index: 2; }
+  .tm-tile b { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .tm-tile span { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; opacity: 0.9; }
+  .tm-legend { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.66rem; color: var(--text-faint); }
+  .tm-legend i { flex: 1; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #FF453A, #2a2a2e, #32D74B); }
+  #mapSel { margin-top: 10px; }
+  .whatif { margin-top: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-raised); }
+  .wi-title { font-size: 0.78rem; font-weight: 600; }
+  .wi-controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .wi-amt { width: 84px; background: var(--surface); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 6px 8px; font-size: 0.82rem; text-align: right; }
+  .wi-per { margin-left: auto; padding: 2px; }
+  .wi-out { margin-top: 12px; }
+  .wi-big { font-size: 1.15rem; font-weight: 700; }
+  .wi-line { display: flex; justify-content: space-between; gap: 8px; font-size: 0.72rem; color: var(--text-dim); margin-top: 6px; }
+  .wi-note { font-size: 0.64rem; color: var(--text-faint); margin-top: 8px; line-height: 1.45; }
+
   /* ======== Finitions ======== */
   body { padding-bottom: calc(92px + env(safe-area-inset-bottom)); padding-top: calc(20px + env(safe-area-inset-top)); }
   :focus-visible { outline: 2px solid var(--gain); outline-offset: 2px; }
@@ -1235,6 +1278,7 @@
       <button type="button" id="tabMarket" class="active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 4 8-10"/><path d="M15 5h5v5"/></svg><span>Marché</span></button>
       <button type="button" id="tabWatch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg><span>Suivi <b id="watchCount"></b></span></button>
       <button type="button" id="tabInv"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3.2 3.2 0 010 5.6M18 14.3c1.9.8 3 2.6 3 5.7"/></svg><span>Investisseurs</span></button>
+      <button type="button" id="tabRadar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6-6"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg><span>Radar</span></button>
     </nav>
 
     <div class="price-panel" id="pricePanel" style="display:none">
@@ -1642,8 +1686,9 @@ function getFiltered() {
 function applyViewChrome() {
   const on = universe.length > 0 && view === 'market';
   document.getElementById('pricePanel').style.display = on ? 'block' : 'none';
-  document.getElementById('toolbarWrap').style.display = (universe.length && view !== 'investors') ? 'block' : 'none';
+  document.getElementById('toolbarWrap').style.display = (universe.length && view !== 'investors' && view !== 'radar') ? 'block' : 'none';
   document.getElementById('tabInv').classList.toggle('active', view === 'investors');
+  document.getElementById('tabRadar').classList.toggle('active', view === 'radar');
   document.getElementById('movers').style.display = (universe.length && view === 'market') ? 'block' : 'none';
   document.getElementById('stats').style.display = view === 'market' ? 'flex' : 'none';
   document.querySelector('.toolbar-filters').style.display = view === 'market' ? 'flex' : 'none';
@@ -1656,7 +1701,132 @@ function setView(v) { view = v; shown = PAGE_SIZE; applyViewChrome(); playIn(); 
 function renderList() {
   if (view === 'watch') renderWatch();
   else if (view === 'investors') renderInvestors();
+  else if (view === 'radar') renderRadar();
   else renderMarket();
+}
+
+/* ---------- Radar : convergence + initiés (tout le marché) ---------- */
+let insData = null, insFailed = false;
+let radarTab = 'conv', radarMin = 50000, radarShown = 30;
+const DAY_MS = 86400000;
+function ageDays(iso) { const t = Date.parse((iso || '').slice(0, 10)); return isNaN(t) ? 999 : (Date.now() - t) / DAY_MS; }
+function shortName(n) { return String(n || '').split(' ').filter(Boolean).slice(0, 3).join(' '); }
+
+function buildConvergence(side) {   // side: 'Achat' | 'Vente'
+  const by = {};
+  const push = (t, issuer, a) => { (by[t] ||= { t, issuer, actors: [] }).actors.push(a); };
+  if (invData) {
+    invData.investors.forEach(inv => inv.moves.forEach(m => {
+      if (m.action !== side || !m.ticker || ageDays(m.date) > 45) return;
+      push(m.ticker, m.issuer, { kind: 'Investisseur', who: inv.person || inv.name, key: 'i:' + inv.cik, value: m.value || 0, price: m.price, shares: m.shares, date: m.date, link: m.link });
+    }));
+  }
+  if (insData) {
+    insData.moves.forEach(m => {
+      if (m.action !== side || m.value < radarMin || ageDays(m.date) > 30) return;
+      push(m.ticker, m.issuer, { kind: 'Initié', who: shortName(m.owner) + (m.role ? ' (' + m.role + ')' : ''), key: 'o:' + m.owner, value: m.value, price: m.price, shares: m.shares, date: m.date, link: m.link });
+    });
+  }
+  return Object.values(by).map(c => {
+    // un même acteur qui revient plusieurs fois ne compte qu'une fois
+    const keys = new Set(c.actors.map(a => a.key));
+    c.n = keys.size;
+    c.nInv = new Set(c.actors.filter(a => a.kind === 'Investisseur').map(a => a.key)).size;
+    c.nIns = c.n - c.nInv;
+    c.total = c.actors.reduce((s, a) => s + a.value, 0);
+    let w = 0, sh = 0;
+    c.actors.forEach(a => { if (a.price && a.shares) { w += a.price * a.shares; sh += a.shares; } });
+    c.avgPrice = sh ? w / sh : null;
+    c.actors.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    return c;
+  }).filter(c => c.n >= 2).sort((a, b) => b.n - a.n || b.total - a.total);
+}
+
+function cvCard(c, side) {
+  const u = byTicker[c.t];
+  const sell = side === 'Vente';
+  const init = escapeHtml(c.t.slice(0, 3));
+  const g = u && c.avgPrice ? gainPct(u.p, c.avgPrice) : null;
+  const parts = [];
+  if (c.nIns) parts.push(c.nIns + ' initié' + (c.nIns > 1 ? 's' : ''));
+  if (c.nInv) parts.push(c.nInv + ' investisseur' + (c.nInv > 1 ? 's' : ''));
+  const lines = c.actors.slice(0, 4).map(a =>
+    '<div><span><span class="k">' + (a.kind === 'Initié' ? 'INITIÉ' : 'INVEST.') + '</span>' + escapeHtml(a.who) + '</span>' +
+    '<span class="mono">' + (a.value ? formatBig(a.value) + ' $ · ' : '') + fmtDate(a.date).slice(0, 5) + '</span></div>').join('') +
+    (c.actors.length > 4 ? '<div><span>+ ' + (c.actors.length - 4) + ' autre' + (c.actors.length - 4 > 1 ? 's' : '') + ' opération' + (c.actors.length - 4 > 1 ? 's' : '') + '</span></div>' : '');
+  return '<div class="cv"><div class="cv-head"><div class="avatar"><img src="' + escapeAttr(logoUrl(c.t)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';"><span class="initials mono">' + init + '</span></div>' +
+    '<div class="cv-name"><span class="mono">' + escapeHtml(c.t) + '</span>' + starBtn(c.t) + '<span class="sub">' + escapeHtml((u && u.n) || c.issuer || '') + ' · ' + parts.join(' + ') + '</span></div>' +
+    '<div class="cv-right"><span class="cv-badge' + (sell ? ' sell' : '') + '">' + c.n + (sell ? ' vendeurs' : ' acheteurs') + '</span>' +
+    (g != null ? '<span class="cv-gain mono" style="color:' + colorOf(g) + '">' + fmtGain(g) + ' <span style="color:var(--text-faint);font-weight:400">vs prix moyen</span></span>' : '') + '</div></div>' +
+    '<div class="cv-actors">' + lines + '</div></div>';
+}
+
+async function loadRadarData() {
+  const get = async (f) => { const r = await fetch(f + '?t=' + Date.now()); if (!r.ok) throw new Error(r.status); return r.json(); };
+  const jobs = [];
+  if (!invData && !invFailed) jobs.push(get('investors.json').then(d => { invData = d; }).catch(() => { invFailed = true; }));
+  if (!insData && !insFailed) jobs.push(get('insiders.json').then(d => { insData = d; }).catch(() => { insFailed = true; }));
+  await Promise.all(jobs);
+}
+
+async function renderRadar() {
+  const el = document.getElementById('content');
+  if (!insData && !invData && !(insFailed && invFailed)) {
+    el.innerHTML = '<div class="status">Chargement du radar…</div>';
+    await loadRadarData();
+    if (view !== 'radar') return;
+  }
+  if (!insData && !invData) {
+    el.innerHTML = '<div class="status">Pas encore de données. Ajoute insiders.py et insiders.yml au dépôt, puis lance le workflow « Radar des initiés » (onglet Actions).</div>';
+    return;
+  }
+  const insMoves = insData ? insData.moves : [];
+  const buys = insMoves.filter(m => m.action === 'Achat' && m.value >= radarMin);
+  const sells = insMoves.filter(m => m.action === 'Vente' && m.value >= radarMin);
+  const convBuy = buildConvergence('Achat');
+  const convSell = buildConvergence('Vente');
+  const gen = (insData && insData.generated_at) || '';
+
+  let html = '<div class="inv-hero"><div><div class="v mono" style="color:var(--gain)">' + convBuy.length + '</div><div class="l">Convergences d\'achats</div></div>' +
+    '<div><div class="v mono">' + buys.length + '</div><div class="l">Achats d\'initiés</div></div>' +
+    '<div><div class="v mono">' + escapeHtml(gen.split(' ')[1] || '—') + '</div><div class="l">' + (gen ? 'Mis à jour le ' + escapeHtml(gen.split(' ')[0]) : 'Initiés : pas de données') + '</div></div></div>';
+
+  html += '<div class="seg sub-seg" id="radarSeg">' +
+    [['conv', 'Convergence'], ['buy', 'Achats initiés'], ['sell', 'Ventes initiés']].map(x =>
+      '<button type="button" data-rtab="' + x[0] + '" class="' + (radarTab === x[0] ? 'active' : '') + '">' + x[1] + '</button>').join('') + '</div>';
+
+  html += '<div class="chip-row" id="radarMin"><span>Montant min.</span>' +
+    [[10000, '10 k$'], [50000, '50 k$'], [250000, '250 k$'], [1000000, '1 M$']].map(x =>
+      '<button type="button" data-rmin="' + x[0] + '" class="' + (radarMin === x[0] ? 'active' : '') + '">' + x[1] + '</button>').join('') + '</div>';
+
+  if (radarTab === 'conv') {
+    html += '<div class="sec-title">Achats : plusieurs acteurs sur le même titre</div>';
+    html += convBuy.length ? '<div class="inv-block">' + convBuy.slice(0, 15).map(c => cvCard(c, 'Achat')).join('') + '</div>'
+      : '<div class="status" style="margin-top:8px">Aucune convergence pour l\'instant avec ce montant minimum. Il faut au moins 2 acteurs différents (initiés ou investisseurs suivis) qui achètent le même titre.</div>';
+    if (convSell.length) {
+      html += '<div class="sec-title">Ventes : plusieurs acteurs sur le même titre</div><div class="inv-block">' +
+        convSell.slice(0, 8).map(c => cvCard(c, 'Vente')).join('') + '</div>';
+    }
+    html += '<div class="pf-hint">Convergence = au moins 2 acteurs différents qui achètent (ou vendent) le même titre : initiés déclarés à la SEC (30 derniers jours) et investisseurs suivis (45 derniers jours). « vs prix moyen » compare le cours actuel au prix moyen de leurs opérations. C\'est un constat sur des opérations passées, pas un conseil : les initiés vendent souvent pour des raisons personnelles ou automatiques.</div>';
+  } else {
+    const list = radarTab === 'buy' ? buys : sells;
+    const sideName = radarTab === 'buy' ? 'Achat' : 'Vente';
+    const clusters = (radarTab === 'buy' ? convBuy : convSell).filter(c => c.nIns >= 2);
+    if (clusters.length) {
+      html += '<div class="sec-title">' + (radarTab === 'buy' ? 'Achats groupés' : 'Ventes groupées') + ' (plusieurs initiés)</div><div class="inv-block">' +
+        clusters.slice(0, 6).map(c => cvCard(c, sideName)).join('') + '</div>';
+    }
+    html += '<div class="sec-title">' + (radarTab === 'buy' ? 'Derniers achats' : 'Dernières ventes') + ' (' + list.length.toLocaleString('fr-FR') + ')</div>';
+    if (!list.length) {
+      html += '<div class="status" style="margin-top:8px">' + (insData ? 'Aucun mouvement avec ce montant minimum.' : 'Données des initiés pas encore disponibles : lance le workflow « Radar des initiés ».') + '</div>';
+    } else {
+      html += '<div class="inv-block">' + list.slice(0, radarShown).map(m => moveRow(m, shortName(m.owner) + (m.role ? ' · ' + m.role : ''))).join('') + '</div>';
+      if (list.length > radarShown) html += '<button type="button" class="more-btn" id="radarMore">Afficher plus (' + (list.length - radarShown) + ' restants)</button>';
+    }
+    html += '<div class="pf-hint">Source : formulaires 4 de la SEC, tout le marché US, déposés au plus tard 2 jours ouvrés après l\'opération. Seuls les achats et ventes en marché ouvert sont gardés (pas les options ni les attributions d\'actions).' +
+      (radarTab === 'sell' ? ' Beaucoup de ventes d\'initiés sont programmées à l\'avance ou liées à la fiscalité : une vente n\'est pas forcément un mauvais signe.' : '') + ' Ce sont des opérations passées, pas des conseils.</div>';
+  }
+  el.innerHTML = html;
 }
 
 let invData = null, invFailed = false;
