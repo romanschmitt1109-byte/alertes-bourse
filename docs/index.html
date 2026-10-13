@@ -1114,6 +1114,7 @@
   .inv-card .inv-prev { grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; white-space: normal; margin-top: 2px; font-size: 0.68rem; color: var(--text-dim); }
   .inv-prev span { display: inline-flex; align-items: center; gap: 5px; }
   .inv-prev b { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .mv-gain { display: block; font-size: 1rem; font-weight: 700; }
   .hd-item.has { cursor: pointer; }
   .hd-item.has .hd-row:active, .hd-item.has .mv:active { background: var(--surface-raised); }
   .hd-detail { display: none; }
@@ -1529,35 +1530,58 @@ function initialsOf(str) {
   const w = String(str || '?').replace(/[^A-Za-zÀ-ÿ ]/g, '').split(/\s+/).filter(Boolean);
   return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
 }
-function stockItem(inner, ticker) {
-  const ok = ticker && byTicker[ticker];
-  return '<div class="hd-item' + (ok ? ' has' : '') + '"' + (ok ? ' data-t="' + escapeAttr(ticker) + '"' : '') + '>' + inner +
-    (ok ? '<div class="hd-detail"><div class="detail"><div class="detail-inner"></div></div></div>' : '') + '</div>';
+function stockItem(inner) {
+  return '<div class="hd-item">' + inner + '</div>';
+}
+function gainPct(price, ref) {
+  return (price && ref) ? (price / ref - 1) * 100 : null;
+}
+function fmtGain(g) {
+  return g == null ? '—' : (g > 0 ? '+' : '') + g.toFixed(1) + '%';
 }
 function starBtn(t) {
   if (!t || !byTicker[t]) return '';
   return '<button type="button" class="star' + (watch[t] ? ' on' : '') + '" data-t="' + escapeAttr(t) + '" aria-label="Suivre ce titre">' + (watch[t] ? '★' : '☆') + '</button>';
 }
-function holdingRow(x, maxPct) {
+function holdingRow(x, maxPct, period) {
   const u = x.ticker ? byTicker[x.ticker] : null;
   const init = escapeHtml((x.ticker || initialsOf(x.name)).slice(0, 3).toUpperCase());
   const avatar = '<div class="avatar">' + (x.ticker ? '<img src="' + escapeAttr(logoUrl(x.ticker)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' : '') +
     '<span class="initials mono"' + (x.ticker ? '' : ' style="display:flex"') + '>' + init + '</span></div>';
-  const day = u ? '<span class="sub mono" style="color:' + colorOf(u.c) + '">' + fmtPrice(u.p) + ' $ · ' + (u.c > 0 ? '+' : '') + u.c.toFixed(2) + '%</span>' : '<span class="sub">' + formatBig(x.value) + ' $</span>';
+  const g = (u && x.shares && period) ? gainPct(u.p, x.value / x.shares) : null;
+  const sub2 = g != null
+    ? '<span class="sub mono" style="color:' + colorOf(g) + '">' + fmtGain(g) + ' depuis le ' + fmtDate(period).slice(0, 5) + '</span>'
+    : '<span class="sub">' + formatBig(x.value) + ' $</span>';
   return stockItem('<div class="hd-row">' + avatar +
     '<div class="hd-main"><span class="mono">' + escapeHtml(x.ticker || x.name) + '</span>' + starBtn(x.ticker) + '<span class="sub">' + escapeHtml(x.ticker ? x.name : 'Titre non identifié') + '</span></div>' +
-    '<div class="hd-pct mono">' + x.pct.toFixed(2) + '%' + day + '</div>' +
-    '<div class="hd-bar"><i style="width:' + Math.min(100, Math.max(2, x.pct / maxPct * 100)).toFixed(0) + '%"></i></div></div>', x.ticker);
+    '<div class="hd-pct mono">' + x.pct.toFixed(2) + '%' + sub2 + '</div>' +
+    '<div class="hd-bar"><i style="width:' + Math.min(100, Math.max(2, x.pct / maxPct * 100)).toFixed(0) + '%"></i></div></div>');
+}
+function moveGain(m) {
+  const u = byTicker[m.ticker];
+  return u ? gainPct(u.p, m.price) : null;
 }
 function moveRow(m, who) {
   const buy = m.action === 'Achat';
+  const g = moveGain(m);
   return stockItem('<div class="mv"><span class="mv-pill ' + (buy ? 'buy' : 'sell') + '">' + (buy ? 'ACHAT' : 'VENTE') + '</span>' +
     '<div class="mv-main"><span class="mono">' + escapeHtml(m.ticker) + '</span>' + starBtn(m.ticker) +
       '<span class="sub">' + (who ? escapeHtml(who) + ' · ' : '') + escapeHtml(m.issuer || '') + '</span></div>' +
-    '<div class="mv-val mono">' + (m.value ? formatBig(m.value) + ' $' : '—') +
-      '<span class="sub">' + (m.shares ? m.shares.toLocaleString('fr-FR') + ' actions' + (m.price ? ' à ' + m.price + ' $' : '') : '') + '</span></div>' +
-    '<div class="mv-meta"><span>Opération du ' + fmtDate(m.date) + ' · déclarée le ' + fmtDate(m.filed) + '</span>' +
-      (m.link ? '<a href="' + escapeAttr(m.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '</div></div>', m.ticker);
+    '<div class="mv-val mono"><span class="mv-gain" style="color:' + colorOf(g || 0) + '">' + fmtGain(g) + '</span>' +
+      '<span class="sub">' + (buy ? 'depuis l\'achat' : 'depuis la vente') + '</span></div>' +
+    '<div class="mv-meta"><span>' + (m.value ? formatBig(m.value) + ' $' : '') + (m.price ? ' à ' + m.price + ' $' : '') + ' · le ' + fmtDate(m.date) + '</span>' +
+      (m.link ? '<a href="' + escapeAttr(m.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '</div></div>');
+}
+// rendement moyen (pondéré par les montants) des achats récents d'un investisseur
+function buysReturn(moves) {
+  let w = 0, acc = 0;
+  for (const m of moves) {
+    if (m.action !== 'Achat' || !m.value) continue;
+    const g = moveGain(m);
+    if (g == null) continue;
+    w += m.value; acc += m.value * g;
+  }
+  return w > 0 ? acc / w : null;
 }
 
 async function renderInvestors() {
@@ -1608,22 +1632,24 @@ async function renderInvestors() {
     const h = inv.holdings;
     const top = (h && h.top) || [];
     const maxPct = Math.max(...top.map(x => x.pct), 1);
+    const bret = buysReturn(inv.moves);
     const alloc = top.length ? '<div class="alloc">' + top.slice(0, 5).map((x, i) => '<i style="width:' + x.pct + '%;background:' + INV_COLORS[i] + '"></i>').join('') +
       '<i style="flex:1;background:var(--line)"></i></div>' : '';
     const preview = top.slice(0, 4).map((x, i) => '<span><b style="background:' + INV_COLORS[i] + '"></b>' + escapeHtml(x.ticker || x.name.split(' ')[0]) + ' ' + Math.round(x.pct) + '%</span>').join('');
     html += '<details class="inv-card"><summary class="inv-sum">' +
       '<div class="inv-av">' + escapeHtml(initialsOf(inv.person || inv.name)) + '</div>' +
       '<div class="inv-id"><div class="inv-name">' + escapeHtml(inv.person || inv.name) + '</div><div class="inv-person">' + escapeHtml(inv.person ? inv.name : '') + '</div></div>' +
-      '<div class="inv-right"><div class="inv-total mono">' + (h ? formatBig(h.total) + ' $' : '—') + '</div><div class="inv-cnt">' + inv.moves.length + ' mouv.<span class="inv-chev">⌄</span></div></div>' +
+      '<div class="inv-right"><div class="inv-total mono">' + (h ? formatBig(h.total) + ' $' : '—') + '</div><div class="inv-cnt">' + (bret != null ? '<span class="mono" style="color:' + colorOf(bret) + '">' + fmtGain(bret) + ' achats</span>' : inv.moves.length + ' mouv.') + '<span class="inv-chev">⌄</span></div></div>' +
       alloc + (preview ? '<div class="inv-prev">' + preview + '</div>' : '') + '</summary>';
     if (top.length) {
       html += '<div class="hd-title">Positions<span>au ' + fmtDate(h.period) + ' · ' + h.count + ' lignes</span></div>' +
-        top.slice(0, 5).map(x => holdingRow(x, maxPct)).join('') +
-        (top.length > 5 ? '<details class="hd-more"><summary>Voir les ' + (top.length - 5) + ' autres positions</summary>' + top.slice(5).map(x => holdingRow(x, maxPct)).join('') + '</details>' : '') +
+        top.slice(0, 5).map(x => holdingRow(x, maxPct, h.period)).join('') +
+        (top.length > 5 ? '<details class="hd-more"><summary>Voir les ' + (top.length - 5) + ' autres positions</summary>' + top.slice(5).map(x => holdingRow(x, maxPct, h.period)).join('') + '</details>' : '') +
         '<div class="inv-note">Autres positions : ' + h.others_pct.toFixed(2) + '% du portefeuille. Formulaire 13F déposé le ' + fmtDate(h.filed) + (h.link ? ' — <a href="' + escapeAttr(h.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '.</div>';
     }
     if (inv.moves.length) {
-      html += '<div class="hd-title">Mouvements récents<span>' + inv.moves.length + '</span></div>' + inv.moves.map(m => moveRow(m)).join('');
+      const br = buysReturn(inv.moves);
+      html += '<div class="hd-title">Mouvements récents<span>' + (br != null ? 'rendement moyen des achats : <b class="mono" style="color:' + colorOf(br) + '">' + fmtGain(br) + '</b>' : inv.moves.length + '') + '</span></div>' + inv.moves.map(m => moveRow(m)).join('');
     } else {
       html += '<div class="inv-note">Aucun achat ni vente déclaré récemment : cet investisseur ne publie en général que ses positions trimestrielles (13F).</div>';
     }
