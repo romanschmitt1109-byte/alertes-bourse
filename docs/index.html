@@ -1061,6 +1061,24 @@
   .pos .sim-input { width: 92px; }
   .pos .sim-row { flex-wrap: wrap; }
   .pos-res { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+
+  .inv-card { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 14px 6px; }
+  .inv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .inv-name { font-size: 0.95rem; font-weight: 600; }
+  .inv-person { font-size: 0.72rem; color: var(--text-faint); margin-top: 2px; }
+  .inv-cnt { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; }
+  .mv { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); margin-top: 10px; }
+  .mv:first-of-type { margin-top: 12px; }
+  .mv-pill { font-size: 0.62rem; font-weight: 700; padding: 3px 7px; border-radius: 6px; color: var(--bg); }
+  .mv-pill.buy { background: var(--gain); }
+  .mv-pill.sell { background: var(--loss); }
+  .mv-main { font-size: 0.84rem; font-weight: 500; min-width: 0; }
+  .mv-main .sub { display: block; font-size: 0.7rem; color: var(--text-faint); font-weight: 400; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mv-val { text-align: right; font-size: 0.8rem; font-weight: 600; }
+  .mv-val .sub { display: block; font-size: 0.66rem; color: var(--text-faint); font-weight: 400; margin-top: 2px; }
+  .mv-meta { grid-column: 1 / -1; font-size: 0.68rem; color: var(--text-faint); display: flex; justify-content: space-between; gap: 8px; }
+  .mv-meta a, .inv-note a { color: var(--text-dim); }
+  .inv-note { font-size: 0.7rem; line-height: 1.5; color: var(--text-faint); padding: 8px 0 10px; }
 </style>
 </head>
 <body>
@@ -1097,6 +1115,7 @@
     <div class="seg view-seg" role="group" aria-label="Vue">
       <button type="button" id="tabMarket" class="active">Marché</button>
       <button type="button" id="tabWatch">Suivi <span id="watchCount"></span></button>
+      <button type="button" id="tabInv">Investisseurs</button>
     </div>
 
     <div class="price-panel" id="pricePanel" style="display:none">
@@ -1442,7 +1461,8 @@ function getFiltered() {
 function applyViewChrome() {
   const on = universe.length > 0 && view === 'market';
   document.getElementById('pricePanel').style.display = on ? 'block' : 'none';
-  document.getElementById('toolbarWrap').style.display = universe.length ? 'block' : 'none';
+  document.getElementById('toolbarWrap').style.display = (universe.length && view !== 'investors') ? 'block' : 'none';
+  document.getElementById('tabInv').classList.toggle('active', view === 'investors');
   document.querySelector('.toolbar-filters').style.display = view === 'market' ? 'flex' : 'none';
   document.getElementById('sortSelect').style.display = view === 'market' ? '' : 'none';
   document.getElementById('tabMarket').classList.toggle('active', view === 'market');
@@ -1450,7 +1470,63 @@ function applyViewChrome() {
   saveWatch();
 }
 function setView(v) { view = v; shown = PAGE_SIZE; applyViewChrome(); renderList(); }
-function renderList() { if (view === 'watch') renderWatch(); else renderMarket(); }
+function renderList() {
+  if (view === 'watch') renderWatch();
+  else if (view === 'investors') renderInvestors();
+  else renderMarket();
+}
+
+let invData = null, invFailed = false;
+function fmtDate(iso) {
+  if (!iso) return '';
+  const p = iso.slice(0, 10).split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso;
+}
+async function renderInvestors() {
+  const el = document.getElementById('content');
+  if (!invData && !invFailed) {
+    el.innerHTML = '<div class="status">Chargement des mouvements…</div>';
+    try {
+      const res = await fetch('investors.json?t=' + Date.now());
+      if (!res.ok) throw new Error(res.status);
+      invData = await res.json();
+    } catch (e) { invFailed = true; }
+    if (view !== 'investors') return;
+  }
+  if (!invData) {
+    el.innerHTML = '<div class="status">Pas encore de données sur les investisseurs. Ajoute investors.py et investors.yml au dépôt, puis lance le workflow « Suivi des investisseurs » (onglet Actions).</div>';
+    return;
+  }
+  let html = '<div class="pf-hint" style="margin-top:14px">Mouvements déclarés à la SEC par de grands investisseurs, sur les ' + invData.lookback_days + ' derniers jours. Mis à jour : ' + escapeHtml(invData.generated_at) + '.</div>';
+  for (const inv of invData.investors) {
+    html += '<div class="inv-card"><div class="inv-head"><div><div class="inv-name">' + escapeHtml(inv.name) + '</div>' +
+      (inv.person ? '<div class="inv-person">' + escapeHtml(inv.person) + '</div>' : '') + '</div>' +
+      '<div class="inv-cnt">' + inv.moves.length + ' mouvement' + (inv.moves.length > 1 ? 's' : '') + '</div></div>';
+    if (!inv.moves.length) {
+      html += '<div class="inv-note">Aucun achat ni vente déclaré récemment. Cet investisseur ne publie en général que ses positions trimestrielles (formulaire 13F)' +
+        (inv.last_13f ? ' — dernier dépôt le ' + fmtDate(inv.last_13f.date) + ' (<a href="' + escapeAttr(inv.last_13f.link) + '" target="_blank" rel="noopener">voir</a>)' : '') + '.</div>';
+    }
+    for (const m of inv.moves) {
+      const buy = m.action === 'Achat';
+      const inList = !!byTicker[m.ticker];
+      html += '<div class="mv"><span class="mv-pill ' + (buy ? 'buy' : 'sell') + '">' + (buy ? 'ACHAT' : 'VENTE') + '</span>' +
+        '<div class="mv-main"><span class="mono">' + escapeHtml(m.ticker) + '</span>' +
+          (inList ? '<button type="button" class="star' + (watch[m.ticker] ? ' on' : '') + '" data-t="' + escapeAttr(m.ticker) + '" aria-label="Suivre ce titre">' + (watch[m.ticker] ? '★' : '☆') + '</button>' : '') +
+          '<span class="sub">' + escapeHtml(m.issuer || '') + '</span></div>' +
+        '<div class="mv-val mono">' + (m.value ? formatBig(m.value) + ' $' : '—') +
+          '<span class="sub">' + (m.shares ? m.shares.toLocaleString('fr-FR') + ' actions' + (m.price ? ' à ' + m.price + ' $' : '') : '') + '</span></div>' +
+        '<div class="mv-meta"><span>Opération du ' + fmtDate(m.date) + ' · déclarée le ' + fmtDate(m.filed) + '</span>' +
+          (m.link ? '<a href="' + escapeAttr(m.link) + '" target="_blank" rel="noopener">SEC</a>' : '') + '</div></div>';
+    }
+    if (inv.filings && inv.filings.length) {
+      html += '<div class="inv-note">Déclarations de participation : ' + inv.filings.map(f =>
+        '<a href="' + escapeAttr(f.link) + '" target="_blank" rel="noopener">' + escapeHtml(f.form) + ' (' + fmtDate(f.date) + ')</a>').join(' · ') + '</div>';
+    }
+    html += '</div>';
+  }
+  html += '<div class="pf-hint">Source : SEC EDGAR. Un formulaire 4 est déposé au plus tard 2 jours ouvrés après l\'opération ; il ne concerne que les dirigeants et les actionnaires de plus de 10 % d\'une société. Ce sont des opérations passées, pas des conseils : suivre un investisseur ne garantit rien.</div>';
+  el.innerHTML = html;
+}
 
 function renderMarket() {
   const contentEl = document.getElementById('content');
@@ -1604,7 +1680,7 @@ function detailHtml(u) {
   } else {
     extra = '<div class="no-detail">Fiche détaillée (résumé, actualité, analystes, graphiques 1 mois → 1 an) disponible pour les titres les plus échangés et ceux qui bougent le plus aujourd\'hui.</div>';
   }
-  return chartHtml + kpis + (watch[u.t] ? positionHtml(u.t) : '') + extra + simulatorHtml();
+  return chartHtml + kpis + (watch[u.t] ? positionHtml(u.t) : '') + extra;
 }
 
 const liveTried = {};
@@ -1643,7 +1719,6 @@ async function loadLive(rowEl, t) {
   rowEl.querySelector('.detail-inner').innerHTML = detailHtml(u);
   const def = pickDefaultRange(details[t].chart);
   if (def) drawRange(rowEl, def);
-  const sim = rowEl.querySelector('.sim'); if (sim) updateSim(sim);
   const pos = rowEl.querySelector('.pos'); if (pos) updatePos(pos, true);
 }
 
@@ -1766,40 +1841,6 @@ function analystHtml(a, price) {
   );
 }
 
-function simulatorHtml() {
-  return (
-    '<div class="sim">' +
-      '<div class="sim-label">Simulateur (argent fictif)</div>' +
-      '<div class="sim-row">' +
-        '<input type="number" class="sim-input mono" value="10" min="0" step="1" inputmode="decimal">' +
-        '<span class="sim-unit mono">€ →</span>' +
-        '<select class="sim-select">' +
-          '<option value="-10">Pessimiste (-10%/mois)</option>' +
-          '<option value="-5">Prudent (-5%/mois)</option>' +
-          '<option value="0">Stable (0%/mois)</option>' +
-          '<option value="2" selected>Modéré (+2%/mois)</option>' +
-          '<option value="5">Optimiste (+5%/mois)</option>' +
-          '<option value="10">Très optimiste (+10%/mois)</option>' +
-        '</select>' +
-      '</div>' +
-      '<div class="sim-results"></div>' +
-      '<div class="sim-note">Simulation mathématique à partir d\'une hypothèse de croissance que tu choisis toi-même — ce n\'est ni une prévision ni un conseil d\'investissement. Les performances passées ne garantissent rien pour l\'avenir et les marchés peuvent faire l\'inverse du scénario choisi.</div>' +
-    '</div>'
-  );
-}
-
-function updateSim(simEl) {
-  const amount = Math.max(0, parseFloat(simEl.querySelector('.sim-input').value) || 0);
-  const rate = (parseFloat(simEl.querySelector('.sim-select').value) || 0) / 100;
-  simEl.querySelector('.sim-results').innerHTML = [
-    ['1 mois', 1], ['3 mois', 3], ['6 mois', 6], ['1 an', 12],
-  ].map(([label, m]) => {
-    const value = amount * Math.pow(1 + rate, m);
-    const color = value >= amount ? 'var(--gain)' : 'var(--loss)';
-    return '<div class="sim-cell"><span class="v mono" style="color:' + color + '">' + value.toFixed(2) + ' €</span><span class="l">Dans ' + label + '</span></div>';
-  }).join('');
-}
-
 function pointsForRange(chart, key) {
   if (!chart) return [];
   if (key === '1j') {
@@ -1857,8 +1898,6 @@ function openRow(rowEl) {
       const def = pickDefaultRange(det.chart);
       if (def) drawRange(rowEl, def);
     }
-    const sim = rowEl.querySelector('.sim');
-    if (sim) updateSim(sim);
     const pos = rowEl.querySelector('.pos');
     if (pos) updatePos(pos, true);
     if (watch[u.t] && !details[u.t]) loadLive(rowEl, u.t);
@@ -1876,9 +1915,13 @@ contentRoot.addEventListener('click', (e) => {
   if (e.target.closest('#copyWatch')) { copyWatchlist(); return; }
   const star = e.target.closest('.star');
   if (star) {
-    const row = star.closest('.row'), t = row.dataset.t;
+    const row = star.closest('.row'), t = row ? row.dataset.t : star.dataset.t;
     if (watch[t]) delete watch[t]; else watch[t] = { qty: '', buy: '' };
     saveWatch();
+    if (!row) {   // étoile depuis l'onglet Investisseurs
+      document.querySelectorAll('.star[data-t="' + t + '"]').forEach(b => { b.classList.toggle('on', !!watch[t]); b.textContent = watch[t] ? '★' : '☆'; });
+      return;
+    }
     if (view === 'watch') { renderWatch(); return; }
     star.classList.toggle('on', !!watch[t]);
     star.textContent = watch[t] ? '★' : '☆';
@@ -1898,14 +1941,8 @@ contentRoot.addEventListener('click', (e) => {
   if (row) openRow(row);
 });
 contentRoot.addEventListener('input', (e) => {
-  const sim = e.target.closest('.sim');
-  if (sim) updateSim(sim);
   const pos = e.target.closest('.pos');
   if (pos) updatePos(pos);
-});
-contentRoot.addEventListener('change', (e) => {
-  const sim = e.target.closest('.sim');
-  if (sim) updateSim(sim);
 });
 
 /* ---------- graphiques ---------- */
@@ -1939,6 +1976,7 @@ function escapeAttr(str) {
 document.getElementById('refreshBtn').addEventListener('click', () => load(true));
 document.getElementById('tabMarket').addEventListener('click', () => setView('market'));
 document.getElementById('tabWatch').addEventListener('click', () => setView('watch'));
+document.getElementById('tabInv').addEventListener('click', () => setView('investors'));
 saveWatch();
 const searchInput = document.getElementById('searchInput');
 const searchBox = document.getElementById('searchBox');
